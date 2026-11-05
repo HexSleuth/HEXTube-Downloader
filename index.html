@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0a0c11">
 <meta name="referrer" content="no-referrer">
-<title>Free Video Downloader — Auto-Detect APIs · MP3 &amp; MP4</title>
+<title>Free Video Downloader — No API Key · MP3 &amp; MP4</title>
 <style>
   :root{
     color-scheme: dark;
@@ -167,6 +167,14 @@
   }
   .err code{background:rgba(0,0,0,.35);border-radius:5px;padding:1px 5px;font-size:12px}
   .err ul{margin:8px 0 0;padding-left:18px}
+  .err a{color:#ffd5d5}
+
+  .warnBox{
+    margin-top:12px;padding:11px 13px;border-radius:11px;font-size:13px;
+    color:#ffd08a;background:rgba(245,158,11,.1);
+    border:1px solid rgba(245,158,11,.35);
+    line-height:1.55;
+  }
 
   .media{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px}
   .media img{
@@ -267,8 +275,30 @@
   .note strong{color:#d9e0ee}
   .note code{background:#0b0f17;border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:11.5px}
   .note ul{margin:8px 0 0;padding-left:18px}
-  .note li{margin-bottom:4px}
+  .note li{margin-bottom:6px}
   .note a{color:#b7c3ff}
+
+  .support{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;
+    margin-top:10px;
+  }
+  .support .srow{
+    display:flex;align-items:center;gap:8px;
+    padding:9px 11px;border-radius:10px;
+    background:#0b0f17;border:1px solid var(--line);
+    font-size:12.5px;
+  }
+  .support .srow .dot{
+    width:8px;height:8px;border-radius:50%;flex:0 0 auto;
+    background:var(--muted);
+  }
+  .support .srow.yes .dot{background:var(--ok);box-shadow:0 0 0 2px rgba(34,197,94,.18)}
+  .support .srow.maybe .dot{background:var(--warn);box-shadow:0 0 0 2px rgba(245,158,11,.18)}
+  .support .srow .name{font-weight:600;color:var(--txt)}
+  .support .srow .eng{font-size:11px;color:var(--muted);margin-left:auto}
+  @media (max-width:400px){
+    .support{grid-template-columns:1fr}
+  }
 
   details.adv{
     margin-top:14px;border-radius:12px;border:1px solid var(--line);
@@ -301,7 +331,7 @@
 
   .instList{
     display:flex;flex-direction:column;gap:6px;margin-top:10px;
-    max-height:180px;overflow-y:auto;
+    max-height:220px;overflow-y:auto;
   }
   .instItem{
     display:flex;align-items:center;gap:8px;
@@ -315,6 +345,7 @@
     background:var(--err);box-shadow:0 0 0 2px rgba(239,68,68,.15);
   }
   .instItem.ok .dot{background:var(--ok);box-shadow:0 0 0 2px rgba(34,197,94,.15)}
+  .instItem.auth .dot{background:var(--warn);box-shadow:0 0 0 2px rgba(245,158,11,.15)}
   .instItem .host{
     flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
@@ -344,7 +375,7 @@
     <div class="logo">&#9654;</div>
     <div>
       <h1>Free Video Downloader</h1>
-      <p class="sub">Auto-detects working APIs &middot; YouTube &middot; TikTok &middot; Instagram &middot; +more</p>
+      <p class="sub">No API keys &middot; YouTube &middot; TikTok &middot; Instagram &middot; +more</p>
     </div>
   </header>
 
@@ -371,37 +402,61 @@
 
       <button id="fetchBtn" class="primary" type="button">Fetch Video</button>
       <div id="err" class="err hidden"></div>
+      <div id="warnBox" class="warnBox hidden"></div>
 
       <details class="adv" id="settingsPanel">
         <summary>
-          <span>API instances</span>
+          <span>API instances &amp; supported platforms</span>
           <span id="instanceStatus" class="badge info">Checking…</span>
           <span id="savedFlag" class="saved">Saved</span>
         </summary>
         <div class="advBody">
-          <div class="detectRow">
+          <div class="support">
+            <div class="srow yes">
+              <span class="dot"></span>
+              <span class="name">YouTube</span>
+              <span class="eng">Piped / Invidious</span>
+            </div>
+            <div class="srow yes">
+              <span class="dot"></span>
+              <span class="name">TikTok</span>
+              <span class="eng">TikWM</span>
+            </div>
+            <div class="srow maybe">
+              <span class="dot"></span>
+              <span class="name">Instagram / Facebook</span>
+              <span class="eng">Cobalt</span>
+            </div>
+            <div class="srow maybe">
+              <span class="dot"></span>
+              <span class="name">X / Vimeo / others</span>
+              <span class="eng">Cobalt</span>
+            </div>
+          </div>
+
+          <div class="detectRow" style="margin-top:14px">
             <span id="detectIcon" class="spinner"></span>
             <span class="text" id="detectText">Initialising detection…</span>
             <button id="redetectBtn" class="ghost small" type="button">Detect now</button>
           </div>
 
-          <label class="lbl" for="setPiped">Piped API (YouTube) — optional override</label>
+          <label class="lbl" for="setPiped">Piped API — optional override</label>
           <input id="setPiped" type="text" inputmode="url" autocomplete="off"
                  autocapitalize="off" spellcheck="false"
                  placeholder="Leave empty to use auto-detected">
 
-          <label class="lbl lbl2" for="setInvidious">Invidious API (YouTube) — optional override</label>
+          <label class="lbl lbl2" for="setInvidious">Invidious API — optional override</label>
           <input id="setInvidious" type="text" inputmode="url" autocomplete="off"
                  autocapitalize="off" spellcheck="false"
                  placeholder="Leave empty to use auto-detected">
 
-          <label class="lbl lbl2" for="setCobalt">Cobalt API (all platforms) — optional override</label>
+          <label class="lbl lbl2" for="setCobalt">Cobalt API — optional override</label>
           <input id="setCobalt" type="text" inputmode="url" autocomplete="off"
                  autocapitalize="off" spellcheck="false"
                  placeholder="Leave empty to use auto-detected">
 
           <div class="detectRow" style="margin-top:14px;margin-bottom:10px">
-            <span class="text">Detected working instances</span>
+            <span class="text">Instance status</span>
             <button id="showInstBtn" class="ghost small" type="button">Show / Hide</button>
           </div>
           <div id="instList" class="instList hidden"></div>
@@ -411,9 +466,12 @@
           </div>
 
           <p class="hint">
-            The app tests a short list of public instances on first load and only uses
-            the ones that respond with CORS. Instance URLs are never sent to us —
-            everything happens in your browser.
+            The app probes every candidate on first load. Instances that respond without
+            requiring an API key are kept. YouTube uses only Piped/Invidious; TikTok also
+            uses TikWM. Other platforms use Cobalt — if every public Cobalt instance
+            requires an API key, download those with
+            <a href="https://github.com/imputnet/cobalt" target="_blank" rel="noopener noreferrer" style="color:#b7c3ff">your own self-hosted instance</a>
+            (free, no key) or the ytdlnis app.
           </p>
         </div>
       </details>
@@ -434,7 +492,7 @@
         <button class="mode" data-mode="audio" type="button">Audio</button>
       </div>
 
-      <!-- direct streams (Piped / Invidious) -->
+      <!-- direct streams (Piped / Invidious / TikWM) -->
       <div id="directFormats">
         <div class="lbl">Available streams</div>
         <div id="chips" class="chips"></div>
@@ -505,8 +563,8 @@
       <div id="searchErr" class="err hidden"></div>
 
       <p class="hint">
-        Search uses the same auto-detected YouTube APIs. Pick a result to load it into
-        the downloader with audio mode preselected.
+        Search uses the same auto-detected YouTube APIs (no key needed). Pick a result
+        to load it into the downloader with audio mode preselected.
       </p>
     </section>
 
@@ -518,17 +576,21 @@
 
   <!-- ========================== INFO ========================== -->
   <div class="note">
-    <strong>What changed in this build</strong>
+    <strong>Fixed in this build</strong>
     <ul>
-      <li><strong>Cobalt 404 fixed</strong> — the old <code>/api/json</code> endpoint is gone; only <code>POST /</code> on the base URL is used, matching current Cobalt v10.</li>
-      <li><strong>Auto-detect</strong> — working Piped, Invidious and Cobalt instances are discovered on first load and refreshed on demand.</li>
-      <li><strong>Multi-instance failover</strong> — each download tries the detected list in order; your manual override always goes first.</li>
+      <li><strong>Cobalt auth detection</strong> — probes now check the exact error code (<code>error.api.auth.jwt.missing</code>, <code>error.api.turnstile.missing</code>). Instances that require a key are hidden from the working list instead of failing at download time.</li>
+      <li><strong>Cobalt v10 + v7</strong> — requests try <code>POST /</code> first, then fall back to <code>POST /api/json</code> on older instances.</li>
+      <li><strong>No-key fallbacks</strong> — YouTube uses Piped/Invidious only; TikTok tries TikWM before touching Cobalt. Cobalt is only used where it's really needed.</li>
+      <li><strong>Graceful errors</strong> — if every Cobalt instance requires a key, you get clear guidance instead of a dead end.</li>
     </ul>
-    <strong style="display:block;margin-top:10px">Limits</strong>
-    Direct YouTube streams top out around 128–160 kbps audio and 360p/720p muxed video.
+    <strong style="display:block;margin-top:10px">Platform summary</strong>
+    <ul>
+      <li>✅ <strong>YouTube</strong> — Piped + Invidious, no key needed</li>
+      <li>✅ <strong>TikTok</strong> — TikWM, no key needed</li>
+      <li>⚠️ <strong>Instagram, Facebook, X, Vimeo, Dailymotion, Youku</strong> — depends on public Cobalt. If all require a key, self-host Cobalt or use ytdlnis.</li>
+    </ul>
     For merged 1080p+/4K or exotic containers (AVI, FLV, WMV, 3GP, M4V) use
-    <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a>
-    with ffmpeg, or the ytdlnis app on Android.
+    <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a> on desktop.
   </div>
 
   <p class="foot">
@@ -544,7 +606,7 @@
   "use strict";
 
   /* ================================================================== *
-   * 0. Tiny helpers
+   * 0. Helpers
    * ================================================================== */
   const $   = (id) => document.getElementById(id);
   const $all = (sel) => Array.prototype.slice.call(document.querySelectorAll(sel));
@@ -552,8 +614,6 @@
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => (
     { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
   ));
-
-  const clamp01 = (n) => Math.max(0, Math.min(1, n));
 
   function fmtDur(sec) {
     const s = Math.round(Number(sec) || 0);
@@ -615,29 +675,8 @@
            errName(e) === "NetworkError";
   }
 
-  function withTimeout(promise, ms, message) {
-    return new Promise((resolve, reject) => {
-      const t = setTimeout(() => {
-        const e = new Error(message || "Timed out after " + ms + " ms");
-        e.name = "TimeoutError";
-        reject(e);
-      }, ms);
-      promise.then(
-        (v) => { clearTimeout(t); resolve(v); },
-        (e) => { clearTimeout(t); reject(e); }
-      );
-    });
-  }
-
   /* ================================================================== *
-   * 1. Instance lists
-   * ------------------------------------------------------------------
-   * These are just CANDIDATES. On first load (and whenever you press
-   * "Detect now") each one is pinged and only CORS-friendly, responsive
-   * instances end up in the working set used for downloads.
-   *
-   * The old /api/json Cobalt endpoint is intentionally NOT tried — it
-   * returns 404 on every current Cobalt v10 instance.
+   * 1. Instance candidates
    * ================================================================== */
   const INSTANCES = {
     piped: [
@@ -669,27 +708,31 @@
       "https://yt.artemislena.eu",
     ],
     cobalt: [
-      "https://api.cobalt.tools",
-      "https://co.eepy.today",
+      /* Most public Cobalt instances moved to requiring a JWT.
+         The probe below filters the ones that don't. Instances
+         that answer with error.api.auth.jwt.missing / turnstile.missing
+         are marked "auth" and never used. */
       "https://cobalt-api.kwiatekmiki.com",
-      "https://cobalt-backend.canine.tools",
+      "https://co.eepy.today",
       "https://cobalt.255x.ru",
-      "https://api.cobalt.best",
       "https://cobalt-api.meowing.de",
-      "https://cobalt.aeong.dev",
+      "https://cobalt-backend.canine.tools",
+      "https://api.cobalt.tools",
       "https://cobalt-api.ayo.tf",
+      "https://cobalt.aeong.dev",
       "https://capi.3kh0.net",
+      "https://api.cobalt.best",
     ],
   };
 
   const TEST_VIDEO_ID = "dQw4w9WgXcQ";
 
   /* ================================================================== *
-   * 2. Config (manual overrides) — separate from detection cache
+   * 2. Config (manual overrides only)
    * ================================================================== */
-  const CFG_KEY = "ytc:cfg:v3";
-  const DETECT_KEY = "ytc:detect:v3";
-  const DETECT_TTL = 60 * 60 * 1000;   // 1 h
+  const CFG_KEY    = "ytc:cfg:v4";
+  const DETECT_KEY = "ytc:detect:v4";
+  const DETECT_TTL = 60 * 60 * 1000;
 
   const cfg = { piped: "", invidious: "", cobalt: "" };
 
@@ -721,9 +764,10 @@
    * 3. Detection cache
    * ================================================================== */
   const detection = {
-    piped: [],
-    invidious: [],
-    cobalt: [],
+    piped: [],        // working
+    invidious: [],    // working
+    cobalt: [],       // working (no auth)
+    cobaltAuth: [],   // alive but requires key/turnstile
     ts: 0,
     running: false,
     lastError: "",
@@ -735,9 +779,10 @@
       if (!raw) return;
       const o = JSON.parse(raw);
       if (!o || typeof o !== "object") return;
-      detection.piped     = Array.isArray(o.piped)     ? o.piped.filter((x) => typeof x === "string")     : [];
-      detection.invidious = Array.isArray(o.invidious) ? o.invidious.filter((x) => typeof x === "string") : [];
-      detection.cobalt    = Array.isArray(o.cobalt)    ? o.cobalt.filter((x) => typeof x === "string")    : [];
+      detection.piped     = Array.isArray(o.piped)      ? o.piped.filter((x) => typeof x === "string")      : [];
+      detection.invidious = Array.isArray(o.invidious)  ? o.invidious.filter((x) => typeof x === "string")  : [];
+      detection.cobalt    = Array.isArray(o.cobalt)     ? o.cobalt.filter((x) => typeof x === "string")     : [];
+      detection.cobaltAuth = Array.isArray(o.cobaltAuth) ? o.cobaltAuth.filter((x) => typeof x === "string") : [];
       detection.ts        = Number(o.ts) || 0;
     } catch (e) { /* ignore */ }
   }
@@ -747,11 +792,11 @@
         piped: detection.piped,
         invidious: detection.invidious,
         cobalt: detection.cobalt,
+        cobaltAuth: detection.cobaltAuth,
         ts: detection.ts,
       }));
     } catch (e) { /* ignore */ }
   }
-
   function cacheFresh() {
     return detection.ts > 0 && (Date.now() - detection.ts) < DETECT_TTL;
   }
@@ -759,39 +804,76 @@
   /* ================================================================== *
    * 4. Instance probing
    * ================================================================== */
-  async function probe(type, base) {
-    const timeoutMs = 8000;
+  async function probePiped(base) {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-
+    const timer = setTimeout(() => ctrl.abort(), 8000);
     try {
-      if (type === "piped") {
-        const res = await fetch(base + "/streams/" + TEST_VIDEO_ID, {
-          signal: ctrl.signal,
-          mode: "cors",
-          credentials: "omit",
-          referrerPolicy: "no-referrer",
-          headers: { Accept: "application/json" },
-        });
-        if (!res.ok) return { ok: false, reason: "HTTP " + res.status };
-        const data = await res.json();
-        return { ok: !!(data && (data.title || data.videoStreams)), reason: "no title/streams" };
-      }
+      const res = await fetch(base + "/streams/" + TEST_VIDEO_ID, {
+        signal: ctrl.signal,
+        mode: "cors",
+        credentials: "omit",
+        referrerPolicy: "no-referrer",
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) return { ok: false, reason: "HTTP " + res.status };
+      const data = await res.json();
+      return { ok: !!(data && (data.title || data.videoStreams)), reason: "ok" };
+    } catch (e) {
+      if (errName(e) === "AbortError") return { ok: false, reason: "timeout" };
+      return { ok: false, reason: looksLikeNetworkError(e) ? "CORS / network" : (e && e.message) || "error" };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 
-      if (type === "invidious") {
-        const res = await fetch(base + "/api/v1/videos/" + TEST_VIDEO_ID + "?local=true", {
-          signal: ctrl.signal,
-          mode: "cors",
-          credentials: "omit",
-          referrerPolicy: "no-referrer",
-          headers: { Accept: "application/json" },
-        });
-        if (!res.ok) return { ok: false, reason: "HTTP " + res.status };
-        const data = await res.json();
-        return { ok: !!(data && (data.title || data.formatStreams)), reason: "no title/formats" };
-      }
+  async function probeInvidious(base) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    try {
+      const res = await fetch(base + "/api/v1/videos/" + TEST_VIDEO_ID + "?local=true", {
+        signal: ctrl.signal,
+        mode: "cors",
+        credentials: "omit",
+        referrerPolicy: "no-referrer",
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) return { ok: false, reason: "HTTP " + res.status };
+      const data = await res.json();
+      return { ok: !!(data && (data.title || data.formatStreams)), reason: "ok" };
+    } catch (e) {
+      if (errName(e) === "AbortError") return { ok: false, reason: "timeout" };
+      return { ok: false, reason: looksLikeNetworkError(e) ? "CORS / network" : (e && e.message) || "error" };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 
-      /* cobalt: POST to the base URL only. /api/json is gone (404). */
+  /* ------------------------------------------------------------------
+   * Cobalt probe — the critical fix.
+   *
+   * We POST a harmless URL and look at the *response body*:
+   *   status:"error" with code error.api.auth.jwt.*        → needs JWT (auth)
+   *   status:"error" with code error.api.turnstile.*       → needs Turnstile (auth)
+   *   status:"error" with any other code                   → works, no key
+   *   status:"tunnel"|"redirect"|"picker"                  → works, no key
+   *   HTTP 401/403                                          → auth required
+   *   HTTP 404/405/501                                      → endpoint doesn't exist
+   *
+   * Only instances that actually speak the API *without* auth are added
+   * to detection.cobalt. Auth-required ones go to detection.cobaltAuth
+   * so the UI can show them separately but never use them.
+   * ------------------------------------------------------------------ */
+  const AUTH_CODES = new Set([
+    "error.api.auth.jwt.missing",
+    "error.api.auth.jwt.invalid",
+    "error.api.turnstile.missing",
+    "error.api.turnstile.invalid",
+  ]);
+
+  async function probeCobalt(base) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10000);
+    try {
       const res = await fetch(base, {
         method: "POST",
         signal: ctrl.signal,
@@ -802,37 +884,63 @@
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ url: "https://example.com/probe.txt" }),
+        body: JSON.stringify({ url: "https://example.com/probe" }),
       });
 
-      /* Any structured response (200 / 400 / 422 / 429) means the server is
-         alive and speaking CORS. 401 / 403 mean auth is required (unusable).
-         404 / 405 / 501 mean the endpoint doesn't exist. */
-      if (res.status === 200 || res.status === 400 || res.status === 422 || res.status === 429) {
-        return { ok: true, reason: "HTTP " + res.status };
+      let data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
+
+      if (res.status === 401 || res.status === 403) {
+        return { ok: false, auth: true, reason: "auth required" };
       }
-      return { ok: false, reason: "HTTP " + res.status };
+
+      if (data && data.status === "error") {
+        const raw = data.error;
+        const code = (raw && (raw.code || (typeof raw === "string" ? raw : ""))) || "";
+        if (AUTH_CODES.has(code)) {
+          return { ok: false, auth: true, reason: "auth required", code };
+        }
+        /* Instance works without auth — even if the probe URL is unsupported. */
+        return { ok: true, reason: "ok" };
+      }
+
+      if (data && (data.status === "tunnel" || data.status === "redirect" || data.status === "picker")) {
+        return { ok: true, reason: "ok" };
+      }
+
+      if (res.status === 404 || res.status === 405 || res.status === 501) {
+        return { ok: false, auth: false, reason: "endpoint missing (HTTP " + res.status + ")" };
+      }
+
+      if (!res.ok) return { ok: false, auth: false, reason: "HTTP " + res.status };
+      return { ok: false, auth: false, reason: "unexpected response" };
     } catch (e) {
-      if (errName(e) === "AbortError") return { ok: false, reason: "timeout" };
-      if (looksLikeNetworkError(e)) return { ok: false, reason: "CORS / network" };
-      return { ok: false, reason: (e && e.message) || "error" };
+      if (errName(e) === "AbortError") return { ok: false, auth: false, reason: "timeout" };
+      return { ok: false, auth: false, reason: looksLikeNetworkError(e) ? "CORS / network" : (e && e.message) || "error" };
     } finally {
       clearTimeout(timer);
     }
   }
 
-  async function probeBatch(type, bases, batchSize) {
+  async function probeBatch(type, bases, size) {
     const ok = [];
-    const size = batchSize || 4;
-    for (let i = 0; i < bases.length; i += size) {
-      const slice = bases.slice(i, i + size);
-      const results = await Promise.all(slice.map((b) => probe(type, b).then((r) => ({ base: b, ...r }))));
-      results.forEach((r) => { if (r.ok) ok.push(r.base); });
-      if (i + size < bases.length) {
-        await new Promise((r) => setTimeout(r, 250));
-      }
+    const auth = [];
+    const bs = size || 4;
+    for (let i = 0; i < bases.length; i += bs) {
+      const slice = bases.slice(i, i + bs);
+      const results = await Promise.all(slice.map((b) => {
+        const p = type === "piped" ? probePiped(b)
+                : type === "invidious" ? probeInvidious(b)
+                : probeCobalt(b);
+        return p.then((r) => ({ base: b, ...r }));
+      }));
+      results.forEach((r) => {
+        if (r.ok) ok.push(r.base);
+        else if (r.auth) auth.push(r.base);
+      });
+      if (i + bs < bases.length) await new Promise((r) => setTimeout(r, 250));
     }
-    return ok;
+    return { ok, auth };
   }
 
   /* ================================================================== *
@@ -843,7 +951,7 @@
   async function runDetection(force) {
     if (detection.running && detectPromise) return detectPromise;
     if (!force && cacheFresh() &&
-        (detection.piped.length || detection.invidious.length || detection.cobalt.length)) {
+        (detection.piped.length || detection.invidious.length || detection.cobalt.length || detection.cobaltAuth.length)) {
       updateDetectionUI();
       return detection;
     }
@@ -853,20 +961,21 @@
     updateDetectionUI();
 
     detectPromise = (async () => {
-      const [piped, invidious, cobalt] = await Promise.all([
-        probeBatch("piped", INSTANCES.piped, 4),
+      const [piped, inv, cob] = await Promise.all([
+        probeBatch("piped",     INSTANCES.piped,     4),
         probeBatch("invidious", INSTANCES.invidious, 4),
-        probeBatch("cobalt", INSTANCES.cobalt, 4),
+        probeBatch("cobalt",    INSTANCES.cobalt,    4),
       ]);
 
-      detection.piped = piped;
-      detection.invidious = invidious;
-      detection.cobalt = cobalt;
-      detection.ts = Date.now();
+      detection.piped      = piped.ok;
+      detection.invidious  = inv.ok;
+      detection.cobalt     = cob.ok;
+      detection.cobaltAuth = cob.auth;
+      detection.ts         = Date.now();
       saveDetectionCache();
 
-      if (!piped.length && !invidious.length && !cobalt.length) {
-        detection.lastError = "No working instances were found. Try again later or add a manual override.";
+      if (!piped.ok.length && !inv.ok.length) {
+        detection.lastError = "No working YouTube API instances. Add a manual override below.";
       }
       detection.running = false;
       updateDetectionUI();
@@ -874,20 +983,16 @@
       return detection;
     })();
 
-    try {
-      await detectPromise;
-    } finally {
+    try { await detectPromise; }
+    finally {
       detectPromise = null;
-      if (detection.running) {
-        detection.running = false;
-        updateDetectionUI();
-      }
+      if (detection.running) { detection.running = false; updateDetectionUI(); }
     }
     return detection;
   }
 
   /* ================================================================== *
-   * 6. UI — detection status
+   * 6. Detection status UI
    * ================================================================== */
   function updateDetectionUI() {
     const badge = $("instanceStatus");
@@ -899,33 +1004,30 @@
       badge.className = "badge warn";
       badge.innerHTML = '<span class="spinner"></span> Detecting…';
       if (icon) icon.style.display = "";
-      if (text) text.textContent = "Testing public instances — this runs once and is cached for 1 hour.";
+      if (text) text.textContent = "Testing public instances — cached for 1 hour after.";
       if (btn) btn.disabled = true;
       return;
     }
 
     if (btn) btn.disabled = false;
 
-    const total = detection.piped.length + detection.invidious.length + detection.cobalt.length;
+    const ytCount  = detection.piped.length + detection.invidious.length;
+    const cobCount = detection.cobalt.length;
+    const authCount = detection.cobaltAuth.length;
     const anyManual = normBase(cfg.piped) || normBase(cfg.invidious) || normBase(cfg.cobalt);
 
-    if (detection.lastError && !total) {
-      badge.className = "badge err";
-      badge.textContent = "No APIs";
-      if (icon) icon.style.display = "none";
-      if (text) text.textContent = detection.lastError;
-      return;
-    }
-
-    if (anyManual) {
-      badge.className = "badge info";
-      badge.textContent = "Manual override";
-    } else if (total) {
-      badge.className = "badge ok";
-      badge.textContent = total + " working";
-    } else {
+    if (!ytCount && !cobCount && !authCount) {
       badge.className = "badge info";
       badge.textContent = "Not detected";
+    } else if (anyManual) {
+      badge.className = "badge info";
+      badge.textContent = "Manual override";
+    } else if (ytCount > 0) {
+      badge.className = "badge ok";
+      badge.textContent = ytCount + " YT · " + cobCount + " COB";
+    } else {
+      badge.className = "badge warn";
+      badge.textContent = cobCount + " COB";
     }
 
     if (icon) icon.style.display = "none";
@@ -934,15 +1036,26 @@
       const parts = [];
       if (detection.piped.length)     parts.push(detection.piped.length + " Piped");
       if (detection.invidious.length) parts.push(detection.invidious.length + " Invidious");
-      if (detection.cobalt.length)    parts.push(detection.cobalt.length + " Cobalt");
-      if (parts.length) {
-        const age = detection.ts ? Math.round((Date.now() - detection.ts) / 60000) : 0;
-        text.textContent = "Detected: " + parts.join(" · ") +
-          (age ? "  ·  cached " + age + " min ago" : "");
-      } else if (!anyManual) {
-        text.textContent = "No instances detected yet — press Detect now.";
-      } else {
-        text.textContent = "Using manual overrides.";
+      if (cobCount)                   parts.push(cobCount + " Cobalt (no key)");
+      if (authCount)                  parts.push(authCount + " Cobalt (needs key)");
+
+      let line = parts.length ? parts.join(" · ") : "No instances detected yet.";
+      if (detection.ts && parts.length) {
+        const age = Math.round((Date.now() - detection.ts) / 60000);
+        if (age) line += " · " + age + " min ago";
+      }
+      if (anyManual) line += " · manual override active";
+      text.textContent = line;
+
+      if (!ytCount && cobCount === 0) {
+        const wb = $("warnBox");
+        if (wb) {
+          wb.innerHTML =
+            "⚠️ No working instances detected right now. " +
+            "TikTok still works via TikWM. For other platforms you may need to " +
+            "self-host Cobalt or add a manual instance above.";
+          wb.classList.remove("hidden");
+        }
       }
     }
   }
@@ -953,20 +1066,22 @@
     box.innerHTML = "";
 
     const groups = [
-      { key: "piped",     label: "Piped" },
-      { key: "invidious", label: "Invidious" },
-      { key: "cobalt",    label: "Cobalt" },
+      { key: "piped",      label: "Piped",     ok: true },
+      { key: "invidious",  label: "Invidious", ok: true },
+      { key: "cobalt",     label: "Cobalt",    ok: true },
+      { key: "cobaltAuth", label: "Cobalt",    ok: false },
     ];
 
     let any = false;
-    groups.forEach(({ key, label }) => {
+    groups.forEach(({ key, label, ok }) => {
       (detection[key] || []).forEach((base) => {
         any = true;
         const row = document.createElement("div");
-        row.className = "instItem ok";
+        row.className = "instItem " + (ok ? "ok" : "auth");
         const dot = document.createElement("span"); dot.className = "dot";
         const host = document.createElement("span"); host.className = "host"; host.textContent = base;
-        const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = label;
+        const tag = document.createElement("span"); tag.className = "tag";
+        tag.textContent = ok ? label : label + " · key";
         row.appendChild(dot); row.appendChild(host); row.appendChild(tag);
         box.appendChild(row);
       });
@@ -976,7 +1091,7 @@
       const p = document.createElement("p");
       p.className = "hint";
       p.style.margin = "4px 0 0";
-      p.textContent = "Nothing detected yet. Press Detect now.";
+      p.textContent = "Nothing detected yet. Press “Detect now”.";
       box.appendChild(p);
     }
   }
@@ -996,15 +1111,11 @@
   }
 
   async function ensureDetection() {
-    if (detection.running) {
-      await detectPromise;
-      return;
-    }
-    const has = detection.piped.length || detection.invidious.length || detection.cobalt.length;
+    if (detection.running) { await detectPromise; return; }
+    const has = detection.piped.length || detection.invidious.length ||
+                detection.cobalt.length || detection.cobaltAuth.length;
     if (has && cacheFresh()) return;
-    if (!has || !cacheFresh()) {
-      await runDetection(false);
-    }
+    if (!has || !cacheFresh()) await runDetection(false);
   }
 
   /* ================================================================== *
@@ -1026,9 +1137,7 @@
 
   function detectPlatform(u) {
     const s = String(u || "");
-    for (const p of PLATFORMS) {
-      if (p.re.test(s)) return { id: p.id, name: p.name };
-    }
+    for (const p of PLATFORMS) if (p.re.test(s)) return { id: p.id, name: p.name };
     return { id: "other", name: hostOf(s) || "Link" };
   }
 
@@ -1047,7 +1156,7 @@
   }
 
   /* ================================================================== *
-   * 9. HTTP helpers
+   * 9. HTTP
    * ================================================================== */
   function fetchJson(url, timeoutMs) {
     const ctrl = new AbortController();
@@ -1066,19 +1175,8 @@
       .finally(() => clearTimeout(timer));
   }
 
-  function networkHint(service, base) {
-    return (
-      "<strong>Failed to fetch.</strong> The browser could not reach " +
-      (base ? "<code>" + esc(base) + "</code>" : "a " + service + " instance") + "." +
-      "<br>• The instance may be offline, rate‑limited, or blocking your region." +
-      "<br>• It must send <code>Access-Control-Allow-Origin</code> (CORS), or the browser discards the response." +
-      "<br>• An <code>http://</code> URL on this <code>https://</code> page is blocked as mixed content." +
-      "<br><br>Press <strong>Detect now</strong> in API instances, or set a manual override."
-    );
-  }
-
   /* ================================================================== *
-   * 10. YouTube resolvers
+   * 10. YouTube resolvers (Piped / Invidious)
    * ================================================================== */
   function pickQualityLabel(q) {
     if (!q) return "";
@@ -1092,7 +1190,6 @@
   function parsePiped(data) {
     const out = [];
     const seen = new Set();
-
     (data.videoStreams || []).forEach((s) => {
       if (s.videoOnly) return;
       const url = s.proxyUrl || s.url;
@@ -1110,7 +1207,6 @@
         size: parseSize(s.contentLength || s.size),
       });
     });
-
     (data.audioStreams || []).forEach((s) => {
       const url = s.proxyUrl || s.url;
       if (!url) return;
@@ -1128,14 +1224,12 @@
         size: parseSize(s.contentLength || s.size),
       });
     });
-
     return out;
   }
 
   function parseInvidious(data) {
     const out = [];
     const seen = new Set();
-
     (data.formatStreams || []).forEach((s) => {
       if (!s.url) return;
       const key = "v:" + (s.itag || s.qualityLabel);
@@ -1151,7 +1245,6 @@
         size: parseSize(s.clen || s.contentLength || s.size),
       });
     });
-
     (data.adaptiveFormats || []).forEach((s) => {
       const type = String(s.type || "");
       if (type.indexOf("audio/") !== 0 || !s.url) return;
@@ -1170,7 +1263,6 @@
         size: parseSize(s.clen || s.contentLength || s.size),
       });
     });
-
     return out;
   }
 
@@ -1194,18 +1286,11 @@
     await ensureDetection();
 
     const order = [];
-    const manualPiped = manualFor("piped");
-    const manualInv   = manualFor("invidious");
-
-    if (manualPiped) order.push({ type: "piped",     base: manualPiped });
-    if (manualInv)   order.push({ type: "invidious", base: manualInv });
-
-    detection.piped.forEach((b) => {
-      if (!order.some((o) => o.base === b)) order.push({ type: "piped", base: b });
-    });
-    detection.invidious.forEach((b) => {
-      if (!order.some((o) => o.base === b)) order.push({ type: "invidious", base: b });
-    });
+    const mp = manualFor("piped"), mi = manualFor("invidious");
+    if (mp) order.push({ type: "piped",     base: mp });
+    if (mi) order.push({ type: "invidious", base: mi });
+    detection.piped.forEach((b) => { if (!order.some((o) => o.base === b)) order.push({ type: "piped", base: b }); });
+    detection.invidious.forEach((b) => { if (!order.some((o) => o.base === b)) order.push({ type: "invidious", base: b }); });
 
     if (!order.length) {
       const e = new Error("NO_YOUTUBE_API");
@@ -1214,30 +1299,19 @@
     }
 
     const failures = [];
-
-    for (const target of order) {
+    for (const t of order) {
       try {
-        const url = target.type === "piped"
-          ? target.base + "/streams/" + videoId
-          : target.base + "/api/v1/videos/" + videoId + "?local=true";
-
+        const url = t.type === "piped"
+          ? t.base + "/streams/" + videoId
+          : t.base + "/api/v1/videos/" + videoId + "?local=true";
         const data = await fetchJson(url, 12000);
         if (!data || typeof data !== "object") throw new Error("Unexpected response");
         if (data.error) throw new Error(String(data.error));
-
-        const streams = sortStreams(
-          target.type === "piped" ? parsePiped(data) : parseInvidious(data)
-        );
+        const streams = sortStreams(t.type === "piped" ? parsePiped(data) : parseInvidious(data));
         if (!streams.length) throw new Error("No downloadable streams returned");
-
-        return { backend: target.type, base: target.base, data, streams };
+        return { backend: t.type, base: t.base, data, streams };
       } catch (e) {
-        failures.push({
-          type: target.type,
-          base: target.base,
-          network: looksLikeNetworkError(e),
-          message: (e && e.message) || String(e),
-        });
+        failures.push({ type: t.type, base: t.base, network: looksLikeNetworkError(e), message: (e && e.message) || String(e) });
       }
     }
 
@@ -1248,7 +1322,61 @@
   }
 
   /* ================================================================== *
-   * 11. Cobalt — fixed endpoint
+   * 11. TikTok via TikWM (no API key needed)
+   * ================================================================== */
+  async function resolveTikTok(url) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const res = await fetch(
+        "https://www.tikwm.com/api/?url=" + encodeURIComponent(url) + "&hd=1",
+        {
+          signal: ctrl.signal,
+          mode: "cors",
+          credentials: "omit",
+          referrerPolicy: "no-referrer",
+        }
+      );
+      if (!res.ok) throw new Error("TikWM HTTP " + res.status);
+      const data = await res.json();
+      if (!data || data.code !== 0) throw new Error((data && data.msg) || "TikWM returned no media");
+      const d = data.data || {};
+      const videoUrl = d.hdplay || d.play || d.wmplay;
+      if (!videoUrl) throw new Error("TikWM returned no video URL");
+
+      const author = d.author && (d.author.unique_id || d.author.nickname) ? d.author : null;
+      const streams = [];
+      if (d.hdplay) streams.push({
+        kind: "video", label: "HD · MP4", sublabel: "no watermark",
+        mime: "video/mp4", ext: "mp4", url: d.hdplay, size: parseSize(d.hd_size || d.size),
+      });
+      if (d.play && d.play !== d.hdplay) streams.push({
+        kind: "video", label: "Standard · MP4", sublabel: "no watermark",
+        mime: "video/mp4", ext: "mp4", url: d.play, size: parseSize(d.size),
+      });
+      if (d.wmplay && !streams.length) streams.push({
+        kind: "video", label: "MP4", sublabel: "with watermark",
+        mime: "video/mp4", ext: "mp4", url: d.wmplay, size: 0,
+      });
+
+      return {
+        backend: "tikwm",
+        base: "https://www.tikwm.com",
+        info: {
+          title: d.title || "TikTok video",
+          uploader: author ? ("@" + (author.unique_id || author.nickname)) : "",
+          duration: d.duration || 0,
+          thumbnailUrl: d.cover || d.origin_cover || "",
+        },
+        streams: sortStreams(streams),
+      };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /* ================================================================== *
+   * 12. Cobalt — v10 with v7 fallback
    * ================================================================== */
   const COBALT_ERRORS = {
     "error.api.link.invalid":              "That link is not valid for this Cobalt instance.",
@@ -1263,9 +1391,10 @@
     "error.api.fetch.critical":            "The source site returned a critical error.",
     "error.api.fetch.rate":                "The instance is rate‑limited. Wait a moment and retry.",
     "error.api.rate_exceeded":             "Rate limit reached on this instance. Retry later.",
-    "error.api.auth.jwt.missing":          "This Cobalt instance requires an API key. Use another instance.",
+    "error.api.auth.jwt.missing":          "This Cobalt instance requires an API key.",
     "error.api.auth.jwt.invalid":          "This Cobalt instance rejected the request (invalid API key).",
-    "error.api.turnstile.missing":         "This instance requires a Turnstile token. Use another instance.",
+    "error.api.turnstile.missing":         "This instance requires a Turnstile token.",
+    "error.api.turnstile.invalid":         "This instance rejected the Turnstile token.",
   };
 
   function cobaltErrorText(code) {
@@ -1273,33 +1402,85 @@
     return COBALT_ERRORS[code] || ("Cobalt error: " + code);
   }
 
-  function cobaltBodyFor(mode, opts) {
-    const body = {
+  function buildCobaltBody(mode, opts) {
+    if (mode === "audio") {
+      return {
+        url: opts.url,
+        downloadMode: "audio",
+        audioFormat: opts.audioFormat || "mp3",
+        audioBitrate: String(opts.audioBitrate || "320"),
+        filenameStyle: "basic",
+        disableMetadata: false,
+      };
+    }
+    return {
       url: opts.url,
-      downloadMode: mode === "audio" ? "audio" : "auto",
+      downloadMode: "auto",
+      videoQuality: opts.videoQuality || "max",
+      youtubeVideoCodec: "h264",
       filenameStyle: "basic",
       disableMetadata: false,
     };
-    if (mode === "audio") {
-      body.audioFormat  = opts.audioFormat || "mp3";
-      body.audioBitrate = String(opts.audioBitrate || "320");
-    } else {
-      body.videoQuality = opts.videoQuality || "max";
-      body.youtubeVideoCodec = "h264";
-    }
-    return body;
   }
 
-  async function tryCobaltAt(base, mode, opts) {
-    /* IMPORTANT: only POST to the base URL. Cobalt v10 has no /api/json —
-       posting there returns 404 on every current instance. */
-    const body = cobaltBodyFor(mode, opts);
+  function buildCobaltV7Body(mode, opts) {
+    const b = {
+      url: opts.url,
+      isNoTTWatermark: true,
+      isAudioOnly: mode === "audio",
+    };
+    if (mode === "audio") {
+      b.aFormat = opts.audioFormat === "opus" ? "opus"
+               : opts.audioFormat === "wav"  ? "wav"
+               : opts.audioFormat === "ogg"  ? "ogg"
+               : "mp3";
+    } else {
+      b.vQuality = opts.videoQuality && opts.videoQuality !== "max" ? opts.videoQuality : "1080";
+    }
+    return b;
+  }
 
+  function parseCobaltResponse(data, isV7) {
+    if (!data || typeof data !== "object") throw new Error("Empty Cobalt response.");
+
+    if (data.status === "error") {
+      const raw = data.error;
+      const code = (raw && (raw.code || (typeof raw === "string" ? raw : ""))) || "unknown";
+      if (AUTH_CODES.has(code)) {
+        const err = new Error(cobaltErrorText(code));
+        err.code = "AUTH_REQUIRED";
+        throw err;
+      }
+      throw new Error(cobaltErrorText(code));
+    }
+
+    if (data.status === "tunnel" || data.status === "redirect" || data.status === "stream") {
+      if (!data.url) throw new Error("Cobalt returned no download URL.");
+      return { kind: "single", url: data.url, filename: data.filename || "" };
+    }
+
+    if (data.status === "picker") {
+      const items = (data.picker || []).map((p) => ({
+        url: p.url, thumb: p.thumb || "", type: p.type || "video",
+      })).filter((p) => p.url);
+      if (!items.length) throw new Error("Cobalt returned an empty picker.");
+      return { kind: "picker", items };
+    }
+
+    if (data.status === "local-processing") {
+      throw new Error(
+        "This instance wants to process the file locally — not supported here. Try another instance."
+      );
+    }
+
+    throw new Error("Unexpected Cobalt status: " + String(data.status));
+  }
+
+  async function postCobalt(base, path, body) {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 45000);
-
     try {
-      const res = await fetch(base, {
+      const res = await fetch(base + path, {
         method: "POST",
         signal: ctrl.signal,
         mode: "cors",
@@ -1312,58 +1493,44 @@
         body: JSON.stringify(body),
       });
 
+      if (res.status === 401 || res.status === 403) {
+        const err = new Error("This instance requires an API key.");
+        err.code = "AUTH_REQUIRED";
+        throw err;
+      }
+      if (res.status === 404 || res.status === 405 || res.status === 501) {
+        const err = new Error("Endpoint missing (HTTP " + res.status + ")");
+        err.code = "ENDPOINT_MISSING";
+        throw err;
+      }
+      if (res.status === 429) {
+        throw new Error("Rate‑limited by this instance — try again or pick another.");
+      }
+
       let data = null;
       try { data = await res.json(); } catch (e) { data = null; }
 
-      if (res.status === 401 || res.status === 403) {
-        throw new Error("This Cobalt instance requires authentication — pick another instance.");
-      }
-      if (res.status === 404) {
-        throw new Error("Endpoint not found (404) — this instance is not a Cobalt v10 server.");
-      }
-      if (res.status === 405 || res.status === 501) {
-        throw new Error("This instance does not expose the POST API (HTTP " + res.status + ").");
-      }
-      if (res.status === 429) {
-        throw new Error("Rate‑limited by this Cobalt instance. Try again later or pick another.");
-      }
-      if (!res.ok) {
-        const code = data && data.error && (data.error.code || data.error);
-        if (typeof code === "string") throw new Error(cobaltErrorText(code));
+      if (!res.ok && !(data && data.status)) {
         throw new Error("HTTP " + res.status);
       }
-      if (!data || typeof data !== "object") throw new Error("Empty response from Cobalt.");
 
-      if (data.status === "error") {
-        const code = (data.error && (data.error.code || data.error)) || "unknown";
-        throw new Error(cobaltErrorText(typeof code === "string" ? code : "unknown"));
-      }
-
-      if (data.status === "redirect" || data.status === "tunnel") {
-        if (!data.url) throw new Error("Cobalt returned no download URL.");
-        return { kind: "single", url: data.url, filename: data.filename || "" };
-      }
-
-      if (data.status === "picker") {
-        const items = (data.picker || []).map((p) => ({
-          url: p.url,
-          thumb: p.thumb || "",
-          type: p.type || "video",
-        })).filter((p) => p.url);
-        if (!items.length) throw new Error("Cobalt returned an empty picker.");
-        return { kind: "picker", items };
-      }
-
-      if (data.status === "local-processing") {
-        throw new Error(
-          "This Cobalt instance wants to process the file locally, which is not supported here. " +
-          "Use another instance or the ytdlnis app."
-        );
-      }
-
-      throw new Error("Unexpected Cobalt status: " + String(data.status));
+      return parseCobaltResponse(data, path === "/api/json");
     } finally {
       clearTimeout(timer);
+    }
+  }
+
+  async function tryCobaltAt(base, mode, opts) {
+    const bodyV10 = buildCobaltBody(mode, opts);
+    try {
+      return await postCobalt(base, "", bodyV10);
+    } catch (e) {
+      if (e.code === "AUTH_REQUIRED") throw e;
+      if (e.code === "ENDPOINT_MISSING") {
+        const bodyV7 = buildCobaltV7Body(mode, opts);
+        return await postCobalt(base, "/api/json", bodyV7);
+      }
+      throw e;
     }
   }
 
@@ -1382,14 +1549,13 @@
     }
 
     const failures = [];
-
     for (const base of order) {
-      try {
-        return await tryCobaltAt(base, mode, opts);
-      } catch (e) {
+      try { return await tryCobaltAt(base, mode, opts); }
+      catch (e) {
         failures.push({
           base,
           network: looksLikeNetworkError(e),
+          auth: e.code === "AUTH_REQUIRED",
           message: (e && e.message) || String(e),
         });
       }
@@ -1402,7 +1568,7 @@
   }
 
   /* ================================================================== *
-   * 12. DOM
+   * 13. DOM
    * ================================================================== */
   const ui = {
     tabs:              $all(".tab"),
@@ -1415,6 +1581,7 @@
     platBadge:         $("platBadge"),
     fetchBtn:          $("fetchBtn"),
     err:               $("err"),
+    warnBox:           $("warnBox"),
 
     settings:          $("settingsPanel"),
     setPiped:          $("setPiped"),
@@ -1465,7 +1632,7 @@
   };
 
   /* ================================================================== *
-   * 13. State
+   * 14. State
    * ================================================================== */
   const state = {
     url: "", platform: null,
@@ -1494,38 +1661,19 @@
   const AUDIO_BITRATES = ["320", "256", "192", "128", "64"];
 
   /* ================================================================== *
-   * 14. Status / error UI
+   * 15. Status / error UI
    * ================================================================== */
   function setStatus(text, cls) {
     ui.status.textContent = text || "";
     ui.status.className = "status" + (cls ? " " + cls : "");
   }
-  function showErrHtml(html) {
-    ui.err.innerHTML = html;
-    ui.err.classList.remove("hidden");
-  }
-  function clearErr() {
-    ui.err.textContent = "";
-    ui.err.classList.add("hidden");
-  }
-  function showSearchErr(text) {
-    ui.searchErr.textContent = text;
-    ui.searchErr.classList.remove("hidden");
-  }
-  function clearSearchErr() {
-    ui.searchErr.textContent = "";
-    ui.searchErr.classList.add("hidden");
-  }
+  function showErrHtml(html) { ui.err.innerHTML = html; ui.err.classList.remove("hidden"); }
+  function clearErr() { ui.err.textContent = ""; ui.err.classList.add("hidden"); }
+  function showSearchErr(text) { ui.searchErr.textContent = text; ui.searchErr.classList.remove("hidden"); }
+  function clearSearchErr() { ui.searchErr.textContent = ""; ui.searchErr.classList.add("hidden"); }
 
-  function hideFileRow() {
-    ui.fileRow.classList.add("hidden");
-    ui.saveLink.href = "#";
-    ui.saveLink.textContent = "Save file again";
-  }
-  function hidePicker() {
-    ui.pickerRow.innerHTML = "";
-    ui.pickerRow.classList.add("hidden");
-  }
+  function hideFileRow() { ui.fileRow.classList.add("hidden"); ui.saveLink.href = "#"; ui.saveLink.textContent = "Save file again"; }
+  function hidePicker() { ui.pickerRow.innerHTML = ""; ui.pickerRow.classList.add("hidden"); }
 
   function updateBadge() {
     const raw = ui.url.value.trim();
@@ -1540,7 +1688,7 @@
   }
 
   /* ================================================================== *
-   * 15. Fetch flow
+   * 16. Fetch flow — the fix for "All Cobalt instances failed"
    * ================================================================== */
   async function doFetch() {
     if (state.busy) return;
@@ -1565,6 +1713,7 @@
     const platform = detectPlatform(raw);
     state.platform = platform;
     state.url = raw;
+    state.mode = "video";
 
     const ytId = platform.id === "youtube" ? extractVideoId(raw) : null;
     if (platform.id === "youtube" && !ytId) {
@@ -1580,62 +1729,71 @@
     try {
       await ensureDetection();
 
-      const hasYT  = platform.id === "youtube" &&
-                     (instancesFor("piped").length || instancesFor("invidious").length);
-      const hasCob = instancesFor("cobalt").length > 0;
-
-      if (hasYT) {
+      /* ---- 1. YouTube: Piped / Invidious (no key needed) ---- */
+      if (platform.id === "youtube") {
         try {
           const r = await resolveYouTube(ytId);
           state.backend = r.backend;
-          state.base    = r.base;
-          state.info    = r.data;
+          state.base = r.base;
+          state.info = r.data;
           state.streams = r.streams;
           state.filtered = [];
           state.selected = 0;
           renderDirect(r.data, ytId);
         } catch (e) {
-          if (hasCob) {
+          /* Try Cobalt as a last resort if there is a working one. */
+          if (instancesFor("cobalt").length) {
             state.backend = "cobalt";
-            state.base    = manualFor("cobalt") || detection.cobalt[0] || "";
-            state.info    = { title: "", uploader: "", duration: 0 };
+            state.base = manualFor("cobalt") || detection.cobalt[0] || "";
+            state.info = { title: "", uploader: "", duration: 0 };
             state.streams = [];
             renderConvert({ title: "", uploader: "", duration: 0 }, ytId);
-            setStatus("YouTube APIs unavailable — using Cobalt conversion.", "warn");
+            setStatus("YouTube APIs are down — trying Cobalt.", "warn");
           } else {
             throw e;
           }
         }
-      } else if (hasCob) {
-        state.backend = "cobalt";
-        state.base    = manualFor("cobalt") || detection.cobalt[0] || "";
-        state.info    = { title: "", uploader: "", duration: 0 };
-        state.streams = [];
-        renderConvert({ title: "", uploader: "", duration: 0 }, ytId);
-      } else {
-        const e = new Error("NO_APIS");
-        e.code = "NO_APIS";
+        showInfoCard();
+        return;
+      }
+
+      /* ---- 2. TikTok: TikWM first (no key needed) ---- */
+      if (platform.id === "tiktok") {
+        try {
+          const r = await resolveTikTok(raw);
+          state.backend = r.backend;
+          state.base = r.base;
+          state.info = r.info;
+          state.streams = r.streams;
+          state.filtered = [];
+          state.selected = 0;
+          renderDirect(r.info, null);
+          showInfoCard();
+          return;
+        } catch (e) {
+          /* fall through to Cobalt */
+          if (!instancesFor("cobalt").length) {
+            throw new Error(
+              "TikTok extraction failed and no Cobalt instance is available. " +
+              "Try again later, or use the ytdlnis app."
+            );
+          }
+        }
+      }
+
+      /* ---- 3. Everything else: Cobalt ---- */
+      if (!instancesFor("cobalt").length) {
+        const e = new Error("NO_COBALT_FOR_PLATFORM");
+        e.code = "NO_COBALT_FOR_PLATFORM";
         throw e;
       }
 
-      ui.infoCard.classList.remove("hidden");
-      ui.infoCard.scrollIntoView({ behavior: "smooth", block: "start" });
-
-      if (state.pendingAudio) {
-        state.pendingAudio = false;
-        setMode("audio");
-        if (state.backend !== "cobalt") {
-          if (state.filtered.length) {
-            state.selected = 0;
-            syncChips();
-            setTimeout(() => doDownload(), 150);
-          } else {
-            setStatus("No audio‑only stream on this instance. Try Cobalt or another format.", "warn");
-          }
-        } else {
-          setTimeout(() => doDownload(), 150);
-        }
-      }
+      state.backend = "cobalt";
+      state.base = manualFor("cobalt") || detection.cobalt[0] || "";
+      state.info = { title: "", uploader: "", duration: 0 };
+      state.streams = [];
+      renderConvert({ title: "", uploader: "", duration: 0 }, ytId);
+      showInfoCard();
     } catch (e) {
       handleFetchError(e);
     } finally {
@@ -1645,59 +1803,77 @@
     }
   }
 
+  function showInfoCard() {
+    ui.infoCard.classList.remove("hidden");
+    ui.infoCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (state.pendingAudio) {
+      state.pendingAudio = false;
+      setMode("audio");
+      if (state.backend !== "cobalt") {
+        if (state.filtered.length) {
+          state.selected = 0;
+          syncChips();
+          setTimeout(() => doDownload(), 150);
+        } else {
+          setStatus("No audio‑only stream on this instance. Try Cobalt or another format.", "warn");
+        }
+      } else {
+        setTimeout(() => doDownload(), 150);
+      }
+    }
+  }
+
   function handleFetchError(e) {
     const code = e && e.code;
 
-    if (code === "NO_APIS" || code === "NO_YOUTUBE_API" || code === "NO_COBALT") {
+    if (code === "NO_YOUTUBE_API") {
       ui.settings.open = true;
       showErrHtml(
-        "No working API instances available for this link.<br>" +
-        "Press <strong>Detect now</strong> in API instances, or add a manual override."
+        "No working YouTube API instances right now. Press <strong>Detect now</strong>, " +
+        "or add a manual Piped/Invidious URL below."
       );
       return;
     }
-
+    if (code === "NO_COBALT_FOR_PLATFORM") {
+      ui.settings.open = true;
+      showErrHtml(
+        "<strong>This platform needs Cobalt.</strong> No working Cobalt instance was detected " +
+        "(the public ones that answer now require API keys)." +
+        "<br><br>Options:" +
+        "<br>• <strong>Self-host Cobalt</strong> — <a href=\"https://github.com/imputnet/cobalt\" target=\"_blank\" rel=\"noopener noreferrer\">github.com/imputnet/cobalt</a> " +
+        "runs without any API key; point the Cobalt override at it." +
+        "<br>• <strong>Use ytdlnis</strong> on Android — it packages yt-dlp and handles these platforms locally." +
+        "<br>• <strong>YouTube and TikTok</strong> already work here without Cobalt."
+      );
+      return;
+    }
     if (code === "ALL_YOUTUBE_FAILED") {
       ui.settings.open = true;
-      const rows = (e.failures || []).map((f) =>
-        "<li><code>" + esc(f.base || f.type) + "</code> — " + esc(f.message) + "</li>"
-      ).join("");
+      const rows = (e.failures || []).map((f) => "<li><code>" + esc(f.base || f.type) + "</code> — " + esc(f.message) + "</li>").join("");
       showErrHtml(
         "<strong>Every configured YouTube API failed.</strong>" +
         (rows ? "<ul>" + rows + "</ul>" : "") +
-        "<br>Try pressing <strong>Detect now</strong>, add a manual override, or use the ytdlnis app."
+        "<br>Press <strong>Detect now</strong> or add a manual override."
       );
       return;
     }
-
-    if (code === "ALL_COBALT_FAILED") {
-      ui.settings.open = true;
-      const rows = (e.failures || []).map((f) =>
-        "<li><code>" + esc(f.base) + "</code> — " + esc(f.message) + "</li>"
-      ).join("");
-      showErrHtml(
-        "<strong>Every Cobalt instance failed.</strong>" +
-        (rows ? "<ul>" + rows + "</ul>" : "") +
-        "<br>Press <strong>Detect now</strong> to refresh the instance list."
-      );
-      return;
-    }
-
     if (looksLikeNetworkError(e)) {
       ui.settings.open = true;
-      showErrHtml(networkHint("API", ""));
+      showErrHtml(
+        "<strong>Failed to fetch.</strong> The browser could not reach the API instance." +
+        "<br>• It may be offline, rate‑limited, or missing CORS headers." +
+        "<br>• <code>http://</code> URLs on this <code>https://</code> page are blocked." +
+        "<br>Press <strong>Detect now</strong> to refresh the working list."
+      );
       return;
     }
-
     showErrHtml(esc((e && e.message) || "Could not fetch this link."));
   }
 
   /* ================================================================== *
-   * 16. Render — direct streams
+   * 17. Render — direct streams
    * ================================================================== */
   function renderDirect(data, videoId) {
-    state.backend = state.backend === "invidious" ? "invidious" : "piped";
-
     const title    = data.title || "Untitled";
     const uploader = data.uploader || data.author || "";
     const duration = data.duration || data.lengthSeconds || 0;
@@ -1707,7 +1883,8 @@
     const bits = [];
     if (uploader) bits.push(uploader);
     if (duration) bits.push(fmtDur(duration));
-    bits.push(state.backend === "piped" ? "Piped" : "Invidious");
+    if (state.backend === "tikwm") bits.push("TikWM");
+    else bits.push(state.backend === "piped" ? "Piped" : "Invidious");
     bits.push(hostOf(state.base));
     ui.meta.textContent = bits.filter(Boolean).join(" · ");
 
@@ -1716,18 +1893,17 @@
       (data.videoThumbnails && data.videoThumbnails[0] && data.videoThumbnails[0].url) ||
       (videoId ? youtubeThumb(videoId) : "");
 
-    if (thumb) {
-      ui.thumb.src = thumb;
-      ui.thumb.style.display = "";
-    } else {
-      ui.thumb.removeAttribute("src");
-      ui.thumb.style.display = "none";
-    }
+    if (thumb) { ui.thumb.src = thumb; ui.thumb.style.display = ""; }
+    else { ui.thumb.removeAttribute("src"); ui.thumb.style.display = "none"; }
 
     ui.directFormats.classList.remove("hidden");
     ui.convertFormats.classList.add("hidden");
+    ui.modeBtns.forEach((b) => {
+      /* Hide audio tab for TikWM — it only exposes video. */
+      b.style.display = (state.backend === "tikwm" && b.dataset.mode === "audio") ? "none" : "";
+    });
 
-    setMode(state.mode, true);
+    setMode(state.mode === "audio" && state.backend !== "tikwm" ? "audio" : "video", true);
 
     ui.barWrap.classList.add("hidden");
     hideFileRow();
@@ -1738,24 +1914,21 @@
     ui.dlBtn.classList.remove("green");
     ui.cancelBtn.classList.add("hidden");
     state.controller = null;
-
     if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
   }
 
   function renderChips() {
     ui.chips.innerHTML = "";
-
     if (!state.filtered.length) {
       const p = document.createElement("p");
       p.className = "muted";
       p.textContent = state.mode === "video"
-        ? "No muxed video stream from this instance. Switch to Audio, or use Cobalt for merged HD."
-        : "No audio‑only stream from this instance. Try another format or instance.";
+        ? "No muxed video stream from this instance. Switch to Audio, or try another instance."
+        : "No audio‑only stream from this instance. Switch to Video or try another instance.";
       ui.chips.appendChild(p);
       ui.dlBtn.disabled = true;
       return;
     }
-
     ui.dlBtn.disabled = false;
 
     state.filtered.forEach((f, i) => {
@@ -1763,19 +1936,16 @@
       btn.type = "button";
       btn.className = "chip" + (i === state.selected ? " active" : "");
       btn.appendChild(document.createTextNode(f.label));
-
       const small = document.createElement("small");
       let sub = f.sublabel || "";
       if (f.size) sub += (sub ? " · " : "") + fmtBytes(f.size);
       small.textContent = sub;
       btn.appendChild(small);
-
       btn.addEventListener("click", () => {
         state.selected = i;
         syncChips();
         ui.dlBtn.textContent = "Download";
       });
-
       ui.chips.appendChild(btn);
     });
   }
@@ -1787,30 +1957,25 @@
   }
 
   /* ================================================================== *
-   * 17. Render — Cobalt conversion options
+   * 18. Render — Cobalt conversion
    * ================================================================== */
   function renderConvert(info, videoId) {
     ui.title.textContent = info.title || "Ready to convert";
-
     const bits = [];
     if (info.uploader) bits.push(info.uploader);
     if (info.duration) bits.push(fmtDur(info.duration));
     bits.push("Cobalt");
-    const host = hostOf(state.base);
-    if (host) bits.push(host);
+    const h = hostOf(state.base);
+    if (h) bits.push(h);
     if (state.platform) bits.push(state.platform.name);
     ui.meta.textContent = bits.filter(Boolean).join(" · ");
 
-    if (videoId) {
-      ui.thumb.src = youtubeThumb(videoId);
-      ui.thumb.style.display = "";
-    } else {
-      ui.thumb.removeAttribute("src");
-      ui.thumb.style.display = "none";
-    }
+    if (videoId) { ui.thumb.src = youtubeThumb(videoId); ui.thumb.style.display = ""; }
+    else { ui.thumb.removeAttribute("src"); ui.thumb.style.display = "none"; }
 
     ui.directFormats.classList.add("hidden");
     ui.convertFormats.classList.remove("hidden");
+    ui.modeBtns.forEach((b) => { b.style.display = ""; });
 
     fillSelect(ui.vQuality, VIDEO_QUALITIES);
     fillSelect(ui.aFormat, AUDIO_FORMATS);
@@ -1840,16 +2005,14 @@
   }
 
   /* ================================================================== *
-   * 18. Mode switching
+   * 19. Mode switching
    * ================================================================== */
   function setMode(mode, force) {
     const next = mode === "audio" ? "audio" : "video";
     if (!force && state.mode === next) return;
     state.mode = next;
 
-    ui.modeBtns.forEach((b) => {
-      b.classList.toggle("active", b.dataset.mode === next);
-    });
+    ui.modeBtns.forEach((b) => b.classList.toggle("active", b.dataset.mode === next));
 
     if (state.backend === "cobalt") {
       ui.videoOpts.classList.toggle("hidden", next !== "video");
@@ -1862,26 +2025,18 @@
   }
 
   /* ================================================================== *
-   * 19. Download — direct stream
+   * 20. Download
    * ================================================================== */
   async function doDownload() {
     if (state.controller) return;
-
-    if (state.backend === "cobalt") {
-      await convertAndDownload();
-      return;
-    }
+    if (state.backend === "cobalt") { await convertAndDownload(); return; }
 
     const fmt = state.filtered[state.selected];
     if (!fmt) { setStatus("Pick a format first.", "warn"); return; }
-
     const filename = safeFilename((state.info && state.info.title) || "video") + "." + fmt.ext;
     await downloadToFile(fmt.url, filename, fmt.mime);
   }
 
-  /* ================================================================== *
-   * 20. Download — Cobalt
-   * ================================================================== */
   async function convertAndDownload() {
     if (!state.url) return;
 
@@ -1889,7 +2044,7 @@
     const opts = {
       url: state.url,
       videoQuality: ui.vQuality.value || "max",
-      audioFormat:  ui.aFormat.value  || "mp3",
+      audioFormat: ui.aFormat.value || "mp3",
       audioBitrate: ui.aBitrate.value || "320",
     };
 
@@ -1903,8 +2058,7 @@
     ui.barWrap.classList.add("hidden");
     setStatus("Requesting conversion from Cobalt…", "");
 
-    const ctrl = new AbortController();
-    state.controller = ctrl;
+    state.controller = new AbortController();
 
     try {
       const result = await cobaltConvert(mode, opts);
@@ -1928,11 +2082,9 @@
 
       ui.cancelBtn.classList.add("hidden");
       state.controller = null;
-
       await downloadToFile(result.url, filename, mime);
     } catch (e) {
       console.error(e);
-
       if (e && e.code === "ALL_COBALT_FAILED") {
         ui.settings.open = true;
         const rows = (e.failures || []).map((f) =>
@@ -1941,14 +2093,14 @@
         showErrHtml(
           "<strong>All Cobalt instances failed.</strong>" +
           (rows ? "<ul>" + rows + "</ul>" : "") +
-          "<br>Press <strong>Detect now</strong> in API instances, or use the ytdlnis app."
+          "<br>Try <strong>Detect now</strong>, self‑host Cobalt (no key), or use the ytdlnis app. " +
+          "YouTube and TikTok downloads work without Cobalt."
         );
       } else if (errName(e) === "AbortError") {
         setStatus("Conversion cancelled.", "warn");
       } else {
         setStatus((e && e.message) || "Conversion failed.", "bad");
       }
-
       ui.dlBtn.disabled = false;
       ui.dlBtn.textContent = "Convert & Download";
       ui.cancelBtn.classList.add("hidden");
@@ -1959,7 +2111,6 @@
   function renderPicker(result) {
     hidePicker();
     ui.pickerRow.classList.remove("hidden");
-
     result.items.forEach((item, i) => {
       const b = document.createElement("button");
       b.type = "button";
@@ -1975,7 +2126,7 @@
   }
 
   /* ================================================================== *
-   * 21. Streaming download with progress
+   * 21. Streaming download
    * ================================================================== */
   async function downloadToFile(url, filename, mime) {
     if (state.controller) return;
@@ -1996,16 +2147,11 @@
     const t0 = Date.now();
 
     try {
-      const res = await fetch(url, {
-        signal,
-        credentials: "omit",
-        mode: "cors",
-        referrerPolicy: "no-referrer",
-      });
+      const res = await fetch(url, { signal, credentials: "omit", mode: "cors", referrerPolicy: "no-referrer" });
       if (!res.ok) throw new Error("Stream server returned HTTP " + res.status);
 
       const total = Number(res.headers.get("content-length") || 0);
-      const type  = res.headers.get("content-type") || mime || "application/octet-stream";
+      const type = res.headers.get("content-type") || mime || "application/octet-stream";
 
       if (!res.body || !res.body.getReader) {
         const blob = await res.blob();
@@ -2015,26 +2161,20 @@
 
       const reader = res.body.getReader();
       const chunks = [];
-      let received = 0;
-      let last = 0;
+      let received = 0, last = 0;
 
       for (;;) {
         const step = await reader.read();
         if (step.done) break;
         chunks.push(step.value);
         received += step.value.length;
-
         const now = Date.now();
-        if (now - last > 200) {
-          last = now;
-          paintProgress(received, total, t0);
-        }
+        if (now - last > 200) { last = now; paintProgress(received, total, t0); }
       }
 
       finishDownload(new Blob(chunks, { type }), filename, t0);
     } catch (e) {
       console.error(e);
-
       if (errName(e) === "AbortError") {
         setStatus("Download cancelled.", "warn");
       } else if (looksLikeNetworkError(e)) {
@@ -2048,7 +2188,6 @@
         setStatus("Download failed: " + ((e && e.message) || "unknown") + ".", "bad");
         offerDirectLink(url, filename, false);
       }
-
       ui.barWrap.classList.add("hidden");
       ui.dlBtn.disabled = false;
       ui.dlBtn.textContent = state.backend === "cobalt" ? "Convert & Download" : "Retry download";
@@ -2060,13 +2199,11 @@
   function paintProgress(received, total, t0) {
     const elapsed = (Date.now() - t0) / 1000;
     const rate = elapsed > 0 ? received / elapsed : 0;
-
     if (total > 0) {
       const p = Math.min(100, (received / total) * 100);
       ui.bar.style.width = p + "%";
       ui.pct.textContent = p.toFixed(1) + "%";
-      ui.speed.textContent =
-        fmtBytes(received) + " / " + fmtBytes(total) + " · " + fmtBytes(rate) + "/s";
+      ui.speed.textContent = fmtBytes(received) + " / " + fmtBytes(total) + " · " + fmtBytes(rate) + "/s";
     } else {
       ui.bar.style.width = "100%";
       ui.pct.textContent = fmtBytes(received);
@@ -2076,13 +2213,9 @@
 
   function finishDownload(blob, filename, t0) {
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
 
     if (state.blobUrl) URL.revokeObjectURL(state.blobUrl);
     state.blobUrl = url;
@@ -2099,7 +2232,6 @@
     ui.speed.textContent = fmtBytes(blob.size) + " · avg " + fmtBytes(avg) + "/s";
 
     setStatus("Download complete — check your browser’s downloads folder.", "ok");
-
     ui.dlBtn.disabled = false;
     ui.dlBtn.textContent = state.backend === "cobalt" ? "Convert & Download" : "Download again";
     ui.cancelBtn.classList.add("hidden");
@@ -2120,7 +2252,6 @@
    * ================================================================== */
   async function doSearch() {
     if (state.busy) return;
-
     clearSearchErr();
     const q = ui.q.value.trim();
     if (!q) { showSearchErr("Type a song or artist name first."); return; }
@@ -2133,9 +2264,7 @@
 
     if (!order.length) {
       ui.settings.open = true;
-      showSearchErr(
-        "No YouTube API detected. Press “Detect now” in API instances, or add a manual override."
-      );
+      showSearchErr("No YouTube API detected. Press “Detect now” or add an override.");
       return;
     }
 
@@ -2145,14 +2274,12 @@
     ui.searchResultsCard.classList.add("hidden");
 
     const failures = [];
-
     try {
       for (const t of order) {
         try {
           const url = t.type === "piped"
             ? t.base + "/search?q=" + encodeURIComponent(q) + "&filter=music_songs"
             : t.base + "/api/v1/search?q=" + encodeURIComponent(q) + "&type=video";
-
           const data = await fetchJson(url, 12000);
           const items = t.type === "piped" ? parsePipedSearch(data) : parseInvidiousSearch(data);
           if (!items.length) throw new Error("No results");
@@ -2162,10 +2289,7 @@
           failures.push({ base: t.base, message: (e && e.message) || String(e) });
         }
       }
-
-      showSearchErr(
-        "No results. " + failures.map((f) => f.base + " — " + f.message).join(" · ")
-      );
+      showSearchErr("No results. " + failures.map((f) => f.base + " — " + f.message).join(" · "));
     } finally {
       state.busy = false;
       ui.searchBtn.disabled = false;
@@ -2192,22 +2316,19 @@
 
   function parseInvidiousSearch(data) {
     const arr = Array.isArray(data) ? data : [];
-    return arr
-      .filter((it) => it && it.videoId)
-      .map((it) => ({
-        videoId: it.videoId,
-        title:   it.title || "Untitled",
-        author:  it.author || "",
-        duration: it.lengthSeconds || 0,
-        thumb: (it.videoThumbnails && it.videoThumbnails[0] && it.videoThumbnails[0].url) ||
-               youtubeThumb(it.videoId, "mqdefault"),
-      }));
+    return arr.filter((it) => it && it.videoId).map((it) => ({
+      videoId: it.videoId,
+      title:   it.title || "Untitled",
+      author:  it.author || "",
+      duration: it.lengthSeconds || 0,
+      thumb: (it.videoThumbnails && it.videoThumbnails[0] && it.videoThumbnails[0].url) ||
+             youtubeThumb(it.videoId, "mqdefault"),
+    }));
   }
 
   function renderSearchResults(items) {
     ui.searchList.innerHTML = "";
     ui.searchResultsCard.classList.remove("hidden");
-
     const kbps = ui.searchBitrate.value;
 
     items.forEach((it) => {
@@ -2215,28 +2336,19 @@
       row.className = "item";
 
       const img = document.createElement("img");
-      img.loading = "lazy";
-      img.referrerPolicy = "no-referrer";
-      img.alt = "";
+      img.loading = "lazy"; img.referrerPolicy = "no-referrer"; img.alt = "";
       img.src = it.thumb;
       img.addEventListener("error", () => { img.style.visibility = "hidden"; });
 
       const meta = document.createElement("div");
       meta.className = "meta";
-
-      const b = document.createElement("b");
-      b.textContent = it.title;
-
+      const b = document.createElement("b"); b.textContent = it.title;
       const span = document.createElement("span");
       span.textContent = [it.author, fmtDur(it.duration)].filter(Boolean).join(" · ");
-
-      meta.appendChild(b);
-      meta.appendChild(span);
+      meta.appendChild(b); meta.appendChild(span);
 
       const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "ghost";
-      btn.textContent = "MP3";
+      btn.type = "button"; btn.className = "ghost"; btn.textContent = "MP3";
       btn.title = "Download as MP3 (~" + kbps + " kbps)";
       btn.addEventListener("click", () => {
         state.pendingAudio = true;
@@ -2246,20 +2358,15 @@
         doFetch();
       });
 
-      row.appendChild(img);
-      row.appendChild(meta);
-      row.appendChild(btn);
+      row.appendChild(img); row.appendChild(meta); row.appendChild(btn);
       ui.searchList.appendChild(row);
     });
   }
 
   /* ================================================================== *
-   * 23. Sharing / handoff
+   * 23. Share helpers
    * ================================================================== */
-  function currentUrl() {
-    if (state.url) return state.url;
-    return ui.url.value.trim();
-  }
+  function currentUrl() { return state.url || ui.url.value.trim(); }
 
   function copyText(text, okMsg) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -2274,27 +2381,18 @@
   function openInYtdlnis() {
     const target = currentUrl();
     if (!target) { setStatus("Paste a link first.", "warn"); return; }
-
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    if (!isAndroid) {
+    if (!/Android/i.test(navigator.userAgent)) {
       copyText(target, "ytdlnis is Android-only. The link has been copied — paste it into the app.");
       return;
     }
-
     const encoded = encodeURIComponent(target);
     const intent =
       "intent:#Intent;action=android.intent.action.SEND;type=text/plain;" +
       "S.android.intent.extra.TEXT=" + encoded + ";" +
       "package=com.deniscerri.ytdl;end";
-
     const t = Date.now();
-    try {
-      window.location.href = intent;
-    } catch (e) {
-      copyText(target, "Couldn’t open ytdlnis — link copied instead.");
-      return;
-    }
-
+    try { window.location.href = intent; }
+    catch (e) { copyText(target, "Couldn’t open ytdlnis — link copied instead."); return; }
     setTimeout(() => {
       if (!document.hidden && Date.now() - t < 2500) {
         copyText(target, "ytdlnis doesn’t seem to be installed. The link has been copied instead.");
@@ -2330,12 +2428,7 @@
       params.get("v")   || hash.get("v")   ||
       params.get("id")  || hash.get("id")  || "";
 
-    if (raw) {
-      ui.url.value = raw;
-      updateBadge();
-      doFetch();
-      return;
-    }
+    if (raw) { ui.url.value = raw; updateBadge(); doFetch(); return; }
     if (vid && /^[A-Za-z0-9_-]{11}$/.test(vid)) {
       ui.url.value = "https://www.youtube.com/watch?v=" + vid;
       updateBadge();
@@ -2344,7 +2437,7 @@
   }
 
   /* ================================================================== *
-   * 26. Event wiring
+   * 26. Events
    * ================================================================== */
   ui.tabs.forEach((t) => t.addEventListener("click", () => setTab(t.dataset.tab)));
 
@@ -2387,17 +2480,9 @@
   ui.pasteBtn.addEventListener("click", () => {
     if (navigator.clipboard && navigator.clipboard.readText) {
       navigator.clipboard.readText()
-        .then((t) => {
-          if (t) {
-            ui.url.value = t.trim();
-            updateBadge();
-            ui.url.focus();
-          }
-        })
+        .then((t) => { if (t) { ui.url.value = t.trim(); updateBadge(); ui.url.focus(); } })
         .catch(() => ui.url.focus());
-    } else {
-      ui.url.focus();
-    }
+    } else ui.url.focus();
   });
 
   ui.clearBtn.addEventListener("click", () => {
@@ -2413,7 +2498,6 @@
 
   ui.thumb.addEventListener("error", () => { ui.thumb.style.display = "none"; });
 
-  /* settings */
   function persistSettings() {
     cfg.piped     = normBase(ui.setPiped.value);
     cfg.invidious = normBase(ui.setInvidious.value);
@@ -2472,9 +2556,7 @@
   updateBadge();
   updateDetectionUI();
 
-  /* Kick off detection in the background on first load. */
-  runDetection(false).catch(() => { /* status shown in UI */ });
-
+  runDetection(false).catch(() => { /* status in UI */ });
   initFromLocation();
 
   if (!ui.url.value) ui.url.focus();
