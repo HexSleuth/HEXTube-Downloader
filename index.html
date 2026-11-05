@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0c11">
+<meta name="referrer" content="no-referrer">
+<title>YouTube Downloader — Client-side · GitHub Pages</title>
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#0a0c11; --card:#141824; --card-2:#10141d; --line:#232a3a;
+    --txt:#e9edf6; --muted:#8b98b0;
+    --accent:#ff2d55; --accent-2:#7c5cff;
+    --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;min-height:100%}
+  html{background:var(--bg)}
+  body{
+    min-height:100dvh;
+    background-color:var(--bg);
+    background-image:
+      radial-gradient(1000px 520px at -10% -10%, rgba(124,92,255,.24), transparent 60%),
+      radial-gradient(820px 420px at 110% 0%, rgba(255,45,85,.18), transparent 55%),
+      radial-gradient(700px 420px at 50% 120%, rgba(34,197,94,.10), transparent 60%);
+    background-attachment:fixed;
+    color:var(--txt);
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:20px 14px 44px}
+
+  header{display:flex;align-items:center;gap:12px;margin:6px 0 18px}
+  .logo{
+    width:44px;height:44px;flex:0 0 44px;border-radius:13px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    box-shadow:0 8px 24px rgba(255,45,85,.28);
+  }
+  h1{font-size:19px;margin:0;letter-spacing:-.02em;font-weight:700}
+  .sub{margin:1px 0 0;font-size:12.5px;color:var(--muted)}
+
+  .card{
+    background:linear-gradient(180deg,var(--card),var(--card-2));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:14px;
+    box-shadow:0 12px 34px rgba(0,0,0,.35);
+  }
+  .hidden{display:none !important}
+
+  .lbl{
+    display:block;font-size:12.5px;font-weight:600;
+    color:var(--muted);letter-spacing:.05em;
+    text-transform:uppercase;margin-bottom:8px;
+  }
+  .lbl2{margin-top:18px}
+
+  .inputRow{display:flex;gap:8px;margin-bottom:12px}
+  input[type=url],input[type=text]{
+    flex:1 1 auto;min-width:0;
+    background:#0b0f17;color:var(--txt);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:13px 14px;font-size:16px;
+    outline:none;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  input[type=url]::placeholder,input[type=text]::placeholder{color:#5d6982}
+  input[type=url]:focus,input[type=text]:focus{
+    border-color:var(--accent-2);
+    box-shadow:0 0 0 3px rgba(124,92,255,.18);
+  }
+
+  button{font-family:inherit;font-size:16px;cursor:pointer;border:none}
+  .primary{
+    width:100%;padding:14px 16px;border-radius:12px;
+    font-weight:700;color:#fff;
+    background:linear-gradient(135deg,var(--accent),#e11d48);
+    box-shadow:0 10px 26px rgba(255,45,85,.28);
+    transition:transform .08s,opacity .15s;
+  }
+  .primary:active{transform:scale(.985)}
+  .primary:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+  .ghost{
+    flex:0 0 auto;padding:13px 16px;border-radius:12px;font-weight:600;
+    color:var(--txt);background:#1b2130;border:1px solid var(--line);
+    transition:background .15s;
+  }
+  .ghost:active{background:#232b3d}
+  .ghost.danger{color:#ffd5d5;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35)}
+  .ghost.danger:active{background:rgba(239,68,68,.22)}
+
+  .btnRow{display:flex;gap:8px;margin-top:18px}
+  .btnRow .primary{flex:1 1 auto}
+  .shareRow{display:flex;gap:8px;margin-top:10px}
+  .shareRow .ghost{flex:1 1 0;font-size:14px;padding:11px 10px}
+
+  .err{
+    margin-top:12px;padding:11px 13px;border-radius:11px;font-size:14px;
+    color:#ffd5d5;background:rgba(239,68,68,.13);
+    border:1px solid rgba(239,68,68,.4);
+    word-break:break-word;
+  }
+
+  .media{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+  .media img{
+    width:132px;height:74px;object-fit:cover;border-radius:11px;
+    background:#0b0f17;border:1px solid var(--line);flex:0 0 auto;
+  }
+  .mediaInfo{min-width:0;flex:1 1 auto}
+  .mediaInfo h2{
+    font-size:15px;line-height:1.32;margin:0 0 6px;font-weight:650;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+    overflow:hidden;word-break:break-word;
+  }
+  .muted{color:var(--muted);font-size:13px;margin:0;word-break:break-word}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    padding:10px 14px;border-radius:11px;
+    font-size:13.5px;font-weight:600;
+    color:var(--txt);background:#1a2030;
+    border:1px solid var(--line);
+    text-align:left;
+    transition:background .15s,border-color .15s,transform .08s;
+  }
+  .chip:active{transform:scale(.97)}
+  .chip.active{
+    background:linear-gradient(135deg,rgba(124,92,255,.30),rgba(255,45,85,.24));
+    border-color:var(--accent-2);color:#fff;
+    box-shadow:0 0 0 2px rgba(124,92,255,.22) inset;
+  }
+  .chip small{
+    display:block;font-size:11px;color:var(--muted);
+    font-weight:500;margin-top:2px;
+  }
+  .chip.active small{color:rgba(255,255,255,.75)}
+
+  .barTrack{
+    margin-top:16px;height:10px;border-radius:99px;
+    background:#0b0f17;border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .barFill{
+    height:100%;width:0%;border-radius:99px;
+    background:linear-gradient(90deg,var(--accent-2),var(--accent));
+    transition:width .25s ease;
+  }
+  .barMeta{
+    display:flex;justify-content:space-between;gap:10px;
+    margin-top:7px;font-size:12.5px;color:var(--muted);
+    font-variant-numeric:tabular-nums;
+  }
+  .status{
+    margin-top:10px;font-size:13.5px;color:var(--muted);
+    min-height:18px;word-break:break-word;
+  }
+  .status.ok{color:var(--ok);font-weight:600}
+  .status.bad{color:var(--err);font-weight:600}
+  .status.warn{color:var(--warn);font-weight:600}
+
+  .save{
+    display:block;text-align:center;text-decoration:none;
+    font-weight:700;color:#04220f;
+    padding:14px 16px;border-radius:12px;margin-top:14px;
+    background:linear-gradient(135deg,#4ade80,#22c55e);
+    box-shadow:0 10px 26px rgba(34,197,94,.25);
+  }
+  .save:active{filter:brightness(.95)}
+
+  .note{
+    padding:12px 14px;margin-top:14px;
+    border-radius:11px;font-size:12.5px;
+    color:#b8c5d9;line-height:1.55;
+    background:rgba(124,92,255,.08);
+    border:1px solid rgba(124,92,255,.22);
+  }
+  .note strong{color:#d9e0ee}
+
+  details.adv{
+    margin-top:14px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(255,255,255,.02);overflow:hidden;
+  }
+  details.adv summary{
+    cursor:pointer;padding:12px 14px;font-size:13.5px;font-weight:600;
+    color:var(--muted);list-style:none;user-select:none;
+  }
+  details.adv summary::-webkit-details-marker{display:none}
+  details.adv summary::before{content:"▸ ";transition:transform .15s}
+  details.adv[open] summary::before{content:"▾ "}
+  details.adv[open] summary{border-bottom:1px solid var(--line)}
+  .advBody{padding:14px}
+  .advBody .lbl{margin-bottom:6px}
+  .advBody input{width:100%}
+
+  .foot{
+    color:#5d6982;font-size:11.5px;text-align:center;
+    margin-top:24px;line-height:1.55;
+  }
+
+  @media (max-width:400px){
+    .media img{width:104px;height:60px}
+    .chip{padding:9px 12px;font-size:13px}
+    .wrap{padding:16px 12px 40px}
+    .shareRow .ghost{font-size:13px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">&#9654;</div>
+    <div>
+      <h1>YouTube Downloader</h1>
+      <p class="sub">Free &middot; Client-side &middot; No login &middot; GitHub Pages ready</p>
+    </div>
+  </header>
+
+  <section class="card">
+    <label class="lbl" for="url">YouTube URL</label>
+    <div class="inputRow">
+      <input id="url" type="url" inputmode="url" autocomplete="off"
+             autocapitalize="off" spellcheck="false"
+             placeholder="https://www.youtube.com/watch?v=...">
+      <button id="pasteBtn" class="ghost" type="button">Paste</button>
+    </div>
+    <button id="fetchBtn" class="primary" type="button">Fetch Video</button>
+    <div id="err" class="err hidden"></div>
+
+    <details class="adv">
+      <summary>Advanced — custom API instances</summary>
+      <div class="advBody">
+        <label class="lbl" for="pipedCustom">Piped API base URL</label>
+        <input id="pipedCustom" type="text" placeholder="https://pipedapi.example.com">
+        <label class="lbl lbl2" for="invidiousCustom">Invidious base URL</label>
+        <input id="invidiousCustom" type="text" placeholder="https://invidious.example.com">
+        <p class="muted" style="margin-top:10px;font-size:12px">
+          Optional. If set, tried before the built-in mirror list.
+        </p>
+      </div>
+    </details>
+  </section>
+
+  <section id="infoCard" class="card hidden">
+    <div class="media">
+      <img id="thumb" alt="" referrerpolicy="no-referrer">
+      <div class="mediaInfo">
+        <h2 id="title">&mdash;</h2>
+        <p id="meta" class="muted"></p>
+      </div>
+    </div>
+
+    <div class="lbl">Available formats</div>
+    <div id="chips" class="chips"></div>
+
+    <div class="btnRow">
+      <button id="dlBtn" class="primary" type="button">Download</button>
+      <button id="cancelBtn" class="ghost danger hidden" type="button">Cancel</button>
+    </div>
+
+    <div class="shareRow">
+      <button id="ytdlnisBtn" class="ghost" type="button">Open in ytdlnis</button>
+      <button id="copyBtn" class="ghost" type="button">Copy video URL</button>
+    </div>
+
+    <div id="barWrap" class="hidden">
+      <div class="barTrack"><div id="bar" class="barFill"></div></div>
+      <div class="barMeta">
+        <span id="pct">0%</span>
+        <span id="speed"></span>
+      </div>
+    </div>
+
+    <div id="status" class="status"></div>
+    <div id="fileRow" class="hidden">
+      <a id="saveLink" class="save" href="#" download>Save file again</a>
+    </div>
+  </section>
+
+  <div class="note">
+    <strong>How this works:</strong> 100% client-side — no server, no backend.
+    The app queries free public <em>Piped</em> and <em>Invidious</em> API instances
+    (automatic failover across ~20 mirrors) to get proxied stream URLs, then
+    downloads the chosen file directly to your browser.
+    Muxed MP4 (typically 360p / 720p) and audio-only streams download here.
+    For 1080p+ and merged output, use the <strong>Open in ytdlnis</strong> handoff
+    (Android) — it uses the installed app instead.
+  </div>
+
+  <p class="foot">
+    Download only content you own or are legally allowed to download.<br>
+    Respect YouTube's Terms of Service and local copyright law.
+  </p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ------------------------------------------------------------------ *
+   *  DOM refs
+   * ------------------------------------------------------------------ */
+  const $  = (id) => document.getElementById(id);
+  const ui = {
+    url:         $("url"),
+    pasteBtn:    $("pasteBtn"),
+    fetchBtn:    $("fetchBtn"),
+    err:         $("err"),
+    infoCard:    $("infoCard"),
+    thumb:       $("thumb"),
+    title:       $("title"),
+    meta:        $("meta"),
+    chips:       $("chips"),
+    dlBtn:       $("dlBtn"),
+    cancelBtn:   $("cancelBtn"),
+    ytdlnisBtn:  $("ytdlnisBtn"),
+    copyBtn:     $("copyBtn"),
+    barWrap:     $("barWrap"),
+    bar:         $("bar"),
+    pct:         $("pct"),
+    speed:       $("speed"),
+    status:      $("status"),
+    fileRow:     $("fileRow"),
+    saveLink:    $("saveLink"),
+    pipedCustom: $("pipedCustom"),
+    invCustom:   $("invidiousCustom"),
+  };
+
+  /* ------------------------------------------------------------------ *
+   *  State
+   * ------------------------------------------------------------------ */
+  const state = {
+    videoId:    null,
+    info:       null,
+    formats:    [],
+    selected:   0,
+    source:     "",
+    sourceHost: "",
+    controller: null,
+    blobUrl:    null,
+  };
+
+  /* ------------------------------------------------------------------ *
+   *  Public API instances  (free, no key, HTTPS)
+   *  Mirrors rotate — override via the "Advanced" panel if needed.
+   * ------------------------------------------------------------------ */
+  const PIPED_INSTANCES = [
+    "https://pipedapi.kavin.rocks",
+    "https://pipedapi.adminforge.de",
+    "https://api.piped.projectsegfau.lt",
+    "https://pipedapi.darkness.services",
+    "https://pipedapi.ducks.party",
+    "https://pipedapi.reallyaweso.me",
+    "https://pipedapi.smnz.de",
+    "https://pipedapi.leptons.xyz",
+    "https://pipedapi.nosebs.ru",
+    "https://api.piped.yt",
+    "https://pipedapi.astartes.nl",
+    "https://pipedapi.drgns.space",
+  ];
+
+  const INVIDIOUS_INSTANCES = [
+    "https://inv.nadeko.net",
+    "https://invidious.nerdvpn.de",
+    "https://invidious.f5.si",
+    "https://inv.tux.pizza",
+    "https://invidious.privacyredirect.com",
+    "https://yewtu.be",
+    "https://iv.ggtyler.dev",
+    "https://invidious.jing.rocks",
+    "https://invidious.materialio.us",
+    "https://invidious.reallyaweso.me",
+  ];
+
+  const VIDEO_ID_RE =
+    /(?:youtu\.be\/|youtube\.com\/(?:watch\?[^#]*\bv=|embed\/|v\/|shorts\/|live\/|.*[?&]v=))([A-Za-z0-9_-]{11})/;
+
+  const LS_KEY = "ytdl-instance";
+
+  /* ------------------------------------------------------------------ *
+   *  Utilities
+   * ------------------------------------------------------------------ */
+  function showErr(msg) {
+    ui.err.textContent = msg;
+    ui.err.classList.remove("hidden");
+  }
+  function clearErr() {
+    ui.err.textContent = "";
+    ui.err.classList.add("hidden");
+  }
+  function fmtDur(s) {
+    if (!s) return "";
+    s = Math.round(Number(s));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const x = s % 60;
+    const p = (n) => (n < 10 ? "0" + n : "" + n);
+    return h > 0 ? h + ":" + p(m) + ":" + p(x) : m + ":" + p(x);
+  }
+  function fmtBytes(n) {
+    if (!n || !isFinite(n)) return "";
+    const u = ["B", "KB", "MB", "GB"];
+    let i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return (Math.round(n * 10) / 10) + " " + u[i];
+  }
+  function parseSize(v) {
+    if (!v) return 0;
+    if (typeof v === "number") return v;
+    const s = String(v);
+    if (/^\d+$/.test(s)) return Number(s);
+    const m = s.match(/([\d.]+)\s*(B|KB|KiB|MB|MiB|GB|GiB)/i);
+    if (!m) return 0;
+    const n = parseFloat(m[1]);
+    const unit = m[2].toLowerCase();
+    const mult = unit[0] === "g" ? 1e9 : unit[0] === "m" ? 1e6 : unit[0] === "k" ? 1e3 : 1;
+    return Math.round(n * mult);
+  }
+  function sanitizeFilename(name) {
+    return String(name || "video")
+      .replace(/[<>:"\/\\|?*\x00-\x1f]/g, "_")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 120) || "video";
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+  }
+  function extractVideoId(input) {
+    const raw = String(input || "").trim();
+    if (!raw) return null;
+    if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
+    const m = raw.match(VIDEO_ID_RE);
+    return m ? m[1] : null;
+  }
+  function hostOf(url) {
+    try { return new URL(url).hostname; } catch (e) { return ""; }
+  }
+  function fetchJson(url, timeout) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeout || 8000);
+    return fetch(url, { signal: ctrl.signal, credentials: "omit", mode: "cors", referrerPolicy: "no-referrer" })
+      .then((res) => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .finally(() => clearTimeout(timer));
+  }
+  function rememberInstance(kind, base) {
+    try { localStorage.setItem(LS_KEY + ":" + kind, base); } catch (e) { /* ignore */ }
+  }
+  function getInstanceList(kind) {
+    const base  = kind === "piped" ? PIPED_INSTANCES : INVIDIOUS_INSTANCES;
+    const custom = (kind === "piped" ? ui.pipedCustom : ui.invCustom).value.trim().replace(/\/+$/, "");
+    let last = "";
+    try { last = localStorage.getItem(LS_KEY + ":" + kind) || ""; } catch (e) { /* ignore */ }
+
+    let list = base.slice();
+    if (custom) list.unshift(custom);
+    else if (last && list.indexOf(last) >= 0) {
+      list = [last].concat(list.filter((x) => x !== last));
+    }
+    return list;
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Format parsers
+   * ------------------------------------------------------------------ */
+  function pickQualityLabel(q) {
+    if (!q) return "";
+    const s = String(q).toLowerCase();
+    const map = ["4320", "2160", "1440", "1080", "720", "480", "360", "240", "144"];
+    for (const n of map) if (s.indexOf(n) >= 0) return n + "p";
+    if (s === "highres") return "Highres";
+    return q;
+  }
+
+  function parsePiped(data) {
+    const out = [];
+    const seen = new Set();
+
+    (data.videoStreams || []).forEach((s) => {
+      if (s.videoOnly) return;
+      const url = s.proxyUrl || s.url;
+      if (!url) return;
+      const key = "v:" + (s.itag || s.quality);
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({
+        kind: "video",
+        label: pickQualityLabel(s.quality) + " MP4",
+        sublabel: (s.codec || "H.264") + (s.fps ? " · " + s.fps + "fps" : ""),
+        mimeType: s.mimeType || "video/mp4",
+        ext: "mp4",
+        url: url,
+        size: parseSize(s.contentLength || s.size),
+      });
+    });
+
+    (data.audioStreams || []).forEach((s) => {
+      const url = s.proxyUrl || s.url;
+      if (!url) return;
+      const key = "a:" + (s.itag || s.quality);
+      if (seen.has(key)) return;
+      seen.add(key);
+      const isM4a = (s.mimeType || "").indexOf("mp4") >= 0;
+      out.push({
+        kind: "audio",
+        label: "Audio " + (s.quality || ""),
+        sublabel: isM4a ? "M4A" : "Opus / WebM",
+        mimeType: isM4a ? "audio/mp4" : "audio/webm",
+        ext: isM4a ? "m4a" : "webm",
+        url: url,
+        size: parseSize(s.contentLength || s.size),
+      });
+    });
+
+    return out;
+  }
+
+  function parseInvidious(data) {
+    const out = [];
+    const seen = new Set();
+
+    (data.formatStreams || []).forEach((s) => {
+      if (!s.url) return;
+      const key = "v:" + (s.itag || s.qualityLabel);
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({
+        kind: "video",
+        label: pickQualityLabel(s.qualityLabel) + " MP4",
+        sublabel: s.resolution || "Video",
+        mimeType: "video/mp4",
+        ext: "mp4",
+        url: s.url,
+        size: parseSize(s.clen || s.contentLength || s.size),
+      });
+    });
+
+    (data.adaptiveFormats || []).forEach((s) => {
+      const type = String(s.type || "");
+      if (type.indexOf("audio/") !== 0 || !s.url) return;
+      const key = "a:" + (s.itag || type);
+      if (seen.has(key)) return;
+      seen.add(key);
+      const isM4a = type.indexOf("mp4") >= 0;
+      const bps = s.bitrate ? parseInt(s.bitrate, 10) : 0;
+      out.push({
+        kind: "audio",
+        label: "Audio " + (bps ? Math.round(bps / 1000) + " kbps" : ""),
+        sublabel: isM4a ? "M4A" : "Opus / WebM",
+        mimeType: isM4a ? "audio/mp4" : "audio/webm",
+        ext: isM4a ? "m4a" : "webm",
+        url: s.url,
+        size: parseSize(s.clen || s.contentLength || s.size),
+      });
+    });
+
+    return out;
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  API resolvers with failover
+   * ------------------------------------------------------------------ */
+  function tryPiped(videoId) {
+    const list = getInstanceList("piped");
+    let i = 0, lastErr = null;
+
+    function next() {
+      if (i >= list.length) {
+        return Promise.reject(new Error(lastErr || "All Piped instances failed."));
+      }
+      const base = list[i++];
+      return fetchJson(base + "/streams/" + videoId, 8000)
+        .then((data) => {
+          if (data && data.title) {
+            rememberInstance("piped", base);
+            return { source: "piped", base: base, data: data };
+          }
+          lastErr = (data && data.error) || "Empty response from " + base;
+          return next();
+        })
+        .catch((e) => {
+          lastErr = (e && e.message) || String(e);
+          return next();
+        });
+    }
+    return next();
+  }
+
+  function tryInvidious(videoId) {
+    const list = getInstanceList("invidious");
+    let i = 0, lastErr = null;
+
+    function next() {
+      if (i >= list.length) {
+        return Promise.reject(new Error(lastErr || "All Invidious instances failed."));
+      }
+      const base = list[i++];
+      // ?local=true makes the instance rewrite stream URLs to its own origin
+      // (which sets CORS headers), so browser-side fetch() works.
+      return fetchJson(base + "/api/v1/videos/" + videoId + "?local=true", 8000)
+        .then((data) => {
+          if (data && data.title) {
+            rememberInstance("invidious", base);
+            return { source: "invidious", base: base, data: data };
+          }
+          lastErr = (data && data.error) || "Empty response from " + base;
+          return next();
+        })
+        .catch((e) => {
+          lastErr = (e && e.message) || String(e);
+          return next();
+        });
+    }
+    return next();
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Fetch video info
+   * ------------------------------------------------------------------ */
+  function doFetch() {
+    clearErr();
+    hideFileRow();
+
+    const raw = ui.url.value.trim();
+    if (!raw) { showErr("Paste a YouTube URL first."); return; }
+
+    const videoId = extractVideoId(raw);
+    if (!videoId) { showErr("Could not find a YouTube video ID in that URL."); return; }
+
+    ui.fetchBtn.disabled = true;
+    ui.fetchBtn.textContent = "Fetching…";
+    ui.infoCard.classList.add("hidden");
+
+    const p = tryPiped(videoId).catch(() => tryInvidious(videoId));
+
+    p.then((r) => {
+      const formats = r.source === "piped" ? parsePiped(r.data) : parseInvidious(r.data);
+      if (!formats.length) {
+        throw new Error(
+          "The API returned no downloadable formats. " +
+          "That usually means the mirror is rate‑limited — try again or set a custom instance."
+        );
+      }
+
+      const order = { "4320p": 9, "2160p": 8, "1440p": 7, "1080p": 6, "720p": 5, "480p": 4, "360p": 3, "240p": 2, "144p": 1 };
+      formats.sort((a, b) => {
+        if (a.kind !== b.kind) return a.kind === "video" ? -1 : 1;
+        if (a.kind === "video") {
+          const qa = order[a.label.split(" ")[0]] || 0;
+          const qb = order[b.label.split(" ")[0]] || 0;
+          return qb - qa;
+        }
+        return (b.size || 0) - (a.size || 0);
+      });
+
+      state.videoId    = videoId;
+      state.info       = r.data;
+      state.formats    = formats;
+      state.selected   = 0;
+      state.source     = r.source;
+      state.sourceHost = hostOf(r.base);
+
+      renderInfo(r.data, formats);
+      ui.infoCard.classList.remove("hidden");
+      ui.infoCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    })
+    .catch((e) => {
+      showErr(
+        (e && e.message) ||
+        "Could not fetch the video. Public API mirrors may be temporarily down — please retry."
+      );
+    })
+    .finally(() => {
+      ui.fetchBtn.disabled = false;
+      ui.fetchBtn.textContent = "Fetch Video";
+    });
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Render video info
+   * ------------------------------------------------------------------ */
+  function renderInfo(data, formats) {
+    ui.title.textContent = data.title || "Untitled";
+
+    const bits = [];
+    const uploader = data.uploader || data.author || "";
+    if (uploader) bits.push(uploader);
+    const duration = data.duration || data.lengthSeconds || 0;
+    if (duration) bits.push(fmtDur(duration));
+    bits.push(state.source === "piped" ? "Piped" : "Invidious");
+    if (state.sourceHost) bits.push(state.sourceHost);
+    ui.meta.textContent = bits.join(" · ");
+
+    const thumb =
+      data.thumbnailUrl ||
+      (data.videoThumbnails && data.videoThumbnails[0] && data.videoThumbnails[0].url) ||
+      (state.videoId ? "https://i.ytimg.com/vi/" + state.videoId + "/hqdefault.jpg" : "");
+
+    if (thumb) {
+      ui.thumb.src = thumb;
+      ui.thumb.style.display = "";
+    } else {
+      ui.thumb.removeAttribute("src");
+      ui.thumb.style.display = "none";
+    }
+
+    ui.chips.innerHTML = "";
+    formats.forEach((f, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chip" + (i === 0 ? " active" : "");
+      btn.appendChild(document.createTextNode(f.label));
+
+      const small = document.createElement("small");
+      let sub = f.sublabel || "";
+      if (f.size) sub += (sub ? " · " : "") + fmtBytes(f.size);
+      small.textContent = sub;
+      btn.appendChild(small);
+
+      btn.addEventListener("click", () => {
+        state.selected = i;
+        Array.prototype.forEach.call(ui.chips.children, (c, j) => {
+          c.classList.toggle("active", i === j);
+        });
+        ui.dlBtn.textContent = "Download";
+      });
+
+      ui.chips.appendChild(btn);
+    });
+
+    ui.barWrap.classList.add("hidden");
+    hideFileRow();
+    ui.status.textContent = "";
+    ui.status.className = "status";
+    ui.dlBtn.disabled = false;
+    ui.dlBtn.textContent = "Download";
+    ui.cancelBtn.classList.add("hidden");
+    state.controller = null;
+    if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Progress helpers
+   * ------------------------------------------------------------------ */
+  function updateProgress(received, total, startTime) {
+    const elapsed = (Date.now() - startTime) / 1000;
+    const rate = elapsed > 0 ? received / elapsed : 0;
+    if (total > 0) {
+      const p = Math.min(100, (received / total) * 100);
+      ui.bar.style.width = p + "%";
+      ui.pct.textContent = p.toFixed(1) + "%";
+      ui.speed.textContent =
+        fmtBytes(received) + " / " + fmtBytes(total) + " · " + fmtBytes(rate) + "/s";
+    } else {
+      ui.bar.style.width = "100%";
+      ui.pct.textContent = fmtBytes(received);
+      ui.speed.textContent = fmtBytes(rate) + "/s";
+    }
+  }
+
+  function hideFileRow() {
+    ui.fileRow.classList.add("hidden");
+    ui.saveLink.href = "#";
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Download with streaming + progress
+   * ------------------------------------------------------------------ */
+  async function doDownload() {
+    const fmt = state.formats[state.selected];
+    if (!state.info || !fmt) return;
+
+    clearErr();
+    hideFileRow();
+    if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
+
+    ui.barWrap.classList.remove("hidden");
+    ui.bar.style.width = "0%";
+    ui.pct.textContent = "0%";
+    ui.speed.textContent = "";
+    ui.status.className = "status";
+    ui.status.textContent = "Connecting to stream…";
+    ui.dlBtn.disabled = true;
+    ui.dlBtn.textContent = "Downloading…";
+    ui.cancelBtn.classList.remove("hidden");
+
+    state.controller = new AbortController();
+    const signal = state.controller.signal;
+    const startTime = Date.now();
+    const filename = sanitizeFilename(state.info.title) + "." + fmt.ext;
+
+    try {
+      const res = await fetch(fmt.url, {
+        method: "GET",
+        signal,
+        credentials: "omit",
+        mode: "cors",
+        referrerPolicy: "no-referrer",
+      });
+      if (!res.ok) throw new Error("Stream server returned HTTP " + res.status);
+
+      const total = Number(res.headers.get("content-length") || fmt.size || 0);
+      const contentType = res.headers.get("content-type") || fmt.mimeType;
+
+      if (!res.body || !res.body.getReader) {
+        const blob = await res.blob();
+        complete(blob, filename, startTime);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const chunks = [];
+      let received = 0;
+      let lastTick = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+        const now = Date.now();
+        if (now - lastTick > 200) {
+          lastTick = now;
+          updateProgress(received, total, startTime);
+        }
+      }
+
+      const blob = new Blob(chunks, { type: contentType });
+      complete(blob, filename, startTime);
+    } catch (e) {
+      if (e && e.name === "AbortError") {
+        ui.status.className = "status warn";
+        ui.status.textContent = "Download cancelled.";
+      } else {
+        console.error(e);
+        ui.status.className = "status bad";
+        ui.status.innerHTML =
+          "Download failed: " + escapeHtml((e && e.message) || "unknown") +
+          ".<br>The stream URL may have expired, or the server blocked CORS. " +
+          "Try a different format, re‑fetch the video, or use <strong>Open in ytdlnis</strong>.";
+        offerDirectLink(fmt.url, filename);
+      }
+      ui.barWrap.classList.add("hidden");
+      ui.dlBtn.disabled = false;
+      ui.dlBtn.textContent = "Retry download";
+      ui.cancelBtn.classList.add("hidden");
+      state.controller = null;
+    }
+  }
+
+  function complete(blob, filename, startTime) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    if (state.blobUrl) URL.revokeObjectURL(state.blobUrl);
+    state.blobUrl = url;
+    ui.saveLink.href = url;
+    ui.saveLink.setAttribute("download", filename);
+    ui.fileRow.classList.remove("hidden");
+
+    ui.bar.style.width = "100%";
+    ui.pct.textContent = "100%";
+    const elapsed = (Date.now() - startTime) / 1000;
+    const avg = elapsed > 0 ? blob.size / elapsed : 0;
+    ui.speed.textContent = fmtBytes(blob.size) + " · avg " + fmtBytes(avg) + "/s";
+    ui.status.className = "status ok";
+    ui.status.textContent = "Download complete — check your browser's downloads folder.";
+    ui.dlBtn.disabled = false;
+    ui.dlBtn.textContent = "Download again";
+    ui.cancelBtn.classList.add("hidden");
+    state.controller = null;
+  }
+
+  function offerDirectLink(url, filename) {
+    // Cross‑origin `download` is ignored by browsers, so this may just navigate.
+    // It's still a useful last resort when fetch() is CORS‑blocked.
+    ui.fileRow.classList.remove("hidden");
+    ui.saveLink.href = url;
+    ui.saveLink.setAttribute("download", filename);
+    ui.saveLink.textContent = "Try direct link (may not save automatically)";
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Share / handoff helpers
+   * ------------------------------------------------------------------ */
+  function currentVideoUrl() {
+    if (state.videoId) return "https://www.youtube.com/watch?v=" + state.videoId;
+    return ui.url.value.trim();
+  }
+
+  function openInYtdlnis() {
+    const target = currentVideoUrl();
+    if (!target) return;
+
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    if (!isAndroid) {
+      ui.status.className = "status warn";
+      ui.status.textContent =
+        "The ytdlnis handoff only works on Android. Copy the video URL and paste it into the app instead.";
+      copyText(target, "Video URL copied — open ytdlnis and paste it.");
+      return;
+    }
+
+    // Android intent: hand the URL to ytdlnis via a SEND intent.
+    const encoded = encodeURIComponent(target);
+    const intent =
+      "intent:#Intent;action=android.intent.action.SEND;type=text/plain;" +
+      "S.android.intent.extra.TEXT=" + encoded + ";" +
+      "package=com.deniscerri.ytdl;end";
+
+    try {
+      window.location.href = intent;
+    } catch (e) {
+      copyText(target, "Couldn't open ytdlnis — video URL copied instead.");
+    }
+  }
+
+  function copyText(text, okMessage) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        ui.status.className = "status ok";
+        ui.status.textContent = okMessage;
+      }).catch(() => {
+        ui.status.className = "status warn";
+        ui.status.textContent = "Couldn't copy automatically — please copy the link manually: " + text;
+      });
+    } else {
+      ui.status.className = "status warn";
+      ui.status.textContent = "Clipboard unavailable — copy manually: " + text;
+    }
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Init from ?url=… / ?v=… / #v=… (supports being loaded via ytdlnis)
+   * ------------------------------------------------------------------ */
+  function initFromLocation() {
+    let params;
+    try { params = new URLSearchParams(location.search); } catch (e) { params = new URLSearchParams(); }
+    let hash;
+    try { hash = new URLSearchParams(location.hash.replace(/^#/, "")); } catch (e) { hash = new URLSearchParams(); }
+
+    const raw =
+      params.get("url") || hash.get("url") || params.get("u") || hash.get("u") || "";
+    const vid =
+      params.get("v") || hash.get("v") || params.get("id") || hash.get("id") || "";
+
+    if (raw) {
+      ui.url.value = raw;
+      doFetch();
+    } else if (vid && /^[A-Za-z0-9_-]{11}$/.test(vid)) {
+      ui.url.value = "https://www.youtube.com/watch?v=" + vid;
+      doFetch();
+    }
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Wire up events
+   * ------------------------------------------------------------------ */
+  ui.fetchBtn.addEventListener("click", doFetch);
+  ui.dlBtn.addEventListener("click", doDownload);
+  ui.ytdlnisBtn.addEventListener("click", openInYtdlnis);
+  ui.copyBtn.addEventListener("click", () => {
+    const target = currentVideoUrl();
+    if (!target) return;
+    copyText(target, "Video URL copied to clipboard.");
+  });
+
+  ui.cancelBtn.addEventListener("click", () => {
+    if (state.controller) state.controller.abort();
+  });
+
+  ui.url.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); doFetch(); }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state.controller) state.controller.abort();
+  });
+
+  ui.pasteBtn.addEventListener("click", () => {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then((t) => {
+        if (t) { ui.url.value = t.trim(); ui.url.focus(); }
+      }).catch(() => ui.url.focus());
+    } else {
+      ui.url.focus();
+    }
+  });
+
+  ui.thumb.addEventListener("error", () => { ui.thumb.style.display = "none"; });
+
+  ui.pipedCustom.addEventListener("change", () => {
+    try { localStorage.removeItem(LS_KEY + ":piped"); } catch (e) { /* ignore */ }
+  });
+  ui.invCustom.addEventListener("change", () => {
+    try { localStorage.removeItem(LS_KEY + ":invidious"); } catch (e) { /* ignore */ }
+  });
+
+  /* ------------------------------------------------------------------ *
+   *  Boot
+   * ------------------------------------------------------------------ */
+  initFromLocation();
+  if (!ui.url.value) ui.url.focus();
+})();
+</script>
+</body>
+</html>
