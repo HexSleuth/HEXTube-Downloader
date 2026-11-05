@@ -1,112 +1,55 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="night">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="dark" />
-<meta name="theme-color" content="#1e293b" />
-<meta name="description" content="HexTube Downloader - mobile friendly YouTube video and audio downloader with forced dark mode, 33 themes and ffmpeg.wasm muxing." />
+<meta name="theme-color" content="#07090d" />
+<meta name="description" content="HexTube Downloader - mobile friendly YouTube video and audio downloader." />
 <title>HexTube Downloader</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
-/* =====================================================================
-   BASE APP VARIABLES — bridged to DaisyUI-style theme variables
-   ===================================================================== */
 :root{
   color-scheme: dark only;
-  --bg: var(--base-100, #07090d);
-  --surface: var(--base-200, #0f151d);
-  --surface-2: var(--base-300, #141d27);
-  --surface-3: color-mix(in srgb, var(--base-300, #141d27) 88%, var(--base-content, #e6edf6) 12%);
-  --border: color-mix(in srgb, var(--base-content, #e6edf6) 10%, transparent);
-  --border-2: color-mix(in srgb, var(--base-content, #e6edf6) 20%, transparent);
-  --text: var(--base-content, #e6edf6);
-  --text-dim: color-mix(in srgb, var(--base-content, #e6edf6) 72%, transparent);
-  --muted: color-mix(in srgb, var(--base-content, #e6edf6) 52%, transparent);
-  --accent: var(--primary, #00e5a0);
-  --accent-2: var(--secondary, #00b3ff);
-  --primary-content: var(--primary-content, #04120c);
-  --danger:#ff4d6d; --warn:#ffc857;
+  --bg:#07090d; --surface:#0f151d; --surface-2:#141d27; --surface-3:#1a2532;
+  --border:#1f2b3a; --border-2:#2a3a4d;
+  --text:#e6edf6; --text-dim:#9aabc0; --muted:#6f8098;
+  --accent:#00e5a0; --accent-2:#00b3ff; --danger:#ff4d6d; --warn:#ffc857;
   --radius:18px; --radius-sm:12px;
-  --shadow:0 12px 40px rgba(0,0,0,.45);
+  --shadow:0 12px 40px rgba(0,0,0,.55);
   --safe-top:env(safe-area-inset-top, 0px);
   --safe-bottom:env(safe-area-inset-bottom, 0px);
 }
-
-[data-theme]{
-  --base-200: color-mix(in srgb, var(--base-100, #07090d) 88%, var(--base-content, #e6edf6) 12%);
-  --base-300: color-mix(in srgb, var(--base-100, #07090d) 76%, var(--base-content, #e6edf6) 24%);
-}
-
-/* ===================== 33 THEME DEFINITIONS ===================== */
-[data-theme="corporate"]{--base-100:#ffffff;--base-content:#181a2a;--primary:#4b6bfb;--secondary:#7b92b2;--primary-content:#ffffff}
-[data-theme="cupcake"]{--base-100:#faf7f5;--base-content:#291334;--primary:#65c3c8;--secondary:#ef9fbc;--primary-content:#0a1f1f}
-[data-theme="bumblebee"]{--base-100:#fff8e7;--base-content:#181830;--primary:#e0a82e;--secondary:#f9d72f;--primary-content:#181830}
-[data-theme="emerald"]{--base-100:#ffffff;--base-content:#333c4d;--primary:#66cc8a;--secondary:#377cfb;--primary-content:#052e16}
-[data-theme="synthwave"]{--base-100:#20134e;--base-content:#f3f4f6;--primary:#e779c1;--secondary:#58c7f3;--primary-content:#20134e}
-[data-theme="retro"]{--base-100:#f8f5ec;--base-content:#7d7259;--primary:#ef9995;--secondary:#a4cbb4;--primary-content:#ffffff}
-[data-theme="cyberpunk"]{--base-100:#1a1a2e;--base-content:#f0e68c;--primary:#ff7598;--secondary:#75d1f0;--primary-content:#1a1a2e}
-[data-theme="valentine"]{--base-100:#fdf0f5;--base-content:#af4670;--primary:#e96d7b;--secondary:#a991f7;--primary-content:#ffffff}
-[data-theme="halloween"]{--base-100:#1b1d1d;--base-content:#f0f0f0;--primary:#f28c18;--secondary:#6d3a9c;--primary-content:#1b1d1d}
-[data-theme="garden"]{--base-100:#f5f9f2;--base-content:#5d5656;--primary:#5c7f67;--secondary:#a4cbb4;--primary-content:#ffffff}
-[data-theme="forest"]{--base-100:#110e0e;--base-content:#e8f5e9;--primary:#1eb854;--secondary:#1fd65f;--primary-content:#110e0e}
-[data-theme="aqua"]{--base-100:#1a3b4f;--base-content:#e0f2fe;--primary:#09ecf3;--secondary:#966fb3;--primary-content:#052e36}
-[data-theme="lofi"]{--base-100:#f4f4f4;--base-content:#000000;--primary:#808080;--secondary:#4d4d4d;--primary-content:#ffffff}
-[data-theme="pastel"]{--base-100:#ffffff;--base-content:#70acc7;--primary:#d1c1d7;--secondary:#f6cbd1;--primary-content:#181a2a}
-[data-theme="fantasy"]{--base-100:#1f2937;--base-content:#f5f5f5;--primary:#6e0b75;--secondary:#007ebd;--primary-content:#ffffff}
-[data-theme="wireframe"]{--base-100:#ffffff;--base-content:#181818;--primary:#b8b8b8;--secondary:#888888;--primary-content:#181818}
-[data-theme="black"]{--base-100:#141414;--base-content:#e5e5e5;--primary:#333333;--secondary:#4a4a4a;--primary-content:#ffffff}
-[data-theme="luxury"]{--base-100:#331800;--base-content:#e5e5e5;--primary:#ffffff;--secondary:#152747;--primary-content:#331800}
-[data-theme="dracula"]{--base-100:#282a36;--base-content:#f8f8f2;--primary:#ff79c6;--secondary:#bd93f9;--primary-content:#282a36}
-[data-theme="cmyk"]{--base-100:#ffffff;--base-content:#1a1a1a;--primary:#45aeee;--secondary:#e8488a;--primary-content:#ffffff}
-[data-theme="autumn"]{--base-100:#faf5ee;--base-content:#826a5c;--primary:#8c0327;--secondary:#d85251;--primary-content:#ffffff}
-[data-theme="business"]{--base-100:#23282e;--base-content:#e5e7eb;--primary:#1c4e80;--secondary:#7c909a;--primary-content:#ffffff}
-[data-theme="acid"]{--base-100:#150f82;--base-content:#f0f0f0;--primary:#ff00ff;--secondary:#c4ff00;--primary-content:#150f82}
-[data-theme="lemonade"]{--base-100:#f7f9ca;--base-content:#191a3f;--primary:#519903;--secondary:#e9e92e;--primary-content:#ffffff}
-[data-theme="night"]{--base-100:#1e293b;--base-content:#e2e8f0;--primary:#38bdf8;--secondary:#818cf8;--primary-content:#0f172a}
-[data-theme="coffee"]{--base-100:#120c12;--base-content:#e8e0d8;--primary:#db924b;--secondary:#263e3f;--primary-content:#120c12}
-[data-theme="winter"]{--base-100:#f5f8ff;--base-content:#021431;--primary:#047aff;--secondary:#463aa2;--primary-content:#ffffff}
-[data-theme="dim"]{--base-100:#374151;--base-content:#e5e7eb;--primary:#9ca3af;--secondary:#6b7280;--primary-content:#1f2937}
-[data-theme="nord"]{--base-100:#eceff4;--base-content:#2e3440;--primary:#5e81ac;--secondary:#81a1c1;--primary-content:#ffffff}
-[data-theme="sunset"]{--base-100:#1b1626;--base-content:#f0e8f0;--primary:#ff865b;--secondary:#fd6f9c;--primary-content:#1b1626}
-[data-theme="caramellatte"]{--base-100:#faf3e9;--base-content:#3b2c23;--primary:#d18f50;--secondary:#8e6844;--primary-content:#ffffff}
-[data-theme="abyss"]{--base-100:#03045e;--base-content:#e0f2fe;--primary:#0077b6;--secondary:#00b4d8;--primary-content:#ffffff}
-[data-theme="silk"]{--base-100:#f7f0ec;--base-content:#3a2c24;--primary:#ffc2d4;--secondary:#ffb5a7;--primary-content:#3a2c24}
-
-/* ===================== RESET / BASE ===================== */
 *,*::before,*::after{ box-sizing:border-box; }
-html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; scroll-behavior:smooth; background:var(--bg); transition:background-color .3s ease, color .3s ease; }
+html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; scroll-behavior:smooth; background:#07090d; }
 body{
   margin:0; min-height:100dvh;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size:16px; line-height:1.45; color:var(--text);
   background:
-    radial-gradient(1100px 520px at 50% -12%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 62%),
-    radial-gradient(900px 520px at 105% 105%, color-mix(in srgb, var(--accent-2) 12%, transparent), transparent 62%),
-    radial-gradient(700px 400px at -10% 60%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 60%),
+    radial-gradient(1100px 520px at 50% -12%, rgba(0,229,160,.14), transparent 62%),
+    radial-gradient(900px 520px at 105% 105%, rgba(0,179,255,.12), transparent 62%),
+    radial-gradient(700px 400px at -10% 60%, rgba(0,229,160,.07), transparent 60%),
     var(--bg);
   background-attachment: fixed;
   -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
   -webkit-tap-highlight-color:transparent; overscroll-behavior-y:none;
   padding-bottom: calc(24px + var(--safe-bottom));
-  transition: background-color .3s ease, color .3s ease;
 }
 body::before{
   content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.35;
   background-image:
-    linear-gradient(30deg, color-mix(in srgb, var(--accent) 5%, transparent) 1px, transparent 1px),
-    linear-gradient(150deg, color-mix(in srgb, var(--accent-2) 5%, transparent) 1px, transparent 1px);
+    linear-gradient(30deg, rgba(0,229,160,.05) 1px, transparent 1px),
+    linear-gradient(150deg, rgba(0,179,255,.05) 1px, transparent 1px);
   background-size: 44px 76px;
   mask-image: radial-gradient(circle at 50% 0%, #000 0%, transparent 72%);
   -webkit-mask-image: radial-gradient(circle at 50% 0%, #000 0%, transparent 72%);
 }
 .hidden{ display:none !important; }
 
-/* ===================== HEADER ===================== */
 .app-header{
   position:sticky; top:0; z-index:60;
   padding: calc(10px + var(--safe-top)) 16px 10px;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  background: rgba(7,9,13,.82);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
   border-bottom:1px solid var(--border);
@@ -117,19 +60,19 @@ body::before{
   position:relative; width:40px; height:44px; flex:0 0 auto; display:grid; place-items:center;
   background:linear-gradient(150deg, var(--accent), var(--accent-2));
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent));
+  filter: drop-shadow(0 6px 18px rgba(0,229,160,.35));
   animation: hexFloat 5s ease-in-out infinite;
 }
 .hex-logo::after{
-  content:""; position:absolute; inset:3px; background:var(--surface);
+  content:""; position:absolute; inset:3px; background:#0a1017;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }
-.hex-logo i{ position:relative; z-index:1; font-size:16px; color:var(--accent); }
+.hex-logo svg{ position:relative; z-index:1; width:18px; height:18px; stroke:var(--accent); fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
 @keyframes hexFloat{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
 .brand-text{ min-width:0; }
 .brand-text h1{
   margin:0; font-size:19px; font-weight:800; letter-spacing:-.3px; line-height:1.1;
-  background:linear-gradient(100deg, var(--text) 10%, var(--accent) 60%, var(--accent-2) 100%);
+  background:linear-gradient(100deg,#ffffff 10%, var(--accent) 60%, var(--accent-2) 100%);
   -webkit-background-clip:text; background-clip:text; color:transparent;
 }
 .brand-text span{ display:block; font-size:11px; letter-spacing:2.4px; text-transform:uppercase; color:var(--muted); font-weight:600; margin-top:2px; }
@@ -137,18 +80,16 @@ body::before{
   width:42px; height:42px; display:grid; place-items:center; border-radius:13px;
   border:1px solid var(--border); background:var(--surface-2); color:var(--text-dim);
   cursor:pointer; transition: background .18s, color .18s, border-color .18s, transform .12s;
-  font-size:16px;
 }
 .icon-btn:active{ transform:scale(.94); }
 .icon-btn:hover{ background:var(--surface-3); color:var(--accent); border-color:var(--border-2); }
+.icon-btn svg{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
 .icon-btn.small{ width:32px; height:32px; border-radius:10px; font-size:13px; }
 
-/* ===================== LAYOUT ===================== */
 .wrap{ position:relative; z-index:1; max-width:680px; margin:0 auto; padding:18px 16px 40px; display:flex; flex-direction:column; gap:16px; }
 .card{
-  background: linear-gradient(180deg, color-mix(in srgb, var(--text) 3.5%, transparent), color-mix(in srgb, var(--text) 0.8%, transparent)), var(--surface);
+  background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.008)), var(--surface);
   border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow: var(--shadow);
-  transition: background-color .3s ease, border-color .3s ease;
 }
 .hero{ text-align:center; padding: 6px 4px 0; }
 .hero h2{ margin:0 0 6px; font-size:22px; font-weight:800; letter-spacing:-.4px; }
@@ -165,18 +106,17 @@ body::before{
   outline:none; transition: border-color .18s, box-shadow .18s, background .18s;
   appearance:none; -webkit-appearance:none;
 }
-.input::placeholder{ color:color-mix(in srgb, var(--text) 45%, transparent); }
-.input:focus, .select:focus{ border-color:var(--accent); background:var(--surface-3); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
-.input-wrap .input{ padding-right:100px; }
+.input::placeholder{ color:#5a6a7d; }
+.input:focus, .select:focus{ border-color:var(--accent); background:var(--surface-3); box-shadow:0 0 0 3px rgba(0,229,160,.16); }
+.input-wrap .input{ padding-right:88px; }
 .input-btn{
   position:absolute; right:6px; top:50%; transform:translateY(-50%);
   padding:8px 13px; border-radius:9px; border:1px solid var(--border-2);
   background:var(--surface-3); color:var(--accent); font-size:12px; font-weight:800;
   letter-spacing:.8px; text-transform:uppercase; cursor:pointer; transition: background .16s, transform .12s;
-  display:flex; align-items:center; gap:5px; font-family:inherit;
 }
 .input-btn:active{ transform:translateY(-50%) scale(.94); }
-.input-btn:hover{ background:color-mix(in srgb, var(--surface-3) 88%, var(--accent) 12%); }
+.input-btn:hover{ background:#1f2f3f; }
 .select{
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236f8098' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
   background-repeat:no-repeat; background-position: right 12px center; background-size:18px;
@@ -191,7 +131,7 @@ body::before{
   animation: fadeUp .3s ease both;
 }
 @keyframes fadeUp{ from{ opacity:0; transform:translateY(6px) } to{ opacity:1; transform:translateY(0) } }
-.preview img{ width:96px; height:56px; object-fit:cover; border-radius:9px; background:var(--surface-3); flex:0 0 auto; }
+.preview img{ width:96px; height:56px; object-fit:cover; border-radius:9px; background:#0a1017; flex:0 0 auto; }
 .preview-meta{ min-width:0; }
 .preview-meta p{
   margin:0 0 3px; font-size:14px; font-weight:600;
@@ -208,40 +148,42 @@ body::before{
   padding:12px 8px; border:0; border-radius:11px; background:transparent; color:var(--text-dim);
   font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer;
   transition: background .18s, color .18s, transform .12s;
-  display:flex; align-items:center; justify-content:center; gap:7px;
 }
-.seg button i{ font-size:14px; }
 .seg button:active{ transform:scale(.97); }
 .seg button[aria-pressed="true"]{
   background:linear-gradient(150deg, var(--accent), var(--accent-2));
-  color:var(--primary-content);
-  box-shadow:0 6px 20px color-mix(in srgb, var(--accent) 28%, transparent);
+  color:#04120c; box-shadow:0 6px 20px rgba(0,229,160,.28);
 }
 
 .btn-primary{
   position:relative; display:flex; align-items:center; justify-content:center; gap:10px;
   width:100%; margin-top:18px; padding:17px 18px; border:0; border-radius:15px;
   font-family:inherit; font-size:16px; font-weight:800; letter-spacing:.2px;
-  color:var(--primary-content); background:linear-gradient(150deg, var(--accent), var(--accent-2));
-  cursor:pointer; box-shadow:0 12px 32px color-mix(in srgb, var(--accent) 26%, transparent);
+  color:#04120c; background:linear-gradient(150deg, var(--accent), var(--accent-2));
+  cursor:pointer; box-shadow:0 12px 32px rgba(0,229,160,.26);
   transition: transform .12s ease, box-shadow .2s, opacity .2s; overflow:hidden;
 }
-.btn-primary i{ font-size:18px; }
+.btn-primary svg{ width:20px; height:20px; fill:none; stroke:#04120c; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
 .btn-primary:active:not(:disabled){ transform:scale(.98); }
 .btn-primary:disabled{ opacity:.55; cursor:not-allowed; box-shadow:none; }
+.btn-primary .spinner{
+  width:18px; height:18px; border:2.5px solid rgba(4,18,12,.28); border-top-color:#04120c;
+  border-radius:50%; animation: spin .7s linear infinite;
+}
+@keyframes spin{ to{ transform:rotate(360deg) } }
 
 .link-btn{
   background:none; border:0; color:var(--accent); font-family:inherit; font-size:13px;
   font-weight:700; cursor:pointer; padding:4px 6px; border-radius:8px; transition: background .16s;
 }
-.link-btn:hover{ background:color-mix(in srgb, var(--accent) 12%, transparent); }
+.link-btn:hover{ background:rgba(0,229,160,.1); }
 
 .progress-wrap{ margin-top:16px; animation: fadeUp .25s ease both; }
 .progress{ height:9px; border-radius:999px; background:var(--surface-3); border:1px solid var(--border); overflow:hidden; }
 .progress > i{
   display:block; height:100%; width:0%; border-radius:999px;
   background:linear-gradient(90deg, var(--accent), var(--accent-2));
-  transition: width .22s ease; box-shadow:0 0 14px color-mix(in srgb, var(--accent) 60%, transparent);
+  transition: width .22s ease; box-shadow:0 0 14px rgba(0,229,160,.6);
 }
 .progress-meta{
   display:flex; justify-content:space-between; gap:10px; margin-top:8px;
@@ -265,7 +207,7 @@ body::before{
 }
 .history-item:hover{ background:var(--surface-3); border-color:var(--border-2); }
 .history-item:active{ transform:scale(.99); }
-.history-item img{ width:70px; height:40px; object-fit:cover; border-radius:8px; background:var(--surface-3); flex:0 0 auto; }
+.history-item img{ width:70px; height:40px; object-fit:cover; border-radius:8px; background:#0a1017; flex:0 0 auto; }
 .h-meta{ min-width:0; flex:1; }
 .h-meta p{ margin:0 0 2px; font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .h-meta span{ font-size:11px; color:var(--muted); }
@@ -275,87 +217,14 @@ body::before{
 .hint{ margin:8px 0 0; font-size:12px; color:var(--muted); line-height:1.5; }
 .hint a{ color:var(--accent-2); text-decoration:none; }
 .hint a:hover{ text-decoration:underline; }
-.hint code{ background:var(--surface-3); padding:1px 5px; border-radius:4px; font-size:11px; }
 .btn-ghost{
   padding:12px; border-radius:12px; border:1px solid var(--border-2);
   background:var(--surface-2); color:var(--text-dim);
   font-family:inherit; font-size:14px; font-weight:700; cursor:pointer;
   transition: background .16s, color .16s;
-  display:flex; align-items:center; justify-content:center; gap:8px;
 }
 .btn-ghost:hover{ background:var(--surface-3); color:var(--text); }
 
-/* ===================== THEME SYSTEM UI ===================== */
-.theme-section{ margin-bottom:4px; }
-.theme-header{
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  margin-bottom:7px;
-}
-.theme-header .field-label{ margin:0; }
-.theme-section.collapsed #themeGallery{ display:none; }
-.theme-section.collapsed .theme-header{ margin-bottom:0; }
-.theme-gallery{
-  display:grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap:8px;
-  max-height:340px;
-  overflow-y:auto;
-  padding:8px;
-  border-radius:14px;
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  scrollbar-width:thin;
-  scrollbar-color: var(--border-2) transparent;
-}
-.theme-gallery::-webkit-scrollbar{ width:6px; }
-.theme-gallery::-webkit-scrollbar-thumb{ background:var(--border-2); border-radius:6px; }
-.theme-card{
-  padding:8px;
-  border-radius:10px;
-  background:var(--surface-3);
-  border:2px solid transparent;
-  cursor:pointer;
-  transition: all .16s ease;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  user-select:none;
-}
-.theme-card:hover{ border-color:var(--border-2); transform:translateY(-1px); }
-.theme-card.active{
-  border-color:var(--accent);
-  box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
-  background:color-mix(in srgb, var(--surface-3) 92%, var(--accent) 8%);
-}
-.swatch-strip{ display:flex; gap:2px; border-radius:6px; overflow:hidden; height:22px; }
-.swatch-strip span{ flex:1; }
-.theme-label{
-  font-size:10px; font-weight:700; text-transform:capitalize;
-  color:var(--text-dim); text-align:center; line-height:1.2;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.theme-label .check{ display:none; color:var(--accent); }
-.theme-card.active .theme-label{ color:var(--text); }
-.theme-card.active .theme-label .check{ display:inline; }
-
-.color-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; }
-@media (max-width:380px){ .color-grid{ grid-template-columns: repeat(2, 1fr); } }
-.color-field{ display:flex; flex-direction:column; gap:4px; }
-.color-field label{
-  font-size:10px; font-weight:700; text-transform:uppercase;
-  color:var(--muted); letter-spacing:.5px;
-}
-.color-field input[type="color"]{
-  width:100%; height:34px; padding:2px; border-radius:8px;
-  border:1px solid var(--border-2); background:var(--surface-2); cursor:pointer;
-}
-.color-field input[type="color"]::-webkit-color-swatch-wrapper{ padding:0; }
-.color-field input[type="color"]::-webkit-color-swatch{ border:none; border-radius:5px; }
-.color-field input[type="color"]::-moz-color-swatch{ border:none; border-radius:5px; }
-
-.divider{ height:1px; background:var(--border); margin:4px 0; border:0; }
-
-/* ===================== TOASTS ===================== */
 .toasts{
   position:fixed; left:50%; bottom: calc(18px + var(--safe-bottom));
   transform:translateX(-50%); z-index:200;
@@ -365,12 +234,12 @@ body::before{
 .toast{
   padding:12px 15px; border-radius:13px; font-size:13.5px; font-weight:600; color:var(--text);
   background:var(--surface-3); border:1px solid var(--border-2);
-  box-shadow:0 14px 36px rgba(0,0,0,.5);
+  box-shadow:0 14px 36px rgba(0,0,0,.6);
   animation: toastIn .28s cubic-bezier(.2,.9,.3,1.2) both; word-break:break-word;
 }
-.toast.ok{ border-color:color-mix(in srgb, var(--accent) 45%, transparent); color:var(--accent); }
+.toast.ok{ border-color:rgba(0,229,160,.45); color:var(--accent); }
 .toast.error{ border-color:rgba(255,77,109,.45); color:var(--danger); }
-.toast.info{ border-color:color-mix(in srgb, var(--accent-2) 45%, transparent); color:var(--accent-2); }
+.toast.info{ border-color:rgba(0,179,255,.45); color:var(--accent-2); }
 @keyframes toastIn{ from{ opacity:0; transform:translateY(14px) scale(.96) } to{ opacity:1; transform:translateY(0) scale(1) } }
 .toast.out{ animation: toastOut .22s ease forwards; }
 @keyframes toastOut{ to{ opacity:0; transform:translateY(10px) scale(.97) } }
@@ -393,7 +262,7 @@ body::before{
   <div class="header-inner">
     <div class="brand">
       <div class="hex-logo" aria-hidden="true">
-        <i class="fa-brands fa-youtube"></i>
+        <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
       </div>
       <div class="brand-text">
         <h1>HexTube</h1>
@@ -401,7 +270,10 @@ body::before{
       </div>
     </div>
     <button id="settingsToggle" class="icon-btn" aria-label="Toggle settings" aria-expanded="false">
-      <i class="fa-solid fa-gear"></i>
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
     </button>
   </div>
 </header>
@@ -409,8 +281,8 @@ body::before{
 <main class="wrap">
 
   <div class="hero">
-    <h2>Grab it in one tap <i class="fa-solid fa-arrow-down-long" style="color:var(--accent)"></i></h2>
-    <p>Paste a YouTube link, pick MP4 (with audio) or MP3, hit download.</p>
+    <h2>Grab it in one tap ⬇</h2>
+    <p>Paste a YouTube link, pick MP4 or MP3, hit download.</p>
   </div>
 
   <section class="card">
@@ -419,9 +291,7 @@ body::before{
       <input id="urlInput" class="input" type="text" inputmode="url"
         autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
         enterkeyhint="go" placeholder="https://youtube.com/watch?v=…" aria-label="YouTube video link" />
-      <button id="pasteBtn" class="input-btn" type="button">
-        <i class="fa-solid fa-paste"></i> Paste
-      </button>
+      <button id="pasteBtn" class="input-btn" type="button">Paste</button>
     </div>
 
     <div id="preview" class="preview hidden">
@@ -433,12 +303,8 @@ body::before{
     </div>
 
     <div class="seg" role="group" aria-label="Output format">
-      <button id="modeVideo" type="button" aria-pressed="true">
-        <i class="fa-solid fa-film"></i> Video (MP4)
-      </button>
-      <button id="modeAudio" type="button" aria-pressed="false">
-        <i class="fa-solid fa-music"></i> Audio (MP3)
-      </button>
+      <button id="modeVideo" type="button" aria-pressed="true">🎬 Video (MP4)</button>
+      <button id="modeAudio" type="button" aria-pressed="false">🎵 Audio (MP3)</button>
     </div>
 
     <div id="videoOpts" class="grid2">
@@ -448,8 +314,8 @@ body::before{
           <option value="max">Best available</option>
           <option value="2160">2160p (4K)</option>
           <option value="1440">1440p (2K)</option>
-          <option value="1080">1080p (Full HD)</option>
-          <option value="720" selected>720p (HD)</option>
+          <option value="1080" selected>1080p (Full HD)</option>
+          <option value="720">720p (HD)</option>
           <option value="480">480p</option>
           <option value="360">360p</option>
         </select>
@@ -457,17 +323,11 @@ body::before{
       <div>
         <label class="field-label" for="videoCodec">Container</label>
         <select id="videoCodec" class="select">
-          <option value="mp4" selected>MP4 (H.264)</option>
+          <option value="mp4">MP4 (H.264)</option>
           <option value="webm">WebM (VP9)</option>
         </select>
       </div>
     </div>
-    <p class="hint" id="videoHint" style="margin-top:10px">
-      <i class="fa-solid fa-circle-info"></i>
-      Video downloads include <strong>audio + video</strong>. High-quality (video-only)
-      streams are muxed in your browser using <strong>ffmpeg.wasm</strong>, so the file is
-      fully audible.
-    </p>
 
     <div id="audioOpts" class="grid2 hidden">
       <div>
@@ -494,8 +354,8 @@ body::before{
     </div>
 
     <button id="downloadBtn" class="btn-primary" type="button">
-      <i class="fa-solid fa-download"></i>
-      <span id="downloadBtnText">Download MP4</span>
+      <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
+      <span id="downloadBtnText">Download</span>
     </button>
 
     <div id="progressWrap" class="progress-wrap hidden">
@@ -512,50 +372,9 @@ body::before{
   <section id="settingsCard" class="card hidden">
     <div class="row-between">
       <h2>Settings</h2>
-      <button id="resetSettings" class="link-btn" type="button">
-        <i class="fa-solid fa-rotate-left"></i> Reset
-      </button>
+      <button id="resetSettings" class="link-btn" type="button">Reset</button>
     </div>
-
-    <!-- ===== THEME SYSTEM ===== -->
     <div class="settings-grid">
-      <div class="theme-section" id="themeSection">
-        <div class="theme-header">
-          <label class="field-label">Theme</label>
-          <button id="themeCloseBtn" class="icon-btn small" type="button"
-                  aria-label="Close theme section" aria-expanded="true">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-        <div id="themeGallery" class="theme-gallery" role="listbox" aria-label="Theme gallery"></div>
-      </div>
-
-      <hr class="divider" />
-
-      <div>
-        <label class="field-label">Custom colors</label>
-        <div class="color-grid">
-          <div class="color-field"><label for="customPrimary">Primary</label><input type="color" id="customPrimary" value="#4b6bfb" /></div>
-          <div class="color-field"><label for="customSecondary">Secondary</label><input type="color" id="customSecondary" value="#7b92b2" /></div>
-          <div class="color-field"><label for="customAccent">Accent</label><input type="color" id="customAccent" value="#67cba0" /></div>
-          <div class="color-field"><label for="customNeutral">Neutral</label><input type="color" id="customNeutral" value="#181a2a" /></div>
-          <div class="color-field"><label for="customBase100">Base 100</label><input type="color" id="customBase100" value="#1e293b" /></div>
-          <div class="color-field"><label for="customBase200">Base 200</label><input type="color" id="customBase200" value="#0f172a" /></div>
-          <div class="color-field"><label for="customBase300">Base 300</label><input type="color" id="customBase300" value="#020617" /></div>
-          <div class="color-field"><label for="customBaseContent">Content</label><input type="color" id="customBaseContent" value="#e2e8f0" /></div>
-        </div>
-        <div class="grid2" style="margin-top:10px">
-          <button id="applyCustomBtn" class="btn-ghost" type="button">
-            <i class="fa-solid fa-palette"></i> Apply colors
-          </button>
-          <button id="resetThemeBtn" class="btn-ghost" type="button">
-            <i class="fa-solid fa-rotate-left"></i> Reset theme
-          </button>
-        </div>
-      </div>
-
-      <hr class="divider" />
-
       <div>
         <label class="field-label" for="apiEndpoint">Custom Cobalt endpoint (optional)</label>
         <input id="apiEndpoint" class="input" type="text" inputmode="url"
@@ -566,14 +385,13 @@ body::before{
         <input id="apiKey" class="input" type="password"
                autocomplete="off" spellcheck="false" placeholder="Only needed for Cobalt" />
       </div>
-      <button id="saveSettings" class="btn-ghost" type="button">
-        <i class="fa-solid fa-floppy-disk"></i> Save settings
-      </button>
+      <button id="saveSettings" class="btn-ghost" type="button">Save settings</button>
       <p class="hint">
-        <strong>Piped</strong> and <strong>Invidious</strong> are tried automatically with a
-        live registry refresh and a CORS-proxy fallback. Cobalt is only used if you
-        configure your own endpoint above. High-quality video is muxed in-browser by
-        <strong>ffmpeg.wasm</strong> so every file has audio.
+        <strong>Piped</strong> and <strong>Invidious</strong> are tried automatically — live
+        instance lists are fetched from the official registries at download time, so you
+        always hit currently-working servers. Cobalt is only used if you configure your own
+        endpoint above. See
+        <a href="https://github.com/imputnet/cobalt" target="_blank" rel="noopener noreferrer">cobalt</a>.
       </p>
     </div>
   </section>
@@ -581,9 +399,7 @@ body::before{
   <section class="card">
     <div class="row-between">
       <h2>History</h2>
-      <button id="clearHistory" class="link-btn" type="button">
-        <i class="fa-solid fa-trash-can"></i> Clear all
-      </button>
+      <button id="clearHistory" class="link-btn" type="button">Clear all</button>
     </div>
     <ul id="historyList" class="history"></ul>
     <p id="historyEmpty" class="empty">No downloads yet. Paste a link to get started.</p>
@@ -593,7 +409,7 @@ body::before{
 
 <footer class="app-footer">
   <p>
-    <strong>HexTube Downloader</strong> · Video with audio · 33 themes · Mobile first<br />
+    <strong>HexTube Downloader</strong> · Forced dark mode · Mobile first<br />
     Only download content you own or have permission to save. Respect creators and the
     YouTube Terms of Service.
   </p>
@@ -601,340 +417,68 @@ body::before{
 
 <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
 
-<!-- ===================== THEME BOOTSTRAP ===================== -->
-<script>
-  try {
-    if (!localStorage.getItem('neon-theme')) {
-      localStorage.setItem('neon-theme', 'night');
-    }
-  } catch (_) {}
-</script>
-
-<!-- ===================== SYSTEM THEME JAVASCRIPT ===================== -->
-<script>
-(function() {
-  'use strict';
-
-  // ── THEME SYSTEM ──
-  const THEMES = [
-    'corporate', 'cupcake', 'bumblebee', 'emerald', 'synthwave',
-    'retro', 'cyberpunk', 'valentine', 'halloween', 'garden',
-    'forest', 'aqua', 'lofi', 'pastel', 'fantasy',
-    'wireframe', 'black', 'luxury', 'dracula', 'cmyk',
-    'autumn', 'business', 'acid', 'lemonade', 'night',
-    'coffee', 'winter', 'dim', 'nord', 'sunset',
-    'caramellatte', 'abyss', 'silk'
-  ];
-
-  let currentTheme = 'corporate';
-  let customColors = {};
-
-  const THEME_SWATCHES = {
-    corporate: ['#4b6bfb', '#7b92b2', '#67cba0', '#181a2a'],
-    cupcake: ['#65c3c8', '#ef9fbc', '#eeaf3a', '#291334'],
-    bumblebee: ['#e0a82e', '#f9d72f', '#181830', '#181830'],
-    emerald: ['#66cc8a', '#377cfb', '#ea5234', '#333c4d'],
-    synthwave: ['#e779c1', '#58c7f3', '#f3cc30', '#20134e'],
-    retro: ['#ef9995', '#a4cbb4', '#ebdc99', '#7d7259'],
-    cyberpunk: ['#ff7598', '#75d1f0', '#c07eec', '#423f00'],
-    valentine: ['#e96d7b', '#a991f7', '#88dbdd', '#af4670'],
-    halloween: ['#f28c18', '#6d3a9c', '#51a800', '#1b1d1d'],
-    garden: ['#5c7f67', '#ecf4e7', '#fae5e5', '#5d5656'],
-    forest: ['#1eb854', '#1fd65f', '#d99330', '#110e0e'],
-    aqua: ['#09ecf3', '#966fb3', '#ffe999', '#3b8ea5'],
-    lofi: ['#808080', '#4d4d4d', '#1a1a1a', '#000000'],
-    pastel: ['#d1c1d7', '#f6cbd1', '#b4e9d6', '#70acc7'],
-    fantasy: ['#6e0b75', '#007ebd', '#f8860d', '#1f2937'],
-    wireframe: ['#b8b8b8', '#b8b8b8', '#b8b8b8', '#ebebeb'],
-    black: ['#333333', '#333333', '#333333', '#141414'],
-    luxury: ['#ffffff', '#152747', '#513448', '#331800'],
-    dracula: ['#ff79c6', '#bd93f9', '#ffb86c', '#414558'],
-    cmyk: ['#45aeee', '#e8488a', '#fff232', '#1a1a1a'],
-    autumn: ['#8c0327', '#d85251', '#d59b6a', '#826a5c'],
-    business: ['#1c4e80', '#7c909a', '#ea6947', '#23282e'],
-    acid: ['#ff00ff', '#ff7f00', '#c4ff00', '#150f82'],
-    lemonade: ['#519903', '#e9e92e', '#f7f9ca', '#191a3f'],
-    night: ['#38bdf8', '#818cf8', '#f472b6', '#1e293b'],
-    coffee: ['#db924b', '#263e3f', '#10576d', '#120c12'],
-    winter: ['#047aff', '#463aa2', '#c148ac', '#021431'],
-    dim: ['#9ca3af', '#6b7280', '#4b5563', '#374151'],
-    nord: ['#5e81ac', '#81a1c1', '#88c0d0', '#4c566a'],
-    sunset: ['#ff865b', '#fd6f9c', '#b387fa', '#1b1626'],
-    caramellatte: ['#d18f50', '#8e6844', '#b25828', '#3b2c23'],
-    abyss: ['#0077b6', '#00b4d8', '#90e0ef', '#03045e'],
-    silk: ['#ffc2d4', '#ffb5a7', '#fcd5ce', '#e8e8e4']
-  };
-
-  const THEME_BASES = {
-    corporate: {b1:'#ffffff', b2:'#f5f6f8', b3:'#e9ebef', bc:'#181a2a'},
-    cupcake: {b1:'#faf7f5', b2:'#f2eae6', b3:'#e8dbd5', bc:'#291334'},
-    bumblebee: {b1:'#fff8e7', b2:'#f8f0d8', b3:'#f0e6c0', bc:'#181830'},
-    emerald: {b1:'#ffffff', b2:'#f2f6f4', b3:'#e3ece7', bc:'#333c4d'},
-    synthwave: {b1:'#20134e', b2:'#291b5e', b3:'#332370', bc:'#f3f4f6'},
-    retro: {b1:'#f8f5ec', b2:'#f0ece0', b3:'#e6e0cf', bc:'#7d7259'},
-    cyberpunk: {b1:'#1a1a2e', b2:'#23233d', b3:'#2d2d4c', bc:'#f0e68c'},
-    valentine: {b1:'#fdf0f5', b2:'#f9e5ee', b3:'#f4d8e4', bc:'#af4670'},
-    halloween: {b1:'#1b1d1d', b2:'#252828', b3:'#2f3333', bc:'#f0f0f0'},
-    garden: {b1:'#f5f9f2', b2:'#edf3e8', b3:'#e3ecdc', bc:'#5d5656'},
-    forest: {b1:'#110e0e', b2:'#1a1717', b3:'#232020', bc:'#e8f5e9'},
-    aqua: {b1:'#1a3b4f', b2:'#224a62', b3:'#2b5975', bc:'#e0f2fe'},
-    lofi: {b1:'#f4f4f4', b2:'#ececec', b3:'#e2e2e2', bc:'#000000'},
-    pastel: {b1:'#ffffff', b2:'#f5f5f8', b3:'#eaeaf0', bc:'#70acc7'},
-    fantasy: {b1:'#1f2937', b2:'#283445', b3:'#324054', bc:'#f5f5f5'},
-    wireframe: {b1:'#ffffff', b2:'#f5f5f5', b3:'#eaeaea', bc:'#181818'},
-    black: {b1:'#141414', b2:'#1d1d1d', b3:'#262626', bc:'#e5e5e5'},
-    luxury: {b1:'#331800', b2:'#3f1f05', b3:'#4b270b', bc:'#e5e5e5'},
-    dracula: {b1:'#282a36', b2:'#313341', b3:'#3b3d4d', bc:'#f8f8f2'},
-    cmyk: {b1:'#ffffff', b2:'#f5f5f5', b3:'#eaeaea', bc:'#1a1a1a'},
-    autumn: {b1:'#faf5ee', b2:'#f5ede1', b3:'#eee3d2', bc:'#826a5c'},
-    business: {b1:'#23282e', b2:'#2c323a', b3:'#363d47', bc:'#e5e7eb'},
-    acid: {b1:'#150f82', b2:'#1e1699', b3:'#281eb0', bc:'#f0f0f0'},
-    lemonade: {b1:'#f7f9ca', b2:'#f0f3b3', b3:'#e8ed9a', bc:'#191a3f'},
-    night: {b1:'#1e293b', b2:'#273449', b3:'#314058', bc:'#e2e8f0'},
-    coffee: {b1:'#120c12', b2:'#1b141b', b3:'#251c25', bc:'#e8e0d8'},
-    winter: {b1:'#f5f8ff', b2:'#edf2fb', b3:'#e2eaf7', bc:'#021431'},
-    dim: {b1:'#374151', b2:'#414c5e', b3:'#4c586b', bc:'#e5e7eb'},
-    nord: {b1:'#eceff4', b2:'#e3e8ee', b3:'#d8dfe7', bc:'#2e3440'},
-    sunset: {b1:'#1b1626', b2:'#251e32', b3:'#2f273f', bc:'#f0e8f0'},
-    caramellatte: {b1:'#faf3e9', b2:'#f5ebdc', b3:'#eee0cc', bc:'#3b2c23'},
-    abyss: {b1:'#03045e', b2:'#030470', b3:'#040484', bc:'#e0f2fe'},
-    silk: {b1:'#f7f0ec', b2:'#f2e8e2', b3:'#ecdfd7', bc:'#3a2c24'}
-  };
-
-  function applySystemTheme(theme) {
-    currentTheme = theme;
-    document.documentElement.setAttribute('data-theme', theme);
-    document.querySelectorAll('.theme-card').forEach(card => {
-      card.classList.toggle('active', card.dataset.theme === theme);
-    });
-    try { localStorage.setItem('neon-theme', theme); } catch (_) {}
-    const c = THEME_SWATCHES[theme] || ['#4b6bfb', '#7b92b2', '#67cba0', '#181a2a'];
-    const b = THEME_BASES[theme] || {b1:'#ffffff', b2:'#f2f2f2', b3:'#e6e6e6', bc:'#181a2a'};
-    const $ = id => document.getElementById(id);
-    if ($('customPrimary')) $('customPrimary').value = c[0] || '#4b6bfb';
-    if ($('customSecondary')) $('customSecondary').value = c[1] || '#7b92b2';
-    if ($('customAccent')) $('customAccent').value = c[2] || '#67cba0';
-    if ($('customNeutral')) $('customNeutral').value = c[3] || '#181a2a';
-    if ($('customBase100')) $('customBase100').value = b.b1;
-    if ($('customBase200')) $('customBase200').value = b.b2;
-    if ($('customBase300')) $('customBase300').value = b.b3;
-    if ($('customBaseContent')) $('customBaseContent').value = b.bc;
-    customColors = {};
-    const root = document.documentElement;
-    ['primary', 'secondary', 'accent', 'neutral', 'base-100', 'base-200', 'base-300', 'base-content']
-      .forEach(p => root.style.removeProperty(`--${p}`));
-    try { localStorage.removeItem('neon-custom-colors'); } catch (_) {}
-  }
-
-  function applyCustomColors(colors) {
-    customColors = colors;
-    const root = document.documentElement;
-    for (const [key, val] of Object.entries(colors)) {
-      if (val) root.style.setProperty(`--${key}`, val);
-    }
-    try { localStorage.setItem('neon-custom-colors', JSON.stringify(colors)); } catch (_) {}
-  }
-
-  function resetSystemTheme() {
-    applySystemTheme('corporate');
-    customColors = {};
-    const root = document.documentElement;
-    ['primary', 'secondary', 'accent', 'neutral', 'base-100', 'base-200', 'base-300', 'base-content']
-      .forEach(p => root.style.removeProperty(`--${p}`));
-    try { localStorage.removeItem('neon-custom-colors'); } catch (_) {}
-  }
-
-  function buildThemeGallery() {
-    const container = document.getElementById('themeGallery');
-    if (!container) return;
-    container.innerHTML = '';
-    THEMES.forEach(theme => {
-      const colors = THEME_SWATCHES[theme] || ['#4b6bfb', '#7b92b2', '#67cba0', '#181a2a'];
-      const card = document.createElement('div');
-      card.className = 'theme-card' + (theme === currentTheme ? ' active' : '');
-      card.dataset.theme = theme;
-      card.setAttribute('role', 'option');
-      card.setAttribute('tabindex', '0');
-      const strip = document.createElement('div');
-      strip.className = 'swatch-strip';
-      colors.forEach(c => {
-        const span = document.createElement('span');
-        span.style.background = c;
-        strip.appendChild(span);
-      });
-      card.appendChild(strip);
-      const label = document.createElement('span');
-      label.className = 'theme-label';
-      label.textContent = theme;
-      const check = document.createElement('span');
-      check.className = 'check';
-      check.textContent = ' ✓';
-      label.appendChild(check);
-      card.appendChild(label);
-      card.addEventListener('click', () => applySystemTheme(theme));
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          applySystemTheme(theme);
-        }
-      });
-      container.appendChild(card);
-    });
-  }
-
-  // ── FORCED DARK MODE (JavaScript only) ──
-  function forceDarkMode() {
-    document.documentElement.style.colorScheme = 'dark';
-    document.documentElement.setAttribute('data-dark', 'true');
-    if (document.body) document.body.classList.add('dark');
-    try { localStorage.setItem('dark', 'true'); } catch (_) {}
-    // Keep meta theme-color in sync (defensive)
-    var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', '#1e293b');
-  }
-
-  function loadSettings() {
-    // FORCED DARK MODE — no toggle, always on.
-    forceDarkMode();
-
-    // Also enforce dark on DOM changes (body replacement, extension interference, etc.)
-    var mo = new MutationObserver(forceDarkMode);
-    if (document.body) {
-      mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    }
-    document.addEventListener('DOMContentLoaded', function () {
-      forceDarkMode();
-      if (document.body) mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    });
-    document.addEventListener('click', forceDarkMode, true);
-    document.addEventListener('focus', forceDarkMode, true);
-
-    // Wire up custom color inputs -> live apply
-    const mapToVars = {
-      customPrimary: 'primary', customSecondary: 'secondary', customAccent: 'accent',
-      customNeutral: 'neutral', customBase100: 'base-100', customBase200: 'base-200',
-      customBase300: 'base-300', customBaseContent: 'base-content'
-    };
-    const readAllColors = () => {
-      const all = {};
-      Object.keys(mapToVars).forEach(id => {
-        const inp = document.getElementById(id);
-        if (inp && inp.value) all[mapToVars[id]] = inp.value;
-      });
-      return all;
-    };
-    Object.keys(mapToVars).forEach(id => {
-      const inp = document.getElementById(id);
-      if (inp) inp.addEventListener('input', () => applyCustomColors(readAllColors()));
-    });
-
-    const applyBtn = document.getElementById('applyCustomBtn');
-    if (applyBtn) applyBtn.addEventListener('click', () => applyCustomColors(readAllColors()));
-
-    const resetBtn = document.getElementById('resetThemeBtn');
-    if (resetBtn) resetBtn.addEventListener('click', resetSystemTheme);
-
-    // ── THEME CLOSE / OPEN BUTTON ──
-    const themeCloseBtn = document.getElementById('themeCloseBtn');
-    const themeSection = document.getElementById('themeSection');
-    if (themeCloseBtn && themeSection) {
-      const setCollapsed = (collapsed) => {
-        themeSection.classList.toggle('collapsed', collapsed);
-        themeCloseBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-        themeCloseBtn.setAttribute('aria-label', collapsed ? 'Open theme section' : 'Close theme section');
-        themeCloseBtn.innerHTML = collapsed
-          ? '<i class="fa-solid fa-chevron-down"></i>'
-          : '<i class="fa-solid fa-xmark"></i>';
-        try { localStorage.setItem('neon-theme-collapsed', String(collapsed)); } catch (_) {}
-      };
-      themeCloseBtn.addEventListener('click', () => {
-        setCollapsed(!themeSection.classList.contains('collapsed'));
-      });
-      try {
-        if (localStorage.getItem('neon-theme-collapsed') === 'true') setCollapsed(true);
-      } catch (_) {}
-    }
-  }
-
-  function loadSavedTheme() {
-    try {
-      const saved = localStorage.getItem('neon-theme');
-      if (saved && THEMES.includes(saved)) {
-        applySystemTheme(saved);
-        return;
-      }
-    } catch (_) {}
-    try {
-      const custom = localStorage.getItem('neon-custom-colors');
-      if (custom) {
-        const colors = JSON.parse(custom);
-        applyCustomColors(colors);
-        return;
-      }
-    } catch (_) {}
-    applySystemTheme('corporate');
-  }
-
-  // ── INIT ──
-  function initThemeSystem() {
-    forceDarkMode();
-    buildThemeGallery();
-    loadSavedTheme();
-    loadSettings();
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initThemeSystem);
-  } else {
-    initThemeSystem();
-  }
-})();
-</script>
-
-<!-- ===================== APP JAVASCRIPT ===================== -->
 <script>
 (function () {
-  'use strict';
+  "use strict";
 
-  /* -------------------------------------------------------------------
-     CONSTANTS
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     1. FORCED DARK MODE
+     ===================================================================== */
+  (function forceDarkMode() {
+    var root = document.documentElement;
+    function enforce() {
+      if (root.getAttribute("data-theme") !== "dark") root.setAttribute("data-theme", "dark");
+      if (root.style.colorScheme !== "dark") root.style.colorScheme = "dark";
+      if (document.body) {
+        document.body.classList.remove("light", "light-mode", "theme-light");
+        if (document.body.getAttribute("data-theme") !== "dark") {
+          document.body.setAttribute("data-theme", "dark");
+        }
+      }
+    }
+    enforce();
+    var mo = new MutationObserver(enforce);
+    mo.observe(root, { attributes: true, attributeFilter: ["data-theme", "class", "style"] });
+    document.addEventListener("DOMContentLoaded", function () {
+      enforce();
+      mo.observe(document.body, { attributes: true, attributeFilter: ["class", "data-theme"] });
+    });
+    if (window.matchMedia) {
+      try {
+        var mq = window.matchMedia("(prefers-color-scheme: light)");
+        var handler = function () { enforce(); };
+        if (mq.addEventListener) mq.addEventListener("change", handler);
+        else if (mq.addListener) mq.addListener(handler);
+      } catch (e) {}
+    }
+    window.__forceDarkMode = enforce;
+  })();
+
+  /* =====================================================================
+     2. CONSTANTS
+     ===================================================================== */
   var STORAGE = {
     endpoint: "hextube.endpoint",
     apiKey: "hextube.apikey",
     history: "hextube.history"
   };
 
-  // Expanded Piped instance pool (fallbacks)
+  // Fallback instance lists (used only if the live registry fetch fails).
   var PIPED_FALLBACK = [
     "https://pipedapi.kavin.rocks",
     "https://pipedapi.adminforge.de",
     "https://api.piped.private.coffee",
     "https://pipedapi.reallyaweso.me",
     "https://pipedapi.leptons.xyz",
-    "https://pipedapi.drgns.space",
-    "https://pipedapi.nosebs.ru",
-    "https://pipedapi.ducks.party",
-    "https://piped-api.lunar.icu",
-    "https://pipedapi.orangenet.cc",
-    "https://pipedapi.astartes.nl",
-    "https://pipedapi.ngn.tf"
+    "https://pipedapi.drgns.space"
   ];
 
-  // Expanded Invidious instance pool
   var INVIDIOUS_FALLBACK = [
     "https://inv.nadeko.net",
     "https://invidious.nerdvpn.de",
     "https://yewtu.be",
     "https://invidious.f5.si",
-    "https://inv.tux.pizza",
-    "https://iv.melmac.space",
-    "https://invidious.privacyredirect.com",
-    "https://inv.zzls.xyz",
-    "https://iv.datura.network",
-    "https://invidious.jing.rocks",
-    "https://invidious.materialio.us",
-    "https://iv.ggtyler.dev"
+    "https://inv.tux.pizza"
   ];
 
   var PIPED_REGISTRY = "https://piped-instances.kavin.rocks/";
@@ -943,13 +487,6 @@ body::before{
   var YT_ID_REGEX =
     /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
 
-  // CORS proxies used as a fallback when direct requests fail.
-  var CORS_PROXIES = [
-    function (u) { return "https://corsproxy.io/?url=" + encodeURIComponent(u); },
-    function (u) { return "https://api.allorigins.win/raw?url=" + encodeURIComponent(u); },
-    function (u) { return "https://cors.eu.org/" + u; }
-  ];
-
   var state = {
     mode: "video",
     busy: false,
@@ -957,6 +494,7 @@ body::before{
     title: ""
   };
 
+  // Promise.any polyfill for older browsers.
   if (typeof Promise.any !== "function") {
     Promise.any = function (promises) {
       return new Promise(function (resolve, reject) {
@@ -974,9 +512,9 @@ body::before{
     };
   }
 
-  /* -------------------------------------------------------------------
-     DOM
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     3. DOM
+     ===================================================================== */
   function $(id) { return document.getElementById(id); }
 
   var el = {
@@ -998,9 +536,9 @@ body::before{
     clearHistory: $("clearHistory"), toasts: $("toasts")
   };
 
-  /* -------------------------------------------------------------------
-     UTILITIES
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     4. UTILITIES
+     ===================================================================== */
   function sanitizeFilename(name) {
     var out = String(name || "")
       .replace(/[\\/:*?"<>|\u0000-\u001f]/g, "")
@@ -1072,29 +610,9 @@ body::before{
     }).finally(function () { clearTimeout(timer); });
   }
 
-  // Robust JSON fetcher: tries direct, then each CORS proxy.
-  async function fetchJSONRobust(url, ms) {
-    ms = ms || 12000;
-    try {
-      return await fetchJSON(url, ms);
-    } catch (directErr) {
-      console.warn("[HexTube] direct JSON fetch failed:", hostOf(url), "-", directErr.message);
-      for (var i = 0; i < CORS_PROXIES.length; i++) {
-        try {
-          var proxied = CORS_PROXIES[i](url);
-          console.warn("[HexTube] trying CORS proxy #" + (i + 1) + " for", hostOf(url));
-          return await fetchJSON(proxied, ms + 5000);
-        } catch (proxyErr) {
-          console.warn("[HexTube] proxy #" + (i + 1) + " failed:", proxyErr.message);
-        }
-      }
-      throw directErr;
-    }
-  }
-
-  /* -------------------------------------------------------------------
-     TOASTS & STATUS
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     5. TOASTS & STATUS
+     ===================================================================== */
   function toast(message, type, ms) {
     var node = document.createElement("div");
     node.className = "toast " + (type || "info");
@@ -1132,11 +650,12 @@ body::before{
     el.downloadBtn.disabled = busy;
     if (busy) {
       el.downloadBtn.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i><span id="downloadBtnText">Working…</span>';
+        '<span class="spinner"></span><span id="downloadBtnText">Working…</span>';
       el.downloadBtnText = $("downloadBtnText");
     } else {
       el.downloadBtn.innerHTML =
-        '<i class="fa-solid fa-download"></i><span id="downloadBtnText">Download MP4</span>';
+        '<svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>' +
+        '<span id="downloadBtnText">Download</span>';
       el.downloadBtnText = $("downloadBtnText");
       updateDownloadLabel();
     }
@@ -1148,9 +667,9 @@ body::before{
       state.mode === "audio" ? "Download MP3" : "Download MP4";
   }
 
-  /* -------------------------------------------------------------------
-     YOUTUBE PARSING & PREVIEW
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     6. YOUTUBE PARSING & PREVIEW
+     ===================================================================== */
   function extractVideoId(input) {
     if (!input) return null;
     var raw = String(input).trim();
@@ -1208,9 +727,9 @@ body::before{
     showPreview(id);
   }, 380);
 
-  /* -------------------------------------------------------------------
-     SETTINGS (Cobalt only)
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     7. SETTINGS
+     ===================================================================== */
   function getStoredEndpoint() {
     try { return localStorage.getItem(STORAGE.endpoint) || ""; } catch (e) { return ""; }
   }
@@ -1243,9 +762,9 @@ body::before{
     toast("Settings reset", "info", 2000);
   }
 
-  /* -------------------------------------------------------------------
-     HISTORY
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     8. HISTORY
+     ===================================================================== */
   function getHistory() {
     try {
       var raw = localStorage.getItem(STORAGE.history);
@@ -1305,7 +824,7 @@ body::before{
       var del = document.createElement("button");
       del.className = "icon-btn small"; del.type = "button";
       del.setAttribute("aria-label", "Remove from history");
-      del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+      del.textContent = "✕";
       del.addEventListener("click", function (evt) {
         evt.stopPropagation();
         removeHistoryAt(index);
@@ -1326,11 +845,15 @@ body::before{
     });
   }
 
-  /* -------------------------------------------------------------------
-     DYNAMIC INSTANCE DISCOVERY
-     ------------------------------------------------------------------- */
-  var instanceCache = { piped: null, invidious: null, timestamp: { piped: 0, invidious: 0 } };
-  var CACHE_TTL = 5 * 60 * 1000;
+  /* =====================================================================
+     9. DYNAMIC INSTANCE DISCOVERY
+     ===================================================================== */
+  var instanceCache = {
+    piped: null,
+    invidious: null,
+    timestamp: { piped: 0, invidious: 0 }
+  };
+  var CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   function getCachedInstances(type) {
     var cached = instanceCache[type];
@@ -1350,7 +873,7 @@ body::before{
 
     var live = [];
     try {
-      var json = await fetchJSONRobust(PIPED_REGISTRY, 8000);
+      var json = await fetchJSON(PIPED_REGISTRY, 6000);
       if (Array.isArray(json)) {
         live = json.map(function (i) { return i && i.api_url; }).filter(Boolean);
       }
@@ -1358,7 +881,7 @@ body::before{
       console.warn("[HexTube] piped registry unreachable:", e.message);
     }
 
-    var list = dedupe(live.concat(PIPED_FALLBACK)).slice(0, 14);
+    var list = dedupe(live.concat(PIPED_FALLBACK)).slice(0, 10);
     setCachedInstances("piped", list);
     return list;
   }
@@ -1369,7 +892,7 @@ body::before{
 
     var live = [];
     try {
-      var json = await fetchJSONRobust(INVIDIOUS_REGISTRY, 8000);
+      var json = await fetchJSON(INVIDIOUS_REGISTRY, 6000);
       if (Array.isArray(json)) {
         live = json
           .filter(function (row) {
@@ -1383,14 +906,16 @@ body::before{
       console.warn("[HexTube] invidious registry unreachable:", e.message);
     }
 
-    var list = dedupe(live.concat(INVIDIOUS_FALLBACK)).slice(0, 14);
+    var list = dedupe(live.concat(INVIDIOUS_FALLBACK)).slice(0, 10);
     setCachedInstances("invidious", list);
     return list;
   }
 
-  /* -------------------------------------------------------------------
-     BATCH RUNNER
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     10. BATCH RUNNER
+     ===================================================================== */
+  // Runs `fn(item)` against up to 3 instances in parallel per wave.
+  // Returns the first successful result, or rejects with aggregated errors.
   function runBatch(items, fn, batchSize) {
     var size = batchSize || 3;
     var errors = [];
@@ -1399,7 +924,9 @@ body::before{
     return new Promise(function (resolve, reject) {
       function nextWave() {
         if (!queue.length) {
-          var summary = errors.length ? errors.slice(0, 4).join(" | ") : "all instances failed";
+          var summary = errors.length
+            ? errors.slice(0, 4).join(" | ")
+            : "all instances failed";
           return reject(new Error(summary));
         }
         var wave = queue.splice(0, size);
@@ -1418,90 +945,9 @@ body::before{
     });
   }
 
-  /* -------------------------------------------------------------------
-     ffmpeg.wasm — LAZY LOADER
-     ------------------------------------------------------------------- */
-  var ffmpegInstance = null;
-  var ffmpegLoading = null;
-  var ffmpegFetchFile = null;
-
-  async function getFFmpeg(onStatus) {
-    if (ffmpegInstance) return ffmpegInstance;
-    if (ffmpegLoading) return ffmpegLoading;
-
-    ffmpegLoading = (async function () {
-      if (onStatus) onStatus("Loading ffmpeg (first time ~30MB, cached after)…");
-      var FFmpegMod = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/+esm");
-      var UtilMod = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/+esm");
-      var FFmpeg = FFmpegMod.FFmpeg;
-      var toBlobURL = UtilMod.toBlobURL;
-      ffmpegFetchFile = UtilMod.fetchFile;
-
-      var ffmpeg = new FFmpeg();
-      ffmpeg.on("log", function (ev) {
-        if (ev && ev.message) console.log("[ffmpeg]", ev.message);
-      });
-
-      var baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
-      await ffmpeg.load({
-        coreURL: await toBlobURL(baseURL + "/ffmpeg-core.js", "text/javascript"),
-        wasmURL: await toBlobURL(baseURL + "/ffmpeg-core.wasm", "application/wasm")
-      });
-
-      ffmpegInstance = ffmpeg;
-      return ffmpeg;
-    })();
-
-    try {
-      return await ffmpegLoading;
-    } catch (e) {
-      ffmpegLoading = null;
-      throw e;
-    }
-  }
-
-  async function muxStreams(videoBlob, videoExt, audioBlob, audioExt, outputExt, onProgress) {
-    var ffmpeg = await getFFmpeg(onProgress);
-    if (!ffmpegFetchFile) {
-      var util = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/+esm");
-      ffmpegFetchFile = util.fetchFile;
-    }
-
-    var vName = "v_" + Date.now() + "." + videoExt;
-    var aName = "a_" + Date.now() + "." + audioExt;
-    var oName = "out_" + Date.now() + "." + outputExt;
-
-    if (onProgress) onProgress("Writing video to ffmpeg FS…");
-    await ffmpeg.writeFile(vName, await ffmpegFetchFile(videoBlob));
-
-    if (onProgress) onProgress("Writing audio to ffmpeg FS…");
-    await ffmpeg.writeFile(aName, await ffmpegFetchFile(audioBlob));
-
-    if (onProgress) onProgress("Muxing video + audio…");
-    await ffmpeg.exec([
-      "-i", vName,
-      "-i", aName,
-      "-c", "copy",
-      "-map", "0:v:0",
-      "-map", "1:a:0",
-      "-shortest",
-      oName
-    ]);
-
-    var data = await ffmpeg.readFile(oName);
-    var outType = outputExt === "webm" ? "video/webm" : "video/mp4";
-    var blob = new Blob([data.buffer], { type: outType });
-
-    try { await ffmpeg.deleteFile(vName); } catch (_) {}
-    try { await ffmpeg.deleteFile(aName); } catch (_) {}
-    try { await ffmpeg.deleteFile(oName); } catch (_) {}
-
-    return blob;
-  }
-
-  /* -------------------------------------------------------------------
-     PIPED BACKEND — returns either a direct muxed stream or a mux plan
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     11. PIPED BACKEND
+     ===================================================================== */
   async function tryPiped(videoId, mode, quality) {
     var instances = await getPipedInstances();
     setStatus("Searching Piped (" + instances.length + " instances)…", "info");
@@ -1512,7 +958,7 @@ body::before{
 
   function fetchOnePiped(base, videoId, mode, quality) {
     var url = String(base).replace(/\/+$/, "") + "/streams/" + videoId;
-    return fetchJSONRobust(url, 15000).then(function (data) {
+    return fetchJSON(url, 15000).then(function (data) {
       if (!data || data.error) {
         throw new Error((data && data.error) ? String(data.error) : "empty response");
       }
@@ -1527,14 +973,12 @@ body::before{
       el.videoTitle.textContent = title;
     }
 
-    // ===== AUDIO MODE =====
     if (mode === "audio") {
       var audios = (data.audioStreams || []).filter(function (a) { return a && a.url; });
       if (!audios.length) throw new Error("no audio streams");
       audios.sort(function (a, b) { return (b.bitrate || 0) - (a.bitrate || 0); });
       var a = audios[0];
       return {
-        kind: "direct",
         url: a.url,
         filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
           "." + extFromMime(a.mimeType, "m4a"),
@@ -1542,118 +986,44 @@ body::before{
       };
     }
 
-    // ===== VIDEO MODE =====
     var videos = (data.videoStreams || []).filter(function (v) { return v && v.url; });
-    var muxed = videos.filter(function (v) { return v.videoOnly !== true; });
-    var separate = videos.filter(function (v) { return v.videoOnly === true; });
-    var audioList = (data.audioStreams || []).filter(function (x) { return x && x.url; });
-    audioList.sort(function (a, b) { return (b.bitrate || 0) - (a.bitrate || 0); });
+    if (!videos.length) throw new Error("no video streams");
 
-    var target = (quality === "max") ? Infinity : (parseInt(quality, 10) || 0);
-    var wantExt = el.videoCodec.value === "webm" ? "webm" : "mp4";
+    // Prefer combined (video + audio) streams.
+    var combined = videos.filter(function (s) { return !s.videoOnly; });
+    var pool = combined.length ? combined : videos;
 
-    // 1) Try a muxed stream at requested quality (fast, no ffmpeg).
-    var muxedSorted = muxed.slice().sort(function (a, b) {
+    pool.sort(function (a, b) {
       return (parseInt(b.quality, 10) || 0) - (parseInt(a.quality, 10) || 0);
     });
-    var muxedMatch = null;
-    if (target === Infinity) {
-      muxedMatch = muxedSorted.find(function (v) {
-        return String(v.mimeType || "").toLowerCase().indexOf(wantExt) !== -1;
-      }) || muxedSorted[0];
+
+    var match = null;
+    if (quality === "max") {
+      match = pool[0];
     } else {
-      var candidatesM = muxedSorted.filter(function (v) {
-        return (parseInt(v.quality, 10) || 0) <= target;
-      });
-      if (!candidatesM.length) candidatesM = muxedSorted;
-      muxedMatch = candidatesM.find(function (v) {
-        return String(v.mimeType || "").toLowerCase().indexOf(wantExt) !== -1;
-      }) || candidatesM[0];
-    }
-
-    var muxedHitExact = muxedMatch && (
-      target === Infinity ||
-      (parseInt(muxedMatch.quality, 10) || 0) === target
-    );
-
-    if (muxedMatch && muxedHitExact) {
-      return {
-        kind: "direct",
-        url: muxedMatch.url,
-        filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
-          "." + extFromMime(muxedMatch.mimeType, "mp4"),
-        title: title,
-        muxedQuality: muxedMatch.quality
-      };
-    }
-
-    // 2) Try separate streams (video-only + audio-only) at requested quality — mux with ffmpeg.
-    if (separate.length && audioList.length) {
-      var sepSorted = separate.slice().sort(function (a, b) {
-        var qa = parseInt(a.quality, 10) || 0;
-        var qb = parseInt(b.quality, 10) || 0;
-        if (qb !== qa) return qb - qa;
-        var ma = String(a.mimeType || "").toLowerCase();
-        var mb = String(b.mimeType || "").toLowerCase();
-        var wa = ma.indexOf(wantExt) !== -1 ? 1 : 0;
-        var wb = mb.indexOf(wantExt) !== -1 ? 1 : 0;
-        return wb - wa;
-      });
-
-      var sepMatch = null;
-      if (target === Infinity) {
-        sepMatch = sepSorted.find(function (v) {
-          return String(v.mimeType || "").toLowerCase().indexOf(wantExt) !== -1;
-        }) || sepSorted[0];
-      } else {
-        var candidatesS = sepSorted.filter(function (v) {
-          return (parseInt(v.quality, 10) || 0) <= target;
-        });
-        if (!candidatesS.length) candidatesS = sepSorted;
-        sepMatch = candidatesS.find(function (v) {
-          return String(v.mimeType || "").toLowerCase().indexOf(wantExt) !== -1;
-        }) || candidatesS[0];
+      var target = parseInt(quality, 10);
+      for (var i = 0; i < pool.length; i++) {
+        if ((parseInt(pool[i].quality, 10) || 0) === target) { match = pool[i]; break; }
       }
+      if (!match) match = pool[0];
+    }
+    if (!match) throw new Error("no matching video stream");
 
-      if (sepMatch) {
-        var audioPref = (wantExt === "webm") ? "webm" : "mp4";
-        var audioMatch = audioList.find(function (x) {
-          return String(x.mimeType || "").toLowerCase().indexOf(audioPref) !== -1;
-        }) || audioList[0];
-
-        return {
-          kind: "mux",
-          videoUrl: sepMatch.url,
-          videoExt: extFromMime(sepMatch.mimeType, wantExt),
-          audioUrl: audioMatch.url,
-          audioExt: extFromMime(audioMatch.mimeType, "m4a"),
-          outputExt: extFromMime(sepMatch.mimeType, wantExt),
-          filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
-            "." + extFromMime(sepMatch.mimeType, wantExt),
-          title: title,
-          quality: sepMatch.quality
-        };
-      }
+    if (match.videoOnly) {
+      setStatus("Note: high-res stream is video-only (no audio track).", "info");
     }
 
-    // 3) Fallback: any muxed stream we can find (guarantees audio).
-    if (muxedMatch) {
-      return {
-        kind: "direct",
-        url: muxedMatch.url,
-        filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
-          "." + extFromMime(muxedMatch.mimeType, "mp4"),
-        title: title,
-        muxedQuality: muxedMatch.quality
-      };
-    }
-
-    throw new Error("no playable stream with audio");
+    return {
+      url: match.url,
+      filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
+        "." + extFromMime(match.mimeType, "mp4"),
+      title: title
+    };
   }
 
-  /* -------------------------------------------------------------------
-     INVIDIOUS BACKEND — returns direct muxed or mux plan
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     12. INVIDIOUS BACKEND
+     ===================================================================== */
   async function tryInvidious(videoId, mode, quality) {
     var instances = await getInvidiousInstances();
     setStatus("Searching Invidious (" + instances.length + " instances)…", "info");
@@ -1663,8 +1033,9 @@ body::before{
   }
 
   function fetchOneInvidious(base, videoId, mode, quality) {
-    var url = String(base).replace(/\/+$/, "") + "/api/v1/videos/" + videoId + "?local=true";
-    return fetchJSONRobust(url, 15000).then(function (data) {
+    var url = String(base).replace(/\/+$/, "") +
+      "/api/v1/videos/" + videoId + "?local=true";
+    return fetchJSON(url, 15000).then(function (data) {
       if (!data || data.error) {
         throw new Error((data && data.error) ? String(data.error) : "empty response");
       }
@@ -1686,7 +1057,6 @@ body::before{
     var adaptive = data.adaptiveFormats || [];
     var formatStreams = data.formatStreams || [];
 
-    // ===== AUDIO MODE =====
     if (mode === "audio") {
       var audios = adaptive.filter(function (f) {
         return f && f.url && String(f.type || "").indexOf("audio/") === 0;
@@ -1697,7 +1067,6 @@ body::before{
       });
       var a = audios[0];
       return {
-        kind: "direct",
         url: a.url,
         filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
           "." + extFromMime(a.type, "m4a"),
@@ -1705,131 +1074,56 @@ body::before{
       };
     }
 
-    // ===== VIDEO MODE =====
-    var target = (quality === "max") ? Infinity : (parseInt(quality, 10) || 0);
-    var wantExt = el.videoCodec.value === "webm" ? "webm" : "mp4";
+    // Prefer combined formatStreams — they include audio.
+    var pool = formatStreams.filter(function (f) { return f && f.url; });
+    if (!pool.length) {
+      pool = adaptive.filter(function (f) {
+        return f && f.url && String(f.type || "").indexOf("video/") === 0;
+      });
+    }
+    if (!pool.length) throw new Error("no video streams");
 
-    var muxedPool = formatStreams.filter(function (f) { return f && f.url; });
-    muxedPool.sort(function (a, b) {
+    pool.sort(function (a, b) {
       return qualityNumber(b.qualityLabel) - qualityNumber(a.qualityLabel);
     });
 
-    var muxedMatch = null;
-    if (target === Infinity) {
-      muxedMatch = muxedPool.find(function (v) {
-        return String(v.type || "").toLowerCase().indexOf(wantExt) !== -1;
-      }) || muxedPool[0];
+    var match = null;
+    if (quality === "max") {
+      match = pool[0];
     } else {
-      var candidatesM = muxedPool.filter(function (v) {
-        return qualityNumber(v.qualityLabel) <= target;
-      });
-      if (!candidatesM.length) candidatesM = muxedPool;
-      muxedMatch = candidatesM.find(function (v) {
-        return String(v.type || "").toLowerCase().indexOf(wantExt) !== -1;
-      }) || candidatesM[0];
-    }
-
-    var muxedHitExact = muxedMatch && (
-      target === Infinity || qualityNumber(muxedMatch.qualityLabel) === target
-    );
-
-    if (muxedMatch && muxedHitExact) {
-      return {
-        kind: "direct",
-        url: muxedMatch.url,
-        filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
-          "." + extFromMime(muxedMatch.type, "mp4"),
-        title: title,
-        muxedQuality: muxedMatch.qualityLabel
-      };
-    }
-
-    // Try separate (adaptiveFormats) for higher quality with muxing.
-    var sepVideo = adaptive.filter(function (f) {
-      return f && f.url && String(f.type || "").indexOf("video/") === 0;
-    });
-    var sepAudio = adaptive.filter(function (f) {
-      return f && f.url && String(f.type || "").indexOf("audio/") === 0;
-    });
-
-    if (sepVideo.length && sepAudio.length) {
-      var sepSorted = sepVideo.slice().sort(function (a, b) {
-        var qa = qualityNumber(a.qualityLabel);
-        var qb = qualityNumber(b.qualityLabel);
-        if (qb !== qa) return qb - qa;
-        var ma = String(a.type || "").toLowerCase();
-        var mb = String(b.type || "").toLowerCase();
-        var wa = ma.indexOf(wantExt) !== -1 ? 1 : 0;
-        var wb = mb.indexOf(wantExt) !== -1 ? 1 : 0;
-        return wb - wa;
-      });
-
-      var sepMatch = null;
-      if (target === Infinity) {
-        sepMatch = sepSorted.find(function (v) {
-          return String(v.type || "").toLowerCase().indexOf(wantExt) !== -1;
-        }) || sepSorted[0];
-      } else {
-        var candidatesS = sepSorted.filter(function (v) {
-          return qualityNumber(v.qualityLabel) <= target;
-        });
-        if (!candidatesS.length) candidatesS = sepSorted;
-        sepMatch = candidatesS.find(function (v) {
-          return String(v.type || "").toLowerCase().indexOf(wantExt) !== -1;
-        }) || candidatesS[0];
+      var target = parseInt(quality, 10);
+      for (var i = 0; i < pool.length; i++) {
+        if (qualityNumber(pool[i].qualityLabel) === target) { match = pool[i]; break; }
       }
-
-      if (sepMatch) {
-        sepAudio.sort(function (a, b) {
-          return (parseInt(b.bitrate, 10) || 0) - (parseInt(a.bitrate, 10) || 0);
-        });
-        var audioPref = (wantExt === "webm") ? "webm" : "mp4";
-        var audioMatch = sepAudio.find(function (x) {
-          return String(x.type || "").toLowerCase().indexOf(audioPref) !== -1;
-        }) || sepAudio[0];
-
-        return {
-          kind: "mux",
-          videoUrl: sepMatch.url,
-          videoExt: extFromMime(sepMatch.type, wantExt),
-          audioUrl: audioMatch.url,
-          audioExt: extFromMime(audioMatch.type, "m4a"),
-          outputExt: extFromMime(sepMatch.type, wantExt),
-          filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
-            "." + extFromMime(sepMatch.type, wantExt),
-          title: title,
-          quality: sepMatch.qualityLabel
-        };
-      }
+      if (!match) match = pool[0];
     }
+    if (!match) throw new Error("no matching video stream");
 
-    if (muxedMatch) {
-      return {
-        kind: "direct",
-        url: muxedMatch.url,
-        filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
-          "." + extFromMime(muxedMatch.type, "mp4"),
-        title: title,
-        muxedQuality: muxedMatch.qualityLabel
-      };
-    }
-
-    throw new Error("no playable stream with audio");
+    return {
+      url: match.url,
+      filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
+        "." + extFromMime(match.type, "mp4"),
+      title: title
+    };
   }
 
-  /* -------------------------------------------------------------------
-     COBALT BACKEND (only if user configured an endpoint)
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     13. COBALT BACKEND (only if user configured an endpoint)
+     ===================================================================== */
   function tryCobalt(url) {
     var endpoint = getCobaltEndpoint();
     if (!endpoint) {
+      // Not an error — just not configured. Signal that clearly.
       return Promise.reject(new Error("cobalt-not-configured"));
     }
 
     var apiKey = getStoredApiKey();
     setStatus("Trying Cobalt (" + hostOf(endpoint) + ")…", "info");
 
-    var payload = { url: url, filenameStyle: "pretty" };
+    var payload = {
+      url: url,
+      filenameStyle: "pretty"
+    };
     if (state.mode === "audio") {
       payload.downloadMode = "audio";
       payload.audioFormat = el.audioFormat.value;
@@ -1840,7 +1134,10 @@ body::before{
       if (el.videoCodec.value === "mp4") payload.youtubeVideoCodec = "h264";
     }
 
-    var headers = { "Accept": "application/json", "Content-Type": "application/json" };
+    var headers = {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    };
     if (apiKey) headers["Authorization"] = "Api-Key " + apiKey;
 
     var ctrl = new AbortController();
@@ -1873,14 +1170,16 @@ body::before{
   function parseCobaltResult(json) {
     if (json.status === "tunnel" || json.status === "redirect") {
       if (!json.url) throw new Error("no download url returned");
-      return { kind: "direct", url: json.url, filename: json.filename || "", title: "" };
+      return { url: json.url, filename: json.filename || "", title: "" };
     }
     if (json.status === "picker") {
       var items = Array.isArray(json.picker) ? json.picker : [];
       var wanted = state.mode === "audio" ? "audio" : "video";
       var picked = null;
       for (var i = 0; i < items.length; i++) {
-        if (items[i] && items[i].type === wanted && items[i].url) { picked = items[i]; break; }
+        if (items[i] && items[i].type === wanted && items[i].url) {
+          picked = items[i]; break;
+        }
       }
       if (!picked) {
         for (var j = 0; j < items.length; j++) {
@@ -1888,7 +1187,7 @@ body::before{
         }
       }
       if (!picked) throw new Error("no downloadable stream");
-      return { kind: "direct", url: picked.url, filename: json.filename || picked.filename || "", title: "" };
+      return { url: picked.url, filename: json.filename || picked.filename || "", title: "" };
     }
     if (json.status === "local-processing") {
       throw new Error("instance requires local processing");
@@ -1896,32 +1195,43 @@ body::before{
     throw new Error("unexpected status: " + json.status);
   }
 
-  /* -------------------------------------------------------------------
-     ORCHESTRATOR
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     14. ORCHESTRATOR
+     ===================================================================== */
   function requestDownload(videoId) {
     return tryPiped(videoId, state.mode, el.quality.value)
-      .then(function (r) { console.log("[HexTube] ✓ piped"); return r; })
+      .then(function (r) {
+        console.log("[HexTube] ✓ piped");
+        return r;
+      })
       .catch(function (pipedErr) {
         console.warn("[HexTube] ✗ piped:", pipedErr.message);
         setStatus("Piped failed — trying Invidious…", "info");
 
         return tryInvidious(videoId, state.mode, el.quality.value)
-          .then(function (r) { console.log("[HexTube] ✓ invidious"); return r; })
+          .then(function (r) {
+            console.log("[HexTube] ✓ invidious");
+            return r;
+          })
           .catch(function (invErr) {
             console.warn("[HexTube] ✗ invidious:", invErr.message);
 
+            // If the user hasn't configured Cobalt, skip it with a clear message.
             if (!getCobaltEndpoint()) {
               throw new Error(
                 "All Piped and Invidious instances failed. " +
-                "Public mirrors may be down or blocked. Try again, or configure a custom Cobalt endpoint in Settings. " +
-                "(Piped: " + pipedErr.message.slice(0, 90) + " · Invidious: " + invErr.message.slice(0, 60) + ")"
+                "This usually means the public mirrors are down or your network is blocking them. " +
+                "Try again in a few minutes, or configure a custom Cobalt endpoint in Settings. " +
+                "(Piped: " + pipedErr.message.slice(0, 90) + ")"
               );
             }
 
             setStatus("Public mirrors failed — trying your Cobalt endpoint…", "info");
             return tryCobalt(canonicalUrl(videoId))
-              .then(function (r) { console.log("[HexTube] ✓ cobalt"); return r; })
+              .then(function (r) {
+                console.log("[HexTube] ✓ cobalt");
+                return r;
+              })
               .catch(function (cobaltErr) {
                 if (cobaltErr.message === "cobalt-not-configured") {
                   throw new Error(
@@ -1940,9 +1250,9 @@ body::before{
       });
   }
 
-  /* -------------------------------------------------------------------
-     FILE SAVING & BLOB STREAMING
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     15. FILE SAVING
+     ===================================================================== */
   function saveBlob(blob, filename) {
     var objectUrl = URL.createObjectURL(blob);
     var a = document.createElement("a");
@@ -1965,18 +1275,18 @@ body::before{
     return true;
   }
 
-  // Fetches a URL as a blob, streaming progress (0-100) into onProgress if supported.
-  function fetchBlobWithProgress(url, onProgress) {
+  function fetchAndSave(url, filename, onProgress) {
     return fetch(url, { mode: "cors", credentials: "omit" })
       .then(function (res) {
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        if (!res.ok) throw new Error("download failed (HTTP " + res.status + ")");
         var contentType = res.headers.get("content-type") || "application/octet-stream";
         var total = Number(res.headers.get("content-length")) || 0;
 
         if (!res.body || typeof res.body.getReader !== "function" || !total) {
           return res.blob().then(function (blob) {
-            if (onProgress) onProgress(100, formatBytes(blob.size));
-            return { blob: blob, contentType: contentType };
+            onProgress(100, formatBytes(blob.size));
+            saveBlob(blob, filename);
+            return { saved: true, size: blob.size };
           });
         }
 
@@ -1988,38 +1298,31 @@ body::before{
           return reader.read().then(function (result) {
             if (result.done) {
               var blob = new Blob(chunks, { type: contentType });
-              if (onProgress) onProgress(100, formatBytes(blob.size));
-              return { blob: blob, contentType: contentType };
+              onProgress(100, formatBytes(blob.size));
+              saveBlob(blob, filename);
+              return { saved: true, size: blob.size };
             }
             chunks.push(result.value);
             received += result.value.length;
             var pct = total ? (received / total) * 100 : 0;
-            if (onProgress) onProgress(Math.min(99, pct),
+            onProgress(Math.min(99, pct),
               formatBytes(received) + " / " + formatBytes(total));
             return pump();
           });
         }
         return pump();
-      });
-  }
-
-  function fetchAndSave(url, filename, onProgress) {
-    return fetchBlobWithProgress(url, onProgress)
-      .then(function (out) {
-        saveBlob(out.blob, filename);
-        return { saved: true, size: out.blob.size };
       })
       .catch(function (err) {
         console.warn("[HexTube] streaming failed:", err.message);
-        if (onProgress) onProgress(100, "direct link");
+        onProgress(100, "direct link");
         if (openInNewTab(url)) return { saved: false, fallback: true };
         throw err;
       });
   }
 
-  /* -------------------------------------------------------------------
-     DOWNLOAD FLOW
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     16. DOWNLOAD FLOW
+     ===================================================================== */
   function guessExtension() {
     if (state.mode === "audio") {
       var fmt = el.audioFormat.value;
@@ -2041,90 +1344,6 @@ body::before{
     return base + suffix + "." + guessExtension();
   }
 
-  async function runDownload() {
-    var raw = el.urlInput.value.trim();
-    var id = extractVideoId(raw);
-    if (!id) throw new Error("invalid YouTube link");
-
-    state.lastId = id;
-    if (el.preview.classList.contains("hidden")) showPreview(id);
-
-    setProgress(0, "resolving…");
-    setStatus("Resolving download link…", "info");
-
-    var result = await requestDownload(id);
-    if (!result || (!result.url && !(result.videoUrl && result.audioUrl))) {
-      throw new Error("no download URL returned");
-    }
-
-    // ── PATH A: direct single-file (muxed stream or audio) ──
-    if (result.kind === "direct") {
-      var filename = buildFilename(result.filename, id);
-      setStatus("Download starting…", "info");
-      setProgress(2, "starting…");
-      return fetchAndSave(result.url, filename, setProgress).then(function (outcome) {
-        return { outcome: outcome, filename: filename, result: result };
-      });
-    }
-
-    // ── PATH B: separate video + audio — mux with ffmpeg.wasm ──
-    if (result.kind === "mux") {
-      var baseName = sanitizeFilename(state.title || ("hextube_" + id));
-      var outName = baseName + "." + result.outputExt;
-
-      setStatus("Downloading video stream…", "info");
-      setProgress(2, "video: 0%");
-      var videoOut = await fetchBlobWithProgress(result.videoUrl, function (pct, detail) {
-        setProgress(2 + pct * 0.45, "video: " + Math.round(pct) + "%");
-      });
-
-      setStatus("Downloading audio stream…", "info");
-      setProgress(48, "audio: 0%");
-      var audioOut = await fetchBlobWithProgress(result.audioUrl, function (pct, detail) {
-        setProgress(48 + pct * 0.22, "audio: " + Math.round(pct) + "%");
-      });
-
-      setStatus("Muxing with ffmpeg.wasm (this may take a moment)…", "info");
-      setProgress(72, "loading ffmpeg…");
-
-      var muxedBlob;
-      try {
-        muxedBlob = await muxStreams(
-          videoOut.blob, result.videoExt,
-          audioOut.blob, result.audioExt,
-          result.outputExt,
-          function (msg) {
-            setProgress(80, msg || "muxing…");
-          }
-        );
-      } catch (muxErr) {
-        console.warn("[HexTube] ffmpeg mux failed:", muxErr.message);
-        toast("ffmpeg mux failed — falling back to muxed stream", "error", 6000);
-        // Fallback: try a muxed stream at max quality
-        var fallback = await tryPiped(id, state.mode, "max")
-          .catch(function () { return tryInvidious(id, state.mode, "max"); });
-        if (fallback && fallback.kind === "direct") {
-          var fname = buildFilename(fallback.filename, id);
-          setStatus("Download starting (fallback)…", "info");
-          setProgress(85, "starting…");
-          var outcome2 = await fetchAndSave(fallback.url, fname, setProgress);
-          return { outcome: outcome2, filename: fname, result: fallback };
-        }
-        throw muxErr;
-      }
-
-      setProgress(100, formatBytes(muxedBlob.size));
-      saveBlob(muxedBlob, outName);
-      return {
-        outcome: { saved: true, size: muxedBlob.size },
-        filename: outName,
-        result: result
-      };
-    }
-
-    throw new Error("unknown result kind");
-  }
-
   function handleDownload() {
     if (state.busy) return;
 
@@ -2135,35 +1354,48 @@ body::before{
       el.urlInput.focus();
       return;
     }
-    if (!extractVideoId(raw)) {
+
+    var id = extractVideoId(raw);
+    if (!id) {
       setStatus("That doesn't look like a YouTube link.", "error");
       toast("Invalid YouTube link", "error");
       return;
     }
 
-    setBusy(true);
+    state.lastId = id;
+    if (el.preview.classList.contains("hidden")) showPreview(id);
 
-    runDownload()
-      .then(function (res) {
-        var outcome = res.outcome;
-        setStatus(
-          outcome.saved
-            ? "Saved: " + res.filename
-            : "Opened in a new tab — use your browser's save option.",
-          outcome.saved ? "ok" : "info"
-        );
-        toast(
-          outcome.saved ? "Download complete" : "Opened direct link",
-          outcome.saved ? "ok" : "info",
-          3200
-        );
-        addHistory({
-          id: state.lastId,
-          url: canonicalUrl(state.lastId),
-          title: state.title || (res.result && res.result.title) || ("YouTube " + state.lastId),
-          mode: state.mode,
-          format: guessExtension(),
-          time: Date.now()
+    setBusy(true);
+    setProgress(0, "resolving…");
+    setStatus("Resolving download link…", "info");
+
+    requestDownload(id)
+      .then(function (result) {
+        if (!result || !result.url) throw new Error("no download URL returned");
+        var filename = buildFilename(result.filename, id);
+        setStatus("Download starting…", "info");
+        setProgress(2, "starting…");
+
+        return fetchAndSave(result.url, filename, setProgress).then(function (outcome) {
+          setStatus(
+            outcome.saved
+              ? "Saved: " + filename
+              : "Opened in a new tab — use your browser's save option.",
+            outcome.saved ? "ok" : "info"
+          );
+          toast(
+            outcome.saved ? "Download complete" : "Opened direct link",
+            outcome.saved ? "ok" : "info",
+            3200
+          );
+          addHistory({
+            id: id,
+            url: canonicalUrl(id),
+            title: state.title || result.title || ("YouTube " + id),
+            mode: state.mode,
+            format: guessExtension(),
+            time: Date.now()
+          });
         });
       })
       .catch(function (err) {
@@ -2179,9 +1411,9 @@ body::before{
       });
   }
 
-  /* -------------------------------------------------------------------
-     PASTE
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     17. PASTE
+     ===================================================================== */
   function handlePaste() {
     if (!navigator.clipboard || !navigator.clipboard.readText) {
       toast("Clipboard unavailable — paste manually", "error");
@@ -2203,9 +1435,9 @@ body::before{
       });
   }
 
-  /* -------------------------------------------------------------------
-     MODE SWITCH
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     18. MODE SWITCH
+     ===================================================================== */
   function setMode(mode) {
     state.mode = mode;
     var isVideo = mode === "video";
@@ -2217,9 +1449,9 @@ body::before{
     setStatus("");
   }
 
-  /* -------------------------------------------------------------------
-     EVENTS
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     19. EVENTS
+     ===================================================================== */
   function bindEvents() {
     el.urlInput.addEventListener("input", handleUrlChange);
     el.urlInput.addEventListener("keydown", function (evt) {
@@ -2242,19 +1474,21 @@ body::before{
     el.resetSettings.addEventListener("click", resetSettings);
     el.clearHistory.addEventListener("click", clearHistory);
 
+    ["click", "focus", "visibilitychange"].forEach(function (evt) {
+      document.addEventListener(evt, function () {
+        if (window.__forceDarkMode) window.__forceDarkMode();
+      }, true);
+    });
+
     window.addEventListener("dragover", function (e) { e.preventDefault(); });
     window.addEventListener("drop", function (e) { e.preventDefault(); });
   }
 
-  /* -------------------------------------------------------------------
-     INIT
-     ------------------------------------------------------------------- */
+  /* =====================================================================
+     20. INIT
+     ===================================================================== */
   function init() {
-    // FORCED DARK MODE — no toggle. JS only.
-    document.documentElement.style.colorScheme = "dark";
-    document.body.classList.add("dark");
-    try { localStorage.setItem("dark", "true"); } catch (e) {}
-
+    if (window.__forceDarkMode) window.__forceDarkMode();
     loadSettingsIntoUI();
     renderHistory();
     setMode("video");
