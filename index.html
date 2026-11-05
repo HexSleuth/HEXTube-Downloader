@@ -461,7 +461,6 @@
       </div>
 
       <div class="shareRow">
-        <button id="ytdlnisBtn" class="ghost" type="button">Open in ytdlnis</button>
         <button id="copyBtn" class="ghost" type="button">Copy link</button>
         <button id="openSrcBtn" class="ghost" type="button">Open source</button>
       </div>
@@ -518,7 +517,13 @@
 
   <!-- ========================== INFO ========================== -->
   <div class="note">
-    <strong>What changed in this build</strong>
+    <strong>Formats supported</strong>
+    <ul>
+      <li><strong>Video:</strong> MP4 / H.264 — resolution follows the source (up to 4K on merged Cobalt streams).</li>
+      <li><strong>Audio:</strong> MP3, M4A, Opus, OGG, WAV, WebM.</li>
+      <li><strong>Multi-item posts</strong> (carousels, slideshows, playlists) expose a picker so you can grab any item.</li>
+    </ul>
+    <strong style="display:block;margin-top:10px">What changed in this build</strong>
     <ul>
       <li><strong>Cobalt 404 fixed</strong> — the old <code>/api/json</code> endpoint is gone; only <code>POST /</code> on the base URL is used, matching current Cobalt v10.</li>
       <li><strong>Auto-detect</strong> — working Piped, Invidious and Cobalt instances are discovered on first load and refreshed on demand.</li>
@@ -528,11 +533,11 @@
     Direct YouTube streams top out around 128–160 kbps audio and 360p/720p muxed video.
     For merged 1080p+/4K or exotic containers (AVI, FLV, WMV, 3GP, M4V) use
     <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a>
-    with ffmpeg, or the ytdlnis app on Android.
+    with ffmpeg.
   </div>
 
   <p class="foot">
-    Interface inspired by <a href="https://limbuilder.github.io/yt-converter/" target="_blank" rel="noopener noreferrer">limbuilder.github.io/yt-converter</a>
+    Interface inspired by <a href="https://github.com/HexSleuth/YouTube-Downloader/" target="_blank" rel="noopener noreferrer">𓋹•HexSleuth•𓃠</a>
     &middot; Engine modelled on <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a><br>
     Download only content you own or are legally allowed to download.<br>
     Respect each platform's Terms of Service and local copyright law.
@@ -1357,7 +1362,7 @@
       if (data.status === "local-processing") {
         throw new Error(
           "This Cobalt instance wants to process the file locally, which is not supported here. " +
-          "Use another instance or the ytdlnis app."
+          "Use another instance."
         );
       }
 
@@ -1443,7 +1448,6 @@
 
     dlBtn:             $("dlBtn"),
     cancelBtn:         $("cancelBtn"),
-    ytdlnisBtn:        $("ytdlnisBtn"),
     copyBtn:           $("copyBtn"),
     openSrcBtn:        $("openSrcBtn"),
     pickerRow:         $("pickerRow"),
@@ -1490,6 +1494,8 @@
     { v: "opus", l: "Opus" },
     { v: "ogg",  l: "OGG" },
     { v: "wav",  l: "WAV" },
+    { v: "m4a",  l: "M4A / AAC" },
+    { v: "flac", l: "FLAC" },
   ];
   const AUDIO_BITRATES = ["320", "256", "192", "128", "64"];
 
@@ -1665,7 +1671,7 @@
       showErrHtml(
         "<strong>Every configured YouTube API failed.</strong>" +
         (rows ? "<ul>" + rows + "</ul>" : "") +
-        "<br>Try pressing <strong>Detect now</strong>, add a manual override, or use the ytdlnis app."
+        "<br>Try pressing <strong>Detect now</strong> or add a manual override."
       );
       return;
     }
@@ -1941,7 +1947,7 @@
         showErrHtml(
           "<strong>All Cobalt instances failed.</strong>" +
           (rows ? "<ul>" + rows + "</ul>" : "") +
-          "<br>Press <strong>Detect now</strong> in API instances, or use the ytdlnis app."
+          "<br>Press <strong>Detect now</strong> in API instances to refresh the list."
         );
       } else if (errName(e) === "AbortError") {
         setStatus("Conversion cancelled.", "warn");
@@ -2040,7 +2046,7 @@
       } else if (looksLikeNetworkError(e)) {
         setStatus(
           "The stream host blocked the browser (CORS) or the signed URL expired. " +
-          "A direct link is offered below — or use “Open in ytdlnis”.",
+          "A direct link is offered below.",
           "bad"
         );
         offerDirectLink(url, filename, true);
@@ -2271,37 +2277,6 @@
     }
   }
 
-  function openInYtdlnis() {
-    const target = currentUrl();
-    if (!target) { setStatus("Paste a link first.", "warn"); return; }
-
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    if (!isAndroid) {
-      copyText(target, "ytdlnis is Android-only. The link has been copied — paste it into the app.");
-      return;
-    }
-
-    const encoded = encodeURIComponent(target);
-    const intent =
-      "intent:#Intent;action=android.intent.action.SEND;type=text/plain;" +
-      "S.android.intent.extra.TEXT=" + encoded + ";" +
-      "package=com.deniscerri.ytdl;end";
-
-    const t = Date.now();
-    try {
-      window.location.href = intent;
-    } catch (e) {
-      copyText(target, "Couldn’t open ytdlnis — link copied instead.");
-      return;
-    }
-
-    setTimeout(() => {
-      if (!document.hidden && Date.now() - t < 2500) {
-        copyText(target, "ytdlnis doesn’t seem to be installed. The link has been copied instead.");
-      }
-    }, 1800);
-  }
-
   /* ================================================================== *
    * 24. Tabs
    * ================================================================== */
@@ -2351,7 +2326,6 @@
   ui.fetchBtn.addEventListener("click", doFetch);
   ui.dlBtn.addEventListener("click", doDownload);
   ui.searchBtn.addEventListener("click", doSearch);
-  ui.ytdlnisBtn.addEventListener("click", openInYtdlnis);
 
   ui.copyBtn.addEventListener("click", () => {
     const target = currentUrl();
@@ -2479,6 +2453,105 @@
 
   if (!ui.url.value) ui.url.focus();
 })();
+</script>
+<script>
+// Disable right-click
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+function ctrlShiftKey(e, keyCode) {
+  return e.ctrlKey && e.shiftKey && e.keyCode === keyCode.charCodeAt(0);
+}
+
+document.onkeydown = (e) => {
+  // Disable F12, Ctrl + Shift + I, Ctrl + Shift + J, Ctrl + U
+  if (
+    event.keyCode === 123 ||
+    ctrlShiftKey(e, 'I') ||
+    ctrlShiftKey(e, 'J') ||
+    ctrlShiftKey(e, 'C') ||
+    (e.ctrlKey && e.keyCode === 'U'.charCodeAt(0))
+  )
+    return false;
+};
+</script>
+<script>
+ if (typeof document.onselectstart!="undefined" ) {
+  document.onselectstart=new Function ("return false" );
+ }
+ else {
+  document.onmousedown=new Function ("return false" );
+  document.onmouseup=new Function ("return true" );
+ }
+</script>
+<script>
+   document.onkeydown = function(e) {
+if(event.keyCode == 123) {
+    return false;
+}
+if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'C'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'X'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'Y'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'Z'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'V'.charCodeAt(0)){
+    return false;
+}
+if (e.keyCode == 67 && e.shiftKey && (e.ctrlKey || e.metaKey)){
+    return false;
+}
+if (e.keyCode == 'J'.charCodeAt(0) && e.altKey && (e.ctrlKey || e.metaKey)){
+    return false;
+}
+if (e.keyCode == 'I'.charCodeAt(0) && e.altKey && (e.ctrlKey || e.metaKey)){
+    return false;
+}
+if ((e.keyCode == 'V'.charCodeAt(0) && e.metaKey) || (e.metaKey && e.altKey)){
+    return false;
+}
+if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'S'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'H'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'A'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'F'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'E'.charCodeAt(0)){
+    return false;
+}
+}
+if (document.addEventListener) {
+    document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    }, false);
+}else{
+    document.attachEvent('oncontextmenu', function() {
+    window.event.returnValue = false;
+    });
+}
 </script>
 </body>
 </html>
