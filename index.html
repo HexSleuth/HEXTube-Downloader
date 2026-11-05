@@ -7,28 +7,36 @@
 <meta name="theme-color" content="#07090d" />
 <meta name="description" content="HexTube Downloader - mobile friendly YouTube video and audio downloader." />
 <title>HexTube Downloader</title>
+
+<!-- Font Awesome (icons & buttons) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer" />
+
 <style>
 :root{
   color-scheme: dark only;
   --bg:#07090d; --surface:#0f151d; --surface-2:#141d27; --surface-3:#1a2532;
   --border:#1f2b3a; --border-2:#2a3a4d;
   --text:#e6edf6; --text-dim:#9aabc0; --muted:#6f8098;
-  --accent:#00e5a0; --accent-2:#00b3ff; --danger:#ff4d6d; --warn:#ffc857;
+  --accent:#00e5a0; --accent-2:#00b3ff; --accent-3:#67cba0; --danger:#ff4d6d; --warn:#ffc857;
+  --on-accent:#04120c;
+  --accent-glow:rgba(0,229,160,.28);
+  --accent-soft:rgba(0,229,160,.16);
+  --accent2-soft:rgba(0,179,255,.14);
   --radius:18px; --radius-sm:12px;
   --shadow:0 12px 40px rgba(0,0,0,.55);
   --safe-top:env(safe-area-inset-top, 0px);
   --safe-bottom:env(safe-area-inset-bottom, 0px);
 }
 *,*::before,*::after{ box-sizing:border-box; }
-html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; scroll-behavior:smooth; background:#07090d; }
+html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; scroll-behavior:smooth; background:var(--bg); }
 body{
   margin:0; min-height:100dvh;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size:16px; line-height:1.45; color:var(--text);
   background:
-    radial-gradient(1100px 520px at 50% -12%, rgba(0,229,160,.14), transparent 62%),
-    radial-gradient(900px 520px at 105% 105%, rgba(0,179,255,.12), transparent 62%),
-    radial-gradient(700px 400px at -10% 60%, rgba(0,229,160,.07), transparent 60%),
+    radial-gradient(1100px 520px at 50% -12%, var(--accent-soft), transparent 62%),
+    radial-gradient(900px 520px at 105% 105%, var(--accent2-soft), transparent 62%),
+    radial-gradient(700px 400px at -10% 60%, var(--accent-soft), transparent 60%),
     var(--bg);
   background-attachment: fixed;
   -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
@@ -38,8 +46,8 @@ body{
 body::before{
   content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.35;
   background-image:
-    linear-gradient(30deg, rgba(0,229,160,.05) 1px, transparent 1px),
-    linear-gradient(150deg, rgba(0,179,255,.05) 1px, transparent 1px);
+    linear-gradient(30deg, var(--accent-soft) 1px, transparent 1px),
+    linear-gradient(150deg, var(--accent2-soft) 1px, transparent 1px);
   background-size: 44px 76px;
   mask-image: radial-gradient(circle at 50% 0%, #000 0%, transparent 72%);
   -webkit-mask-image: radial-gradient(circle at 50% 0%, #000 0%, transparent 72%);
@@ -60,14 +68,14 @@ body::before{
   position:relative; width:40px; height:44px; flex:0 0 auto; display:grid; place-items:center;
   background:linear-gradient(150deg, var(--accent), var(--accent-2));
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  filter: drop-shadow(0 6px 18px rgba(0,229,160,.35));
+  filter: drop-shadow(0 6px 18px var(--accent-glow));
   animation: hexFloat 5s ease-in-out infinite;
 }
 .hex-logo::after{
   content:""; position:absolute; inset:3px; background:#0a1017;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }
-.hex-logo svg{ position:relative; z-index:1; width:18px; height:18px; stroke:var(--accent); fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+.hex-logo i{ position:relative; z-index:1; font-size:16px; color:var(--accent); }
 @keyframes hexFloat{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
 .brand-text{ min-width:0; }
 .brand-text h1{
@@ -80,10 +88,10 @@ body::before{
   width:42px; height:42px; display:grid; place-items:center; border-radius:13px;
   border:1px solid var(--border); background:var(--surface-2); color:var(--text-dim);
   cursor:pointer; transition: background .18s, color .18s, border-color .18s, transform .12s;
+  font-size:16px;
 }
 .icon-btn:active{ transform:scale(.94); }
 .icon-btn:hover{ background:var(--surface-3); color:var(--accent); border-color:var(--border-2); }
-.icon-btn svg{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
 .icon-btn.small{ width:32px; height:32px; border-radius:10px; font-size:13px; }
 
 .wrap{ position:relative; z-index:1; max-width:680px; margin:0 auto; padding:18px 16px 40px; display:flex; flex-direction:column; gap:16px; }
@@ -107,10 +115,11 @@ body::before{
   appearance:none; -webkit-appearance:none;
 }
 .input::placeholder{ color:#5a6a7d; }
-.input:focus, .select:focus{ border-color:var(--accent); background:var(--surface-3); box-shadow:0 0 0 3px rgba(0,229,160,.16); }
-.input-wrap .input{ padding-right:88px; }
+.input:focus, .select:focus{ border-color:var(--accent); background:var(--surface-3); box-shadow:0 0 0 3px var(--accent-soft); }
+.input-wrap .input{ padding-right:104px; }
 .input-btn{
   position:absolute; right:6px; top:50%; transform:translateY(-50%);
+  display:flex; align-items:center; gap:6px;
   padding:8px 13px; border-radius:9px; border:1px solid var(--border-2);
   background:var(--surface-3); color:var(--accent); font-size:12px; font-weight:800;
   letter-spacing:.8px; text-transform:uppercase; cursor:pointer; transition: background .16s, transform .12s;
@@ -145,25 +154,27 @@ body::before{
   background:var(--surface-2); border:1px solid var(--border); border-radius:15px;
 }
 .seg button{
+  display:flex; align-items:center; justify-content:center; gap:8px;
   padding:12px 8px; border:0; border-radius:11px; background:transparent; color:var(--text-dim);
   font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer;
   transition: background .18s, color .18s, transform .12s;
 }
+.seg button i{ font-size:14px; }
 .seg button:active{ transform:scale(.97); }
 .seg button[aria-pressed="true"]{
   background:linear-gradient(150deg, var(--accent), var(--accent-2));
-  color:#04120c; box-shadow:0 6px 20px rgba(0,229,160,.28);
+  color:var(--on-accent); box-shadow:0 6px 20px var(--accent-glow);
 }
 
 .btn-primary{
   position:relative; display:flex; align-items:center; justify-content:center; gap:10px;
   width:100%; margin-top:18px; padding:17px 18px; border:0; border-radius:15px;
   font-family:inherit; font-size:16px; font-weight:800; letter-spacing:.2px;
-  color:#04120c; background:linear-gradient(150deg, var(--accent), var(--accent-2));
-  cursor:pointer; box-shadow:0 12px 32px rgba(0,229,160,.26);
+  color:var(--on-accent); background:linear-gradient(150deg, var(--accent), var(--accent-2));
+  cursor:pointer; box-shadow:0 12px 32px var(--accent-glow);
   transition: transform .12s ease, box-shadow .2s, opacity .2s; overflow:hidden;
 }
-.btn-primary svg{ width:20px; height:20px; fill:none; stroke:#04120c; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+.btn-primary i{ font-size:17px; color:var(--on-accent); }
 .btn-primary:active:not(:disabled){ transform:scale(.98); }
 .btn-primary:disabled{ opacity:.55; cursor:not-allowed; box-shadow:none; }
 .btn-primary .spinner{
@@ -175,15 +186,16 @@ body::before{
 .link-btn{
   background:none; border:0; color:var(--accent); font-family:inherit; font-size:13px;
   font-weight:700; cursor:pointer; padding:4px 6px; border-radius:8px; transition: background .16s;
+  display:inline-flex; align-items:center; gap:6px;
 }
-.link-btn:hover{ background:rgba(0,229,160,.1); }
+.link-btn:hover{ background:var(--accent-soft); }
 
 .progress-wrap{ margin-top:16px; animation: fadeUp .25s ease both; }
 .progress{ height:9px; border-radius:999px; background:var(--surface-3); border:1px solid var(--border); overflow:hidden; }
 .progress > i{
   display:block; height:100%; width:0%; border-radius:999px;
   background:linear-gradient(90deg, var(--accent), var(--accent-2));
-  transition: width .22s ease; box-shadow:0 0 14px rgba(0,229,160,.6);
+  transition: width .22s ease; box-shadow:0 0 14px var(--accent-glow);
 }
 .progress-meta{
   display:flex; justify-content:space-between; gap:10px; margin-top:8px;
@@ -222,8 +234,81 @@ body::before{
   background:var(--surface-2); color:var(--text-dim);
   font-family:inherit; font-size:14px; font-weight:700; cursor:pointer;
   transition: background .16s, color .16s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
 }
 .btn-ghost:hover{ background:var(--surface-3); color:var(--text); }
+
+/* ===================== THEME SECTION ===================== */
+.theme-section{
+  margin-top:18px; padding-top:16px; border-top:1px dashed var(--border-2);
+}
+.theme-current{
+  font-size:10.5px; font-weight:800; letter-spacing:1.2px; text-transform:uppercase;
+  color:var(--accent); background:var(--accent-soft);
+  border:1px solid var(--border-2); border-radius:999px; padding:3px 10px;
+}
+.theme-gallery{
+  display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:9px;
+  max-height:296px; overflow-y:auto; padding:4px 2px 8px;
+  -webkit-overflow-scrolling:touch; scrollbar-width:thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+.theme-gallery::-webkit-scrollbar{ width:6px; }
+.theme-gallery::-webkit-scrollbar-thumb{ background:var(--border-2); border-radius:999px; }
+@media (min-width:430px){ .theme-gallery{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
+.theme-card{
+  position:relative; border:1px solid var(--border); border-radius:12px; overflow:hidden;
+  background:var(--surface-2); cursor:pointer; padding:0;
+  transition:border-color .16s, transform .12s, box-shadow .18s;
+}
+.theme-card:active{ transform:scale(.97); }
+.theme-card.active{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+.swatch-strip{ display:flex; height:26px; }
+.swatch-strip span{ flex:1; }
+.theme-label{
+  display:block; padding:6px 5px 7px; font-size:10.5px; font-weight:700; letter-spacing:.3px;
+  color:var(--text-dim); text-transform:capitalize; text-align:center;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.theme-card.active .theme-label{ color:var(--text); }
+.check{ display:none; color:var(--accent); }
+.theme-card.active .check{ display:inline; }
+
+.color-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:9px; margin-top:12px; }
+.color-item{
+  display:flex; align-items:center; gap:8px; padding:7px 9px;
+  background:var(--surface-2); border:1px solid var(--border); border-radius:11px;
+}
+.color-item span{
+  font-size:10.5px; color:var(--muted); font-weight:800;
+  text-transform:uppercase; letter-spacing:.6px;
+}
+.color-item input[type="color"]{
+  -webkit-appearance:none; appearance:none; width:30px; height:30px; padding:0;
+  border:1px solid var(--border-2); border-radius:8px; background:transparent;
+  cursor:pointer; margin-left:auto;
+}
+.color-item input[type="color"]::-webkit-color-swatch-wrapper{ padding:2px; }
+.color-item input[type="color"]::-webkit-color-swatch{ border:none; border-radius:6px; }
+.color-item input[type="color"]::-moz-color-swatch{ border:none; border-radius:6px; }
+
+.theme-actions{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:14px; }
+.btn-theme{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:12px 10px; border-radius:12px; border:1px solid var(--border-2);
+  background:var(--surface-2); color:var(--text-dim); font-family:inherit;
+  font-size:13px; font-weight:800; cursor:pointer;
+  transition:background .16s, color .16s, transform .12s, filter .16s;
+}
+.btn-theme i{ font-size:13px; }
+.btn-theme:active{ transform:scale(.97); }
+.btn-theme:hover{ background:var(--surface-3); color:var(--text); }
+.btn-theme.primary{
+  background:linear-gradient(150deg, var(--accent), var(--accent-2));
+  color:var(--on-accent); border-color:transparent;
+  box-shadow:0 8px 22px var(--accent-glow);
+}
+.btn-theme.primary:hover{ color:var(--on-accent); filter:brightness(1.06); }
 
 .toasts{
   position:fixed; left:50%; bottom: calc(18px + var(--safe-bottom));
@@ -262,7 +347,7 @@ body::before{
   <div class="header-inner">
     <div class="brand">
       <div class="hex-logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
+        <i class="fa-solid fa-hexagon-nodes"></i>
       </div>
       <div class="brand-text">
         <h1>HexTube</h1>
@@ -270,10 +355,7 @@ body::before{
       </div>
     </div>
     <button id="settingsToggle" class="icon-btn" aria-label="Toggle settings" aria-expanded="false">
-      <svg viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
+      <i class="fa-solid fa-gear"></i>
     </button>
   </div>
 </header>
@@ -281,7 +363,7 @@ body::before{
 <main class="wrap">
 
   <div class="hero">
-    <h2>Grab it in one tap ⬇</h2>
+    <h2>Grab it in one tap <i class="fa-solid fa-arrow-down-long" aria-hidden="true"></i></h2>
     <p>Paste a YouTube link, pick MP4 or MP3, hit download.</p>
   </div>
 
@@ -291,7 +373,9 @@ body::before{
       <input id="urlInput" class="input" type="text" inputmode="url"
         autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
         enterkeyhint="go" placeholder="https://youtube.com/watch?v=…" aria-label="YouTube video link" />
-      <button id="pasteBtn" class="input-btn" type="button">Paste</button>
+      <button id="pasteBtn" class="input-btn" type="button">
+        <i class="fa-solid fa-paste" aria-hidden="true"></i><span>Paste</span>
+      </button>
     </div>
 
     <div id="preview" class="preview hidden">
@@ -303,8 +387,12 @@ body::before{
     </div>
 
     <div class="seg" role="group" aria-label="Output format">
-      <button id="modeVideo" type="button" aria-pressed="true">🎬 Video (MP4)</button>
-      <button id="modeAudio" type="button" aria-pressed="false">🎵 Audio (MP3)</button>
+      <button id="modeVideo" type="button" aria-pressed="true">
+        <i class="fa-solid fa-film" aria-hidden="true"></i><span>Video (MP4)</span>
+      </button>
+      <button id="modeAudio" type="button" aria-pressed="false">
+        <i class="fa-solid fa-music" aria-hidden="true"></i><span>Audio (MP3)</span>
+      </button>
     </div>
 
     <div id="videoOpts" class="grid2">
@@ -354,7 +442,7 @@ body::before{
     </div>
 
     <button id="downloadBtn" class="btn-primary" type="button">
-      <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
+      <i class="fa-solid fa-circle-down" aria-hidden="true"></i>
       <span id="downloadBtnText">Download</span>
     </button>
 
@@ -372,7 +460,9 @@ body::before{
   <section id="settingsCard" class="card hidden">
     <div class="row-between">
       <h2>Settings</h2>
-      <button id="resetSettings" class="link-btn" type="button">Reset</button>
+      <button id="resetSettings" class="link-btn" type="button">
+        <i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>Reset API</span>
+      </button>
     </div>
     <div class="settings-grid">
       <div>
@@ -385,7 +475,9 @@ body::before{
         <input id="apiKey" class="input" type="password"
                autocomplete="off" spellcheck="false" placeholder="Only needed for Cobalt" />
       </div>
-      <button id="saveSettings" class="btn-ghost" type="button">Save settings</button>
+      <button id="saveSettings" class="btn-ghost" type="button">
+        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span>Save settings</span>
+      </button>
       <p class="hint">
         <strong>Piped</strong> and <strong>Invidious</strong> are tried automatically — live
         instance lists are fetched from the official registries at download time, so you
@@ -394,12 +486,81 @@ body::before{
         <a href="https://github.com/imputnet/cobalt" target="_blank" rel="noopener noreferrer">cobalt</a>.
       </p>
     </div>
+
+    <!-- ===================== THEME SECTION ===================== -->
+    <div class="theme-section">
+      <div class="row-between">
+        <h2><i class="fa-solid fa-palette" aria-hidden="true"></i> Theme</h2>
+        <span id="themeCurrent" class="theme-current">corporate</span>
+      </div>
+
+      <div id="themeGallery" class="theme-gallery" role="listbox" aria-label="Theme gallery"></div>
+
+      <div class="color-grid">
+        <label class="color-item" for="customPrimary">
+          <span>Primary</span>
+          <input id="customPrimary" type="color" value="#4b6bfb" aria-label="Primary colour" />
+        </label>
+        <label class="color-item" for="customSecondary">
+          <span>Secondary</span>
+          <input id="customSecondary" type="color" value="#7b92b2" aria-label="Secondary colour" />
+        </label>
+        <label class="color-item" for="customAccent">
+          <span>Accent</span>
+          <input id="customAccent" type="color" value="#67cba0" aria-label="Accent colour" />
+        </label>
+        <label class="color-item" for="customNeutral">
+          <span>Neutral</span>
+          <input id="customNeutral" type="color" value="#181a2a" aria-label="Neutral colour" />
+        </label>
+        <label class="color-item" for="customBase100">
+          <span>Base 100</span>
+          <input id="customBase100" type="color" value="#ffffff" aria-label="Base 100 colour" />
+        </label>
+        <label class="color-item" for="customBase200">
+          <span>Base 200</span>
+          <input id="customBase200" type="color" value="#f2f2f2" aria-label="Base 200 colour" />
+        </label>
+        <label class="color-item" for="customBase300">
+          <span>Base 300</span>
+          <input id="customBase300" type="color" value="#e6e6e6" aria-label="Base 300 colour" />
+        </label>
+        <label class="color-item" for="customBaseContent">
+          <span>Content</span>
+          <input id="customBaseContent" type="color" value="#181a2a" aria-label="Base content colour" />
+        </label>
+      </div>
+
+      <div class="theme-actions">
+        <button id="applyTheme" class="btn-theme primary" type="button">
+          <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span>Apply theme</span>
+        </button>
+        <button id="resetTheme" class="btn-theme" type="button">
+          <i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span>Reset</span>
+        </button>
+        <button id="saveTheme" class="btn-theme" type="button">
+          <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span>Save</span>
+        </button>
+        <button id="closeTheme" class="btn-theme" type="button">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i><span>Close</span>
+        </button>
+      </div>
+
+      <p class="hint">
+        <i class="fa-solid fa-moon" aria-hidden="true"></i>
+        Dark mode is force-locked by 𓋹•HexSleuth•𓃠 — themes only recolor accents and the dark
+        surface tint, so the interface can never fall back to light mode.
+      </p>
+    </div>
+    <!-- =================== /THEME SECTION =================== -->
   </section>
 
   <section class="card">
     <div class="row-between">
       <h2>History</h2>
-      <button id="clearHistory" class="link-btn" type="button">Clear all</button>
+      <button id="clearHistory" class="link-btn" type="button">
+        <i class="fa-solid fa-trash-can" aria-hidden="true"></i><span>Clear all</span>
+      </button>
     </div>
     <ul id="historyList" class="history"></ul>
     <p id="historyEmpty" class="empty">No downloads yet. Paste a link to get started.</p>
@@ -463,7 +624,6 @@ body::before{
     history: "hextube.history"
   };
 
-  // Fallback instance lists (used only if the live registry fetch fails).
   var PIPED_FALLBACK = [
     "https://pipedapi.kavin.rocks",
     "https://pipedapi.adminforge.de",
@@ -487,6 +647,17 @@ body::before{
   var YT_ID_REGEX =
     /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
 
+  /* ---------------------------------------------------------------------
+     ffmpeg.wasm CDN — single-threaded core (no SharedArrayBuffer / COOP).
+     Loaded lazily only when a merge is actually required.
+     --------------------------------------------------------------------- */
+  var FFMPEG_CDN = {
+    ffmpeg:     "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js",
+    util:       "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js",
+    coreBase:   "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm",
+    workerBase: "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/"
+  };
+
   var state = {
     mode: "video",
     busy: false,
@@ -494,7 +665,6 @@ body::before{
     title: ""
   };
 
-  // Promise.any polyfill for older browsers.
   if (typeof Promise.any !== "function") {
     Promise.any = function (promises) {
       return new Promise(function (resolve, reject) {
@@ -533,7 +703,15 @@ body::before{
     apiEndpoint: $("apiEndpoint"), apiKey: $("apiKey"),
     saveSettings: $("saveSettings"), resetSettings: $("resetSettings"),
     historyList: $("historyList"), historyEmpty: $("historyEmpty"),
-    clearHistory: $("clearHistory"), toasts: $("toasts")
+    clearHistory: $("clearHistory"), toasts: $("toasts"),
+
+    themeGallery: $("themeGallery"), themeCurrent: $("themeCurrent"),
+    customPrimary: $("customPrimary"), customSecondary: $("customSecondary"),
+    customAccent: $("customAccent"), customNeutral: $("customNeutral"),
+    customBase100: $("customBase100"), customBase200: $("customBase200"),
+    customBase300: $("customBase300"), customBaseContent: $("customBaseContent"),
+    applyThemeBtn: $("applyTheme"), resetThemeBtn: $("resetTheme"),
+    saveThemeBtn: $("saveTheme"), closeThemeBtn: $("closeTheme")
   };
 
   /* =====================================================================
@@ -610,6 +788,10 @@ body::before{
     }).finally(function () { clearTimeout(timer); });
   }
 
+  function replaceExt(filename, ext) {
+    return String(filename || "").replace(/\.[^./\\]+$/, "") + "." + ext;
+  }
+
   /* =====================================================================
      5. TOASTS & STATUS
      ===================================================================== */
@@ -650,12 +832,11 @@ body::before{
     el.downloadBtn.disabled = busy;
     if (busy) {
       el.downloadBtn.innerHTML =
-        '<span class="spinner"></span><span id="downloadBtnText">Working…</span>';
+        '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span id="downloadBtnText">Working…</span>';
       el.downloadBtnText = $("downloadBtnText");
     } else {
       el.downloadBtn.innerHTML =
-        '<svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>' +
-        '<span id="downloadBtnText">Download</span>';
+        '<i class="fa-solid fa-circle-down" aria-hidden="true"></i><span id="downloadBtnText">Download</span>';
       el.downloadBtnText = $("downloadBtnText");
       updateDownloadLabel();
     }
@@ -824,7 +1005,7 @@ body::before{
       var del = document.createElement("button");
       del.className = "icon-btn small"; del.type = "button";
       del.setAttribute("aria-label", "Remove from history");
-      del.textContent = "✕";
+      del.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
       del.addEventListener("click", function (evt) {
         evt.stopPropagation();
         removeHistoryAt(index);
@@ -853,7 +1034,7 @@ body::before{
     invidious: null,
     timestamp: { piped: 0, invidious: 0 }
   };
-  var CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  var CACHE_TTL = 5 * 60 * 1000;
 
   function getCachedInstances(type) {
     var cached = instanceCache[type];
@@ -914,8 +1095,6 @@ body::before{
   /* =====================================================================
      10. BATCH RUNNER
      ===================================================================== */
-  // Runs `fn(item)` against up to 3 instances in parallel per wave.
-  // Returns the first successful result, or rejects with aggregated errors.
   function runBatch(items, fn, batchSize) {
     var size = batchSize || 3;
     var errors = [];
@@ -946,7 +1125,25 @@ body::before{
   }
 
   /* =====================================================================
-     11. PIPED BACKEND
+     11. AUDIO HELPER
+     ===================================================================== */
+  function pickBestAudio(audios) {
+    if (!audios || !audios.length) return null;
+    var wantWebm = el.videoCodec.value === "webm";
+    var preferred = audios.filter(function (a) {
+      var m = String((a && (a.mimeType || a.type)) || "").toLowerCase();
+      if (wantWebm) return m.indexOf("webm") !== -1 || m.indexOf("opus") !== -1;
+      return m.indexOf("mp4") !== -1 || m.indexOf("m4a") !== -1;
+    });
+    var pool = (preferred.length ? preferred : audios).slice();
+    pool.sort(function (a, b) {
+      return (parseInt(b.bitrate, 10) || 0) - (parseInt(a.bitrate, 10) || 0);
+    });
+    return pool[0];
+  }
+
+  /* =====================================================================
+     12. PIPED BACKEND
      ===================================================================== */
   async function tryPiped(videoId, mode, quality) {
     var instances = await getPipedInstances();
@@ -974,14 +1171,16 @@ body::before{
     }
 
     if (mode === "audio") {
-      var audios = (data.audioStreams || []).filter(function (a) { return a && a.url; });
-      if (!audios.length) throw new Error("no audio streams");
-      audios.sort(function (a, b) { return (b.bitrate || 0) - (a.bitrate || 0); });
-      var a = audios[0];
+      var audiosA = (data.audioStreams || []).filter(function (a) { return a && a.url; });
+      if (!audiosA.length) throw new Error("no audio streams");
+      audiosA.sort(function (a, b) { return (b.bitrate || 0) - (a.bitrate || 0); });
+      var aPick = audiosA[0];
       return {
-        url: a.url,
+        url: aPick.url,
+        audioUrl: null,
+        needsMerge: false,
         filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
-          "." + extFromMime(a.mimeType, "m4a"),
+          "." + extFromMime(aPick.mimeType, "m4a"),
         title: title
       };
     }
@@ -989,40 +1188,81 @@ body::before{
     var videos = (data.videoStreams || []).filter(function (v) { return v && v.url; });
     if (!videos.length) throw new Error("no video streams");
 
-    // Prefer combined (video + audio) streams.
     var combined = videos.filter(function (s) { return !s.videoOnly; });
-    var pool = combined.length ? combined : videos;
+    var videoOnly = videos.filter(function (s) { return s.videoOnly; });
 
-    pool.sort(function (a, b) {
-      return (parseInt(b.quality, 10) || 0) - (parseInt(a.quality, 10) || 0);
-    });
-
-    var match = null;
-    if (quality === "max") {
-      match = pool[0];
-    } else {
-      var target = parseInt(quality, 10);
-      for (var i = 0; i < pool.length; i++) {
-        if ((parseInt(pool[i].quality, 10) || 0) === target) { match = pool[i]; break; }
-      }
-      if (!match) match = pool[0];
+    function qNum(s) { return parseInt(s && s.quality, 10) || 0; }
+    function sortDesc(arr) {
+      return arr.slice().sort(function (a, b) { return qNum(b) - qNum(a); });
     }
-    if (!match) throw new Error("no matching video stream");
+    var combSorted = sortDesc(combined);
+    var voSorted = sortDesc(videoOnly);
 
-    if (match.videoOnly) {
-      setStatus("Note: high-res stream is video-only (no audio track).", "info");
+    var target = (quality === "max") ? Infinity : (parseInt(quality, 10) || 0);
+
+    function pickMatch(pool) {
+      if (!pool.length) return null;
+      if (target === Infinity) return pool[0];
+      var i, j;
+      for (i = 0; i < pool.length; i++) { if (qNum(pool[i]) === target) return pool[i]; }
+      for (j = 0; j < pool.length; j++) { if (qNum(pool[j]) < target) return pool[j]; }
+      return pool[0];
+    }
+
+    var cMatch = pickMatch(combSorted);
+    var vMatch = pickMatch(voSorted);
+    var cQ = cMatch ? qNum(cMatch) : -1;
+    var vQ = vMatch ? qNum(vMatch) : -1;
+
+    var chosen = null;
+    var needsMerge = false;
+
+    if (target === Infinity) {
+      if (vQ > cQ) { chosen = vMatch; needsMerge = true; }
+      else if (cQ >= 0) { chosen = cMatch; needsMerge = false; }
+      else if (vQ >= 0) { chosen = vMatch; needsMerge = true; }
+    } else {
+      if (cQ === target) { chosen = cMatch; needsMerge = false; }
+      else if (vQ === target) { chosen = vMatch; needsMerge = true; }
+      else {
+        var cBelow = (cQ >= 0 && cQ <= target) ? cQ : -1;
+        var vBelow = (vQ >= 0 && vQ <= target) ? vQ : -1;
+        if (cBelow >= 0 || vBelow >= 0) {
+          if (cBelow >= vBelow) { chosen = cMatch; needsMerge = false; }
+          else { chosen = vMatch; needsMerge = true; }
+        } else if (cQ >= 0 && vQ >= 0) {
+          if (cQ <= vQ) { chosen = cMatch; needsMerge = false; }
+          else { chosen = vMatch; needsMerge = true; }
+        } else if (cQ >= 0) { chosen = cMatch; needsMerge = false; }
+        else if (vQ >= 0) { chosen = vMatch; needsMerge = true; }
+      }
+    }
+
+    if (!chosen) throw new Error("no matching video stream");
+
+    var audioUrl = null;
+    if (needsMerge) {
+      var audioPick = pickBestAudio(data.audioStreams || []);
+      if (!audioPick || !audioPick.url) {
+        throw new Error("video-only stream but no audio available to merge");
+      }
+      audioUrl = audioPick.url;
     }
 
     return {
-      url: match.url,
+      url: chosen.url,
+      audioUrl: audioUrl,
+      needsMerge: needsMerge,
+      videoMime: chosen.mimeType || "",
+      audioMime: "",
       filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
-        "." + extFromMime(match.mimeType, "mp4"),
+        "." + extFromMime(chosen.mimeType, "mp4"),
       title: title
     };
   }
 
   /* =====================================================================
-     12. INVIDIOUS BACKEND
+     13. INVIDIOUS BACKEND
      ===================================================================== */
   async function tryInvidious(videoId, mode, quality) {
     var instances = await getInvidiousInstances();
@@ -1058,72 +1298,123 @@ body::before{
     var formatStreams = data.formatStreams || [];
 
     if (mode === "audio") {
-      var audios = adaptive.filter(function (f) {
+      var audiosA = adaptive.filter(function (f) {
         return f && f.url && String(f.type || "").indexOf("audio/") === 0;
       });
-      if (!audios.length) throw new Error("no audio streams");
-      audios.sort(function (a, b) {
+      if (!audiosA.length) throw new Error("no audio streams");
+      audiosA.sort(function (a, b) {
         return (parseInt(b.bitrate, 10) || 0) - (parseInt(a.bitrate, 10) || 0);
       });
-      var a = audios[0];
+      var aPick = audiosA[0];
       return {
-        url: a.url,
+        url: aPick.url,
+        audioUrl: null,
+        needsMerge: false,
         filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
-          "." + extFromMime(a.type, "m4a"),
+          "." + extFromMime(aPick.type, "m4a"),
         title: title
       };
     }
 
-    // Prefer combined formatStreams — they include audio.
-    var pool = formatStreams.filter(function (f) { return f && f.url; });
-    if (!pool.length) {
-      pool = adaptive.filter(function (f) {
-        return f && f.url && String(f.type || "").indexOf("video/") === 0;
-      });
-    }
-    if (!pool.length) throw new Error("no video streams");
+    var muxed = formatStreams.filter(function (f) {
+      return f && f.url && /^video\//i.test(String(f.type || ""));
+    });
+    var videoOnly = adaptive.filter(function (f) {
+      return f && f.url && /^video\//i.test(String(f.type || ""));
+    });
 
-    pool.sort(function (a, b) {
+    muxed.sort(function (a, b) {
+      return qualityNumber(b.qualityLabel) - qualityNumber(a.qualityLabel);
+    });
+    videoOnly.sort(function (a, b) {
       return qualityNumber(b.qualityLabel) - qualityNumber(a.qualityLabel);
     });
 
-    var match = null;
-    if (quality === "max") {
-      match = pool[0];
-    } else {
-      var target = parseInt(quality, 10);
-      for (var i = 0; i < pool.length; i++) {
-        if (qualityNumber(pool[i].qualityLabel) === target) { match = pool[i]; break; }
+    var target = (quality === "max") ? Infinity : (parseInt(quality, 10) || 0);
+
+    function pickMatch(pool) {
+      if (!pool.length) return null;
+      if (target === Infinity) return pool[0];
+      var i, j;
+      for (i = 0; i < pool.length; i++) {
+        if (qualityNumber(pool[i].qualityLabel) === target) return pool[i];
       }
-      if (!match) match = pool[0];
+      for (j = 0; j < pool.length; j++) {
+        if (qualityNumber(pool[j].qualityLabel) < target) return pool[j];
+      }
+      return pool[0];
     }
-    if (!match) throw new Error("no matching video stream");
+
+    var cMatch = pickMatch(muxed);
+    var vMatch = pickMatch(videoOnly);
+    var cQ = cMatch ? qualityNumber(cMatch.qualityLabel) : -1;
+    var vQ = vMatch ? qualityNumber(vMatch.qualityLabel) : -1;
+
+    var chosen = null;
+    var needsMerge = false;
+
+    if (target === Infinity) {
+      if (vQ > cQ) { chosen = vMatch; needsMerge = true; }
+      else if (cQ >= 0) { chosen = cMatch; needsMerge = false; }
+      else if (vQ >= 0) { chosen = vMatch; needsMerge = true; }
+    } else {
+      if (cQ === target) { chosen = cMatch; needsMerge = false; }
+      else if (vQ === target) { chosen = vMatch; needsMerge = true; }
+      else {
+        var cBelow = (cQ >= 0 && cQ <= target) ? cQ : -1;
+        var vBelow = (vQ >= 0 && vQ <= target) ? vQ : -1;
+        if (cBelow >= 0 || vBelow >= 0) {
+          if (cBelow >= vBelow) { chosen = cMatch; needsMerge = false; }
+          else { chosen = vMatch; needsMerge = true; }
+        } else if (cQ >= 0 && vQ >= 0) {
+          if (cQ <= vQ) { chosen = cMatch; needsMerge = false; }
+          else { chosen = vMatch; needsMerge = true; }
+        } else if (cQ >= 0) { chosen = cMatch; needsMerge = false; }
+        else if (vQ >= 0) { chosen = vMatch; needsMerge = true; }
+      }
+    }
+
+    if (!chosen) throw new Error("no matching video stream");
+
+    var audioUrl = null;
+    var audioMime = "";
+    if (needsMerge) {
+      var audioCandidates = adaptive.filter(function (f) {
+        return f && f.url && /^audio\//i.test(String(f.type || ""));
+      });
+      var audioPick = pickBestAudio(audioCandidates);
+      if (!audioPick || !audioPick.url) {
+        throw new Error("video-only stream but no audio available to merge");
+      }
+      audioUrl = audioPick.url;
+      audioMime = audioPick.type || "";
+    }
 
     return {
-      url: match.url,
+      url: chosen.url,
+      audioUrl: audioUrl,
+      needsMerge: needsMerge,
+      videoMime: chosen.type || "",
+      audioMime: audioMime,
       filename: sanitizeFilename(title || ("hextube_" + state.lastId)) +
-        "." + extFromMime(match.type, "mp4"),
+        "." + extFromMime(chosen.type, "mp4"),
       title: title
     };
   }
 
   /* =====================================================================
-     13. COBALT BACKEND (only if user configured an endpoint)
+     14. COBALT BACKEND
      ===================================================================== */
   function tryCobalt(url) {
     var endpoint = getCobaltEndpoint();
     if (!endpoint) {
-      // Not an error — just not configured. Signal that clearly.
       return Promise.reject(new Error("cobalt-not-configured"));
     }
 
     var apiKey = getStoredApiKey();
     setStatus("Trying Cobalt (" + hostOf(endpoint) + ")…", "info");
 
-    var payload = {
-      url: url,
-      filenameStyle: "pretty"
-    };
+    var payload = { url: url, filenameStyle: "pretty" };
     if (state.mode === "audio") {
       payload.downloadMode = "audio";
       payload.audioFormat = el.audioFormat.value;
@@ -1134,10 +1425,7 @@ body::before{
       if (el.videoCodec.value === "mp4") payload.youtubeVideoCodec = "h264";
     }
 
-    var headers = {
-      "Accept": "application/json",
-      "Content-Type": "application/json"
-    };
+    var headers = { "Accept": "application/json", "Content-Type": "application/json" };
     if (apiKey) headers["Authorization"] = "Api-Key " + apiKey;
 
     var ctrl = new AbortController();
@@ -1170,16 +1458,14 @@ body::before{
   function parseCobaltResult(json) {
     if (json.status === "tunnel" || json.status === "redirect") {
       if (!json.url) throw new Error("no download url returned");
-      return { url: json.url, filename: json.filename || "", title: "" };
+      return { url: json.url, audioUrl: null, needsMerge: false, filename: json.filename || "", title: "" };
     }
     if (json.status === "picker") {
       var items = Array.isArray(json.picker) ? json.picker : [];
       var wanted = state.mode === "audio" ? "audio" : "video";
       var picked = null;
       for (var i = 0; i < items.length; i++) {
-        if (items[i] && items[i].type === wanted && items[i].url) {
-          picked = items[i]; break;
-        }
+        if (items[i] && items[i].type === wanted && items[i].url) { picked = items[i]; break; }
       }
       if (!picked) {
         for (var j = 0; j < items.length; j++) {
@@ -1187,7 +1473,7 @@ body::before{
         }
       }
       if (!picked) throw new Error("no downloadable stream");
-      return { url: picked.url, filename: json.filename || picked.filename || "", title: "" };
+      return { url: picked.url, audioUrl: null, needsMerge: false, filename: json.filename || picked.filename || "", title: "" };
     }
     if (json.status === "local-processing") {
       throw new Error("instance requires local processing");
@@ -1196,27 +1482,20 @@ body::before{
   }
 
   /* =====================================================================
-     14. ORCHESTRATOR
+     15. ORCHESTRATOR
      ===================================================================== */
   function requestDownload(videoId) {
     return tryPiped(videoId, state.mode, el.quality.value)
-      .then(function (r) {
-        console.log("[HexTube] ✓ piped");
-        return r;
-      })
+      .then(function (r) { console.log("[HexTube] ✓ piped"); return r; })
       .catch(function (pipedErr) {
         console.warn("[HexTube] ✗ piped:", pipedErr.message);
         setStatus("Piped failed — trying Invidious…", "info");
 
         return tryInvidious(videoId, state.mode, el.quality.value)
-          .then(function (r) {
-            console.log("[HexTube] ✓ invidious");
-            return r;
-          })
+          .then(function (r) { console.log("[HexTube] ✓ invidious"); return r; })
           .catch(function (invErr) {
             console.warn("[HexTube] ✗ invidious:", invErr.message);
 
-            // If the user hasn't configured Cobalt, skip it with a clear message.
             if (!getCobaltEndpoint()) {
               throw new Error(
                 "All Piped and Invidious instances failed. " +
@@ -1228,10 +1507,7 @@ body::before{
 
             setStatus("Public mirrors failed — trying your Cobalt endpoint…", "info");
             return tryCobalt(canonicalUrl(videoId))
-              .then(function (r) {
-                console.log("[HexTube] ✓ cobalt");
-                return r;
-              })
+              .then(function (r) { console.log("[HexTube] ✓ cobalt"); return r; })
               .catch(function (cobaltErr) {
                 if (cobaltErr.message === "cobalt-not-configured") {
                   throw new Error(
@@ -1251,7 +1527,7 @@ body::before{
   }
 
   /* =====================================================================
-     15. FILE SAVING
+     16. FILE SAVING
      ===================================================================== */
   function saveBlob(blob, filename) {
     var objectUrl = URL.createObjectURL(blob);
@@ -1286,7 +1562,7 @@ body::before{
           return res.blob().then(function (blob) {
             onProgress(100, formatBytes(blob.size));
             saveBlob(blob, filename);
-            return { saved: true, size: blob.size };
+            return { saved: true, size: blob.size, filename: filename };
           });
         }
 
@@ -1300,7 +1576,7 @@ body::before{
               var blob = new Blob(chunks, { type: contentType });
               onProgress(100, formatBytes(blob.size));
               saveBlob(blob, filename);
-              return { saved: true, size: blob.size };
+              return { saved: true, size: blob.size, filename: filename };
             }
             chunks.push(result.value);
             received += result.value.length;
@@ -1315,13 +1591,249 @@ body::before{
       .catch(function (err) {
         console.warn("[HexTube] streaming failed:", err.message);
         onProgress(100, "direct link");
-        if (openInNewTab(url)) return { saved: false, fallback: true };
+        if (openInNewTab(url)) return { saved: false, fallback: true, filename: filename };
         throw err;
       });
   }
 
   /* =====================================================================
-     16. DOWNLOAD FLOW
+     17. ffmpeg.wasm LOADER
+     ---------------------------------------------------------------------
+     Fix for the cross-origin Worker error:
+       "Failed to construct 'Worker': Script at
+        https://cdn.jsdelivr.net/.../worker.js cannot be accessed from origin"
+
+     ffmpeg.wasm's ESM build spawns its worker directly from the CDN,
+     which browsers block. We work around it by:
+       1. fetching worker.js with fetch() (jsdelivr sends CORS headers),
+       2. rewriting its relative "./xxx.js" imports to absolute CDN URLs
+          (a blob: URL has no directory, so relative imports would 404),
+       3. turning the rewritten source into a same-origin blob: URL,
+       4. passing it as `classWorkerURL` to ffmpeg.load().
+     ===================================================================== */
+  var ffmpegInstance = null;
+  var ffmpegLoadingPromise = null;
+  var ffmpegWorkerBlobURL = null;
+
+  async function buildFFmpegWorkerBlobURL() {
+    if (ffmpegWorkerBlobURL) return ffmpegWorkerBlobURL;
+
+    var base = FFMPEG_CDN.workerBase;
+    var res = await fetch(base + "worker.js", { credentials: "omit" });
+    if (!res.ok) throw new Error("ffmpeg worker.js fetch failed: HTTP " + res.status);
+    var code = await res.text();
+
+    /* Rewrite every relative import/export to an absolute CDN URL. */
+    code = code.replace(
+      /(\bfrom\s*["'])(\.\.?\/[^"']+)(["'])/g,
+      function (m, pre, rel, post) { return pre + new URL(rel, base).href + post; }
+    );
+    code = code.replace(
+      /(\bimport\s*\(\s*["'])(\.\.?\/[^"']+)(["']\s*\))/g,
+      function (m, pre, rel, post) { return pre + new URL(rel, base).href + post; }
+    );
+    code = code.replace(
+      /(\bimport\s*["'])(\.\.?\/[^"']+)(["'])/g,
+      function (m, pre, rel, post) { return pre + new URL(rel, base).href + post; }
+    );
+
+    var blob = new Blob([code], { type: "text/javascript" });
+    ffmpegWorkerBlobURL = URL.createObjectURL(blob);
+    return ffmpegWorkerBlobURL;
+  }
+
+  async function loadFFmpeg() {
+    if (ffmpegInstance) return ffmpegInstance;
+    if (ffmpegLoadingPromise) return ffmpegLoadingPromise;
+
+    ffmpegLoadingPromise = (async function () {
+      setStatus("Loading ffmpeg.wasm (first merge only, ~30 MB)…", "info");
+      setProgress(2, "loading ffmpeg…");
+
+      var ffmpegMod = await import(FFMPEG_CDN.ffmpeg);
+      var utilMod = await import(FFMPEG_CDN.util);
+
+      var FFmpeg = ffmpegMod.FFmpeg;
+      var toBlobURL = utilMod.toBlobURL;
+
+      if (!FFmpeg || !toBlobURL) {
+        throw new Error("ffmpeg.wasm module failed to load");
+      }
+
+      var ffmpeg = new FFmpeg();
+
+      ffmpeg.on("log", function (evt) {
+        if (evt && evt.message) console.log("[ffmpeg]", evt.message);
+      });
+
+      var workerBlobURL = await buildFFmpegWorkerBlobURL();
+
+      await ffmpeg.load({
+        coreURL: await toBlobURL(FFMPEG_CDN.coreBase + "/ffmpeg-core.js", "text/javascript"),
+        wasmURL: await toBlobURL(FFMPEG_CDN.coreBase + "/ffmpeg-core.wasm", "application/wasm"),
+        classWorkerURL: workerBlobURL
+      });
+
+      ffmpegInstance = ffmpeg;
+      return ffmpeg;
+    })();
+
+    try {
+      return await ffmpegLoadingPromise;
+    } catch (err) {
+      ffmpegLoadingPromise = null;
+      throw err;
+    }
+  }
+
+  /* =====================================================================
+     18. BYTE FETCHER
+     ===================================================================== */
+  async function fetchBytes(url, onProgress, label) {
+    var res = await fetch(url, { mode: "cors", credentials: "omit" });
+    if (!res.ok) throw new Error("fetch failed: HTTP " + res.status);
+
+    var total = Number(res.headers.get("content-length")) || 0;
+    var contentType = res.headers.get("content-type") || "application/octet-stream";
+
+    if (!res.body || typeof res.body.getReader !== "function") {
+      var buf = await res.arrayBuffer();
+      if (onProgress) onProgress(100, label);
+      return { data: new Uint8Array(buf), contentType: contentType, total: buf.byteLength };
+    }
+
+    var reader = res.body.getReader();
+    var chunks = [];
+    var received = 0;
+
+    while (true) {
+      var result = await reader.read();
+      if (result.done) break;
+      chunks.push(result.value);
+      received += result.value.length;
+      if (onProgress && total) {
+        onProgress(
+          Math.min(99, (received / total) * 100),
+          label + " " + formatBytes(received) + " / " + formatBytes(total)
+        );
+      }
+    }
+
+    var blob = new Blob(chunks, { type: contentType });
+    var arrayBuf = await blob.arrayBuffer();
+    return { data: new Uint8Array(arrayBuf), contentType: contentType, total: arrayBuf.byteLength };
+  }
+
+  /* =====================================================================
+     19. MERGE
+     ===================================================================== */
+  async function downloadMerged(result, baseFilename) {
+    try {
+      var ffmpeg = await loadFFmpeg();
+
+      setStatus("Downloading video stream…", "info");
+      setProgress(5, "downloading video…");
+      var video = await fetchBytes(result.url, function (p, detail) {
+        setProgress(5 + p * 0.35, detail || ("video " + Math.round(p) + "%"));
+      }, "video");
+
+      setStatus("Downloading audio stream…", "info");
+      setProgress(42, "downloading audio…");
+      var audio = await fetchBytes(result.audioUrl, function (p, detail) {
+        setProgress(42 + p * 0.13, detail || ("audio " + Math.round(p) + "%"));
+      }, "audio");
+
+      var videoFamily = /webm/i.test(video.contentType) ? "webm" : "mp4";
+      var audioFamily = /webm|opus/i.test(audio.contentType) ? "webm" : "mp4";
+
+      var outputExt, outputMime;
+      if (videoFamily === audioFamily) {
+        outputExt = videoFamily;
+        outputMime = videoFamily === "webm" ? "video/webm" : "video/mp4";
+      } else {
+        outputExt = "mp4";
+        outputMime = "video/mp4";
+      }
+
+      var vExt = videoFamily === "webm" ? "webm" : "mp4";
+      var aExt = audioFamily === "webm" ? "webm" : "m4a";
+
+      var vName = "v_input." + vExt;
+      var aName = "a_input." + aExt;
+      var outName = "merged_output." + outputExt;
+
+      setStatus("Merging with ffmpeg…", "info");
+      setProgress(58, "writing files…");
+
+      await ffmpeg.writeFile(vName, video.data);
+      await ffmpeg.writeFile(aName, audio.data);
+
+      setProgress(62, "merging streams…");
+
+      var argsPrimary = [
+        "-i", vName,
+        "-i", aName,
+        "-map", "0:v:0",
+        "-map", "1:a:0",
+        "-c", "copy",
+        "-shortest",
+        outName
+      ];
+
+      var argsFallback = [
+        "-i", vName,
+        "-i", aName,
+        "-map", "0:v:0",
+        "-map", "1:a:0",
+        "-c:v", "copy",
+        "-c:a", "aac",
+        "-b:a", "192k",
+        "-shortest",
+        outName
+      ];
+
+      var merged = false;
+      try {
+        await ffmpeg.exec(argsPrimary);
+        merged = true;
+      } catch (e1) {
+        console.warn("[HexTube] stream-copy merge failed, re-encoding audio:", e1 && e1.message);
+      }
+
+      if (!merged) {
+        setProgress(66, "re-encoding audio…");
+        await ffmpeg.exec(argsFallback);
+      }
+
+      setProgress(92, "finalizing…");
+      var outData = await ffmpeg.readFile(outName);
+
+      try { await ffmpeg.deleteFile(vName); } catch (e) {}
+      try { await ffmpeg.deleteFile(aName); } catch (e) {}
+      try { await ffmpeg.deleteFile(outName); } catch (e) {}
+
+      var outBytes = (outData instanceof Uint8Array) ? outData : new Uint8Array(outData);
+      var blob = new Blob([outBytes], { type: outputMime });
+
+      var finalFilename = replaceExt(baseFilename, outputExt);
+      saveBlob(blob, finalFilename);
+      setProgress(100, formatBytes(blob.size));
+
+      return { saved: true, size: blob.size, filename: finalFilename };
+    } catch (err) {
+      console.warn("[HexTube] merge failed, falling back to video-only:", err && err.message);
+      toast("Merge failed — downloading video only (no audio)", "error", 5000);
+      setStatus(
+        "Merge failed: " + (err && err.message ? err.message : "unknown") +
+        " — falling back to video-only file.",
+        "error"
+      );
+      return fetchAndSave(result.url, baseFilename, setProgress);
+    }
+  }
+
+  /* =====================================================================
+     20. DOWNLOAD FLOW
      ===================================================================== */
   function guessExtension() {
     if (state.mode === "audio") {
@@ -1342,6 +1854,28 @@ body::before{
       ? "_audio"
       : "_" + (el.quality.value === "max" ? "best" : el.quality.value + "p");
     return base + suffix + "." + guessExtension();
+  }
+
+  function finalizeDownload(outcome, filename, id, result) {
+    setStatus(
+      outcome.saved
+        ? "Saved: " + (outcome.filename || filename)
+        : "Opened in a new tab — use your browser's save option.",
+      outcome.saved ? "ok" : "info"
+    );
+    toast(
+      outcome.saved ? "Download complete" : "Opened direct link",
+      outcome.saved ? "ok" : "info",
+      3200
+    );
+    addHistory({
+      id: id,
+      url: canonicalUrl(id),
+      title: state.title || result.title || ("YouTube " + id),
+      mode: state.mode,
+      format: guessExtension(),
+      time: Date.now()
+    });
   }
 
   function handleDownload() {
@@ -1376,26 +1910,15 @@ body::before{
         setStatus("Download starting…", "info");
         setProgress(2, "starting…");
 
-        return fetchAndSave(result.url, filename, setProgress).then(function (outcome) {
-          setStatus(
-            outcome.saved
-              ? "Saved: " + filename
-              : "Opened in a new tab — use your browser's save option.",
-            outcome.saved ? "ok" : "info"
-          );
-          toast(
-            outcome.saved ? "Download complete" : "Opened direct link",
-            outcome.saved ? "ok" : "info",
-            3200
-          );
-          addHistory({
-            id: id,
-            url: canonicalUrl(id),
-            title: state.title || result.title || ("YouTube " + id),
-            mode: state.mode,
-            format: guessExtension(),
-            time: Date.now()
+        if (result.needsMerge && result.audioUrl) {
+          toast("Merging video + audio with ffmpeg.wasm…", "info", 3200);
+          return downloadMerged(result, filename).then(function (outcome) {
+            finalizeDownload(outcome, filename, id, result);
           });
+        }
+
+        return fetchAndSave(result.url, filename, setProgress).then(function (outcome) {
+          finalizeDownload(outcome, filename, id, result);
         });
       })
       .catch(function (err) {
@@ -1412,7 +1935,7 @@ body::before{
   }
 
   /* =====================================================================
-     17. PASTE
+     21. PASTE
      ===================================================================== */
   function handlePaste() {
     if (!navigator.clipboard || !navigator.clipboard.readText) {
@@ -1436,7 +1959,7 @@ body::before{
   }
 
   /* =====================================================================
-     18. MODE SWITCH
+     22. MODE SWITCH
      ===================================================================== */
   function setMode(mode) {
     state.mode = mode;
@@ -1450,7 +1973,355 @@ body::before{
   }
 
   /* =====================================================================
-     19. EVENTS
+     23. THEME SYSTEM
+     ===================================================================== */
+  const THEMES = [
+    'corporate', 'cupcake', 'bumblebee', 'emerald', 'synthwave',
+    'retro', 'cyberpunk', 'valentine', 'halloween', 'garden',
+    'forest', 'aqua', 'lofi', 'pastel', 'fantasy',
+    'wireframe', 'black', 'luxury', 'dracula', 'cmyk',
+    'autumn', 'business', 'acid', 'lemonade', 'night',
+    'coffee', 'winter', 'dim', 'nord', 'sunset',
+    'caramellatte', 'abyss', 'silk'
+  ];
+
+  let currentTheme = 'corporate';
+  let customColors = {};
+
+  const THEME_SWATCHES = {
+    corporate: ['#4b6bfb', '#7b92b2', '#67cba0', '#181a2a'],
+    cupcake: ['#65c3c8', '#ef9fbc', '#eeaf3a', '#291334'],
+    bumblebee: ['#e0a82e', '#f9d72f', '#181830', '#181830'],
+    emerald: ['#66cc8a', '#377cfb', '#ea5234', '#333c4d'],
+    synthwave: ['#e779c1', '#58c7f3', '#f3cc30', '#20134e'],
+    retro: ['#ef9995', '#a4cbb4', '#ebdc99', '#7d7259'],
+    cyberpunk: ['#ff7598', '#75d1f0', '#c07eec', '#423f00'],
+    valentine: ['#e96d7b', '#a991f7', '#88dbdd', '#af4670'],
+    halloween: ['#f28c18', '#6d3a9c', '#51a800', '#1b1d1d'],
+    garden: ['#5c7f67', '#ecf4e7', '#fae5e5', '#5d5656'],
+    forest: ['#1eb854', '#1fd65f', '#d99330', '#110e0e'],
+    aqua: ['#09ecf3', '#966fb3', '#ffe999', '#3b8ea5'],
+    lofi: ['#808080', '#4d4d4d', '#1a1a1a', '#000000'],
+    pastel: ['#d1c1d7', '#f6cbd1', '#b4e9d6', '#70acc7'],
+    fantasy: ['#6e0b75', '#007ebd', '#f8860d', '#1f2937'],
+    wireframe: ['#b8b8b8', '#b8b8b8', '#b8b8b8', '#ebebeb'],
+    black: ['#333333', '#333333', '#333333', '#141414'],
+    luxury: ['#ffffff', '#152747', '#513448', '#331800'],
+    dracula: ['#ff79c6', '#bd93f9', '#ffb86c', '#414558'],
+    cmyk: ['#45aeee', '#e8488a', '#fff232', '#1a1a1a'],
+    autumn: ['#8c0327', '#d85251', '#d59b6a', '#826a5c'],
+    business: ['#1c4e80', '#7c909a', '#ea6947', '#23282e'],
+    acid: ['#ff00ff', '#ff7f00', '#c4ff00', '#150f82'],
+    lemonade: ['#519903', '#e9e92e', '#f7f9ca', '#191a3f'],
+    night: ['#38bdf8', '#818cf8', '#f472b6', '#1e293b'],
+    coffee: ['#db924b', '#263e3f', '#10576d', '#120c12'],
+    winter: ['#047aff', '#463aa2', '#c148ac', '#021431'],
+    dim: ['#9ca3af', '#6b7280', '#4b5563', '#374151'],
+    nord: ['#5e81ac', '#81a1c1', '#88c0d0', '#4c566a'],
+    sunset: ['#ff865b', '#fd6f9c', '#b387fa', '#1b1626'],
+    caramellatte: ['#d18f50', '#8e6844', '#b25828', '#3b2c23'],
+    abyss: ['#0077b6', '#00b4d8', '#90e0ef', '#03045e'],
+    silk: ['#ffc2d4', '#ffb5a7', '#fcd5ce', '#e8e8e4']
+  };
+
+  function hexToRgb(hex) {
+    var h = String(hex || '').replace('#', '').trim();
+    if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
+    if (h.length !== 6 || /[^0-9a-f]/i.test(h)) return { r: 20, g: 25, b: 34 };
+    var n = parseInt(h, 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+
+  function rgbToHex(r, g, b) {
+    function p(v) {
+      v = Math.max(0, Math.min(255, Math.round(v)));
+      return v.toString(16).padStart(2, '0');
+    }
+    return '#' + p(r) + p(g) + p(b);
+  }
+
+  function mixHex(a, b, t) {
+    var A = hexToRgb(a), B = hexToRgb(b);
+    return rgbToHex(A.r + (B.r - A.r) * t, A.g + (B.g - A.g) * t, A.b + (B.b - A.b) * t);
+  }
+
+  function hexToRgba(hex, alpha) {
+    var c = hexToRgb(hex);
+    return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + alpha + ')';
+  }
+
+  function luminance(hex) {
+    var c = hexToRgb(hex);
+    function f(v) {
+      v = v / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    }
+    return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
+  }
+
+  function onColorFor(hex) {
+    return luminance(hex) > 0.45 ? '#04120c' : '#ffffff';
+  }
+
+  function applyThemeColors(colors) {
+    colors = colors || {};
+    var root = document.documentElement;
+    var primary = colors.primary || '#00e5a0';
+    var secondary = colors.secondary || '#00b3ff';
+    var accent = colors.accent || '#67cba0';
+    var neutral = colors.neutral || '#181a2a';
+    var DARK = '#04060a';
+
+    root.style.setProperty('--accent', primary);
+    root.style.setProperty('--accent-2', secondary);
+    root.style.setProperty('--accent-3', accent);
+    root.style.setProperty('--on-accent', onColorFor(primary));
+    root.style.setProperty('--accent-glow', hexToRgba(primary, 0.30));
+    root.style.setProperty('--accent-soft', hexToRgba(primary, 0.16));
+    root.style.setProperty('--accent2-soft', hexToRgba(secondary, 0.14));
+
+    root.style.setProperty('--bg', mixHex(neutral, DARK, 0.94));
+    root.style.setProperty('--surface', mixHex(neutral, DARK, 0.90));
+    root.style.setProperty('--surface-2', mixHex(neutral, DARK, 0.86));
+    root.style.setProperty('--surface-3', mixHex(neutral, DARK, 0.80));
+    root.style.setProperty('--border', mixHex(neutral, DARK, 0.74));
+    root.style.setProperty('--border-2', mixHex(neutral, DARK, 0.64));
+
+    customColors = {
+      primary: primary,
+      secondary: secondary,
+      accent: accent,
+      neutral: neutral,
+      'base-100': colors['base-100'] || '#ffffff',
+      'base-200': colors['base-200'] || '#f2f2f2',
+      'base-300': colors['base-300'] || '#e6e6e6',
+      'base-content': colors['base-content'] || '#181a2a'
+    };
+  }
+
+  function themeToColors(theme) {
+    var c = THEME_SWATCHES[theme] || ['#4b6bfb', '#7b92b2', '#67cba0', '#181a2a'];
+    return {
+      primary: c[0], secondary: c[1], accent: c[2], neutral: c[3],
+      'base-100': '#ffffff',
+      'base-200': '#f2f2f2',
+      'base-300': '#e6e6e6',
+      'base-content': '#181a2a'
+    };
+  }
+
+  function applySystemTheme(theme) {
+    currentTheme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    document.querySelectorAll('.theme-card').forEach(card => {
+      card.classList.toggle('active', card.dataset.theme === theme);
+    });
+    try { localStorage.setItem('neon-theme', theme); } catch (_) {}
+
+    const c = THEME_SWATCHES[theme] || ['#4b6bfb', '#7b92b2', '#67cba0', '#181a2a'];
+    document.getElementById('customPrimary').value = c[0] || '#4b6bfb';
+    document.getElementById('customSecondary').value = c[1] || '#7b92b2';
+    document.getElementById('customAccent').value = c[2] || '#67cba0';
+    document.getElementById('customNeutral').value = c[3] || '#181a2a';
+    document.getElementById('customBase100').value = '#ffffff';
+    document.getElementById('customBase200').value = '#f2f2f2';
+    document.getElementById('customBase300').value = '#e6e6e6';
+    document.getElementById('customBaseContent').value = '#181a2a';
+    customColors = {};
+
+    const root = document.documentElement;
+    ['primary', 'secondary', 'accent', 'neutral', 'base-100', 'base-200', 'base-300', 'base-content']
+      .forEach(p => root.style.removeProperty(`--${p}`));
+    try { localStorage.removeItem('neon-custom-colors'); } catch (_) {}
+  }
+
+  function applyCustomColors(colors) {
+    customColors = colors;
+    const root = document.documentElement;
+    for (const [key, val] of Object.entries(colors)) {
+      if (val) root.style.setProperty(`--${key}`, val);
+    }
+    try { localStorage.setItem('neon-custom-colors', JSON.stringify(colors)); } catch (_) {}
+  }
+
+  function resetSystemTheme() {
+    applySystemTheme('corporate');
+    customColors = {};
+    const root = document.documentElement;
+    ['primary', 'secondary', 'accent', 'neutral', 'base-100', 'base-200', 'base-300', 'base-content']
+      .forEach(p => root.style.removeProperty(`--${p}`));
+    try { localStorage.removeItem('neon-custom-colors'); } catch (_) {}
+
+    const c = THEME_SWATCHES.corporate || ['#4b6bfb', '#7b92b2', '#67cba0', '#181a2a'];
+    document.getElementById('customPrimary').value = c[0] || '#4b6bfb';
+    document.getElementById('customSecondary').value = c[1] || '#7b92b2';
+    document.getElementById('customAccent').value = c[2] || '#67cba0';
+    document.getElementById('customNeutral').value = c[3] || '#181a2a';
+    document.getElementById('customBase100').value = '#ffffff';
+    document.getElementById('customBase200').value = '#f2f2f2';
+    document.getElementById('customBase300').value = '#e6e6e6';
+    document.getElementById('customBaseContent').value = '#181a2a';
+
+    applySystemTheme('corporate');
+  }
+
+  function buildThemeGallery() {
+    const container = document.getElementById('themeGallery');
+    container.innerHTML = '';
+    THEMES.forEach(theme => {
+      const colors = THEME_SWATCHES[theme] || ['#4b6bfb', '#7b92b2', '#67cba0', '#181a2a'];
+      const card = document.createElement('div');
+      card.className = 'theme-card' + (theme === currentTheme ? ' active' : '');
+      card.dataset.theme = theme;
+      card.setAttribute('role', 'option');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', 'Theme ' + theme);
+      card.title = theme;
+
+      const strip = document.createElement('div');
+      strip.className = 'swatch-strip';
+      colors.forEach(c => {
+        const span = document.createElement('span');
+        span.style.background = c;
+        strip.appendChild(span);
+      });
+      card.appendChild(strip);
+
+      const label = document.createElement('span');
+      label.className = 'theme-label';
+      label.textContent = theme;
+      const check = document.createElement('span');
+      check.className = 'check';
+      check.textContent = ' ✓';
+      label.appendChild(check);
+      card.appendChild(label);
+
+      card.addEventListener('click', () => applySystemTheme(theme));
+      card.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          applySystemTheme(theme);
+          applyThemeColors(themeToColors(theme));
+          updateCurrentThemeLabel();
+        }
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  function updateCurrentThemeLabel() {
+    if (el.themeCurrent) el.themeCurrent.textContent = currentTheme;
+  }
+
+  function setCustomInputs(c) {
+    if (!c) return;
+    if (c.primary && el.customPrimary) el.customPrimary.value = c.primary;
+    if (c.secondary && el.customSecondary) el.customSecondary.value = c.secondary;
+    if (c.accent && el.customAccent) el.customAccent.value = c.accent;
+    if (c.neutral && el.customNeutral) el.customNeutral.value = c.neutral;
+    if (c['base-100'] && el.customBase100) el.customBase100.value = c['base-100'];
+    if (c['base-200'] && el.customBase200) el.customBase200.value = c['base-200'];
+    if (c['base-300'] && el.customBase300) el.customBase300.value = c['base-300'];
+    if (c['base-content'] && el.customBaseContent) el.customBaseContent.value = c['base-content'];
+  }
+
+  function readCustomInputs() {
+    return {
+      primary: el.customPrimary.value,
+      secondary: el.customSecondary.value,
+      accent: el.customAccent.value,
+      neutral: el.customNeutral.value,
+      'base-100': el.customBase100.value,
+      'base-200': el.customBase200.value,
+      'base-300': el.customBase300.value,
+      'base-content': el.customBaseContent.value
+    };
+  }
+
+  function saveThemeNow() {
+    try {
+      localStorage.setItem('neon-theme', currentTheme);
+      localStorage.setItem('neon-custom-colors', JSON.stringify(customColors));
+    } catch (e) {}
+  }
+
+  function initTheme() {
+    buildThemeGallery();
+
+    var savedTheme = 'corporate';
+    var savedCustom = null;
+
+    try { savedTheme = localStorage.getItem('neon-theme') || 'corporate'; } catch (e) {}
+    if (THEMES.indexOf(savedTheme) === -1) savedTheme = 'corporate';
+
+    try {
+      var raw = localStorage.getItem('neon-custom-colors');
+      if (raw) savedCustom = JSON.parse(raw);
+    } catch (e) { savedCustom = null; }
+
+    applySystemTheme(savedTheme);
+
+    if (savedCustom && savedCustom.primary) {
+      setCustomInputs(savedCustom);
+      customColors = savedCustom;
+      try { localStorage.setItem('neon-custom-colors', JSON.stringify(savedCustom)); } catch (e) {}
+      applyThemeColors(savedCustom);
+    } else {
+      applyThemeColors(themeToColors(savedTheme));
+    }
+
+    updateCurrentThemeLabel();
+  }
+
+  function bindThemeEvents() {
+    if (el.themeGallery) {
+      el.themeGallery.addEventListener('click', function (ev) {
+        var card = ev.target && ev.target.closest ? ev.target.closest('.theme-card') : null;
+        if (!card) return;
+        applyThemeColors(themeToColors(card.dataset.theme));
+        updateCurrentThemeLabel();
+      });
+    }
+
+    if (el.applyThemeBtn) {
+      el.applyThemeBtn.addEventListener('click', function () {
+        var colors = readCustomInputs();
+        applyCustomColors(colors);
+        applyThemeColors(colors);
+        updateCurrentThemeLabel();
+        toast('Theme applied', 'ok', 2000);
+      });
+    }
+
+    if (el.resetThemeBtn) {
+      el.resetThemeBtn.addEventListener('click', function () {
+        resetSystemTheme();
+        applyThemeColors(themeToColors('corporate'));
+        updateCurrentThemeLabel();
+        toast('Theme reset to default', 'info', 2200);
+      });
+    }
+
+    if (el.saveThemeBtn) {
+      el.saveThemeBtn.addEventListener('click', function () {
+        saveThemeNow();
+        toast('Theme saved', 'ok', 2000);
+      });
+    }
+
+    if (el.closeThemeBtn) {
+      el.closeThemeBtn.addEventListener('click', function () {
+        saveThemeNow();
+        el.settingsCard.classList.add('hidden');
+        el.settingsToggle.setAttribute('aria-expanded', 'false');
+        toast('Theme saved & closed', 'ok', 2000);
+      });
+    }
+  }
+
+  /* =====================================================================
+     24. EVENTS
      ===================================================================== */
   function bindEvents() {
     el.urlInput.addEventListener("input", handleUrlChange);
@@ -1485,14 +2356,16 @@ body::before{
   }
 
   /* =====================================================================
-     20. INIT
+     25. INIT
      ===================================================================== */
   function init() {
     if (window.__forceDarkMode) window.__forceDarkMode();
     loadSettingsIntoUI();
+    initTheme();
     renderHistory();
     setMode("video");
     bindEvents();
+    bindThemeEvents();
 
     try {
       var params = new URLSearchParams(window.location.search);
@@ -1510,6 +2383,104 @@ body::before{
     init();
   }
 })();
+</script>
+<script>
+// Disable right-click
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+function ctrlShiftKey(e, keyCode) {
+  return e.ctrlKey && e.shiftKey && e.keyCode === keyCode.charCodeAt(0);
+}
+
+document.onkeydown = (e) => {
+  if (
+    event.keyCode === 123 ||
+    ctrlShiftKey(e, 'I') ||
+    ctrlShiftKey(e, 'J') ||
+    ctrlShiftKey(e, 'C') ||
+    (e.ctrlKey && e.keyCode === 'U'.charCodeAt(0))
+  )
+    return false;
+};
+</script>
+<script>
+ if (typeof document.onselectstart!="undefined" ) {
+  document.onselectstart=new Function ("return false" );
+ }
+ else {
+  document.onmousedown=new Function ("return false" );
+  document.onmouseup=new Function ("return true" );
+ }
+</script>
+<script>
+   document.onkeydown = function(e) {
+if(event.keyCode == 123) {
+    return false;
+}
+if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'C'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'X'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'Y'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'Z'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'V'.charCodeAt(0)){
+    return false;
+}
+if (e.keyCode == 67 && e.shiftKey && (e.ctrlKey || e.metaKey)){
+    return false;
+}
+if (e.keyCode == 'J'.charCodeAt(0) && e.altKey && (e.ctrlKey || e.metaKey)){
+    return false;
+}
+if (e.keyCode == 'I'.charCodeAt(0) && e.altKey && (e.ctrlKey || e.metaKey)){
+    return false;
+}
+if ((e.keyCode == 'V'.charCodeAt(0) && e.metaKey) || (e.metaKey && e.altKey)){
+    return false;
+}
+if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'S'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'H'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'A'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'F'.charCodeAt(0)){
+    return false;
+}
+if(e.ctrlKey && e.keyCode == 'E'.charCodeAt(0)){
+    return false;
+}
+}
+if (document.addEventListener) {
+    document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    }, false);
+}else{
+    document.attachEvent('oncontextmenu', function() {
+    window.event.returnValue = false;
+    });
+}
 </script>
 </body>
 </html>
