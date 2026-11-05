@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0a0c11">
 <meta name="referrer" content="no-referrer">
-<title>Free Video Downloader — Auto-Detect APIs · MP3 &amp; MP4</title>
+<title>Free Video Downloader — Auto-Detect APIs · MP3 &amp; MP4 · FFmpeg</title>
 <style>
   :root{
     color-scheme: dark;
@@ -118,12 +118,17 @@
     background:linear-gradient(135deg,#4ade80,#22c55e);
     color:#04220f;box-shadow:0 10px 26px rgba(34,197,94,.25);
   }
+  .primary.ffmpeg{
+    background:linear-gradient(135deg,#7c5cff,#5b3ee0);
+    box-shadow:0 10px 26px rgba(124,92,255,.3);
+  }
   .ghost{
     flex:0 0 auto;padding:12px 16px;border-radius:12px;font-weight:600;
     color:var(--txt);background:#1b2130;border:1px solid var(--line);
     transition:background .15s;
   }
   .ghost:active{background:#232b3d}
+  .ghost:disabled{opacity:.55;cursor:not-allowed}
   .ghost.danger{color:#ffd5d5;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35)}
   .ghost.danger:active{background:rgba(239,68,68,.22)}
   .ghost.small{padding:9px 12px;font-size:13px}
@@ -146,6 +151,7 @@
   .badge.warn{color:#ffd08a;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.12)}
   .badge.err{color:#ffb3b3;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.12)}
   .badge.info{color:#b7c3ff;border-color:rgba(124,92,255,.4);background:rgba(124,92,255,.12)}
+  .badge.ff{color:#c9beff;border-color:rgba(124,92,255,.5);background:rgba(124,92,255,.16)}
 
   .spinner{
     display:inline-block;width:11px;height:11px;
@@ -219,6 +225,7 @@
     background:linear-gradient(90deg,var(--accent-2),var(--accent));
     transition:width .25s ease;
   }
+  .barFill.green{background:linear-gradient(90deg,#4ade80,#22c55e)}
   .barMeta{
     display:flex;justify-content:space-between;gap:10px;
     margin-top:7px;font-size:12.5px;color:var(--muted);
@@ -323,6 +330,17 @@
     padding:2px 6px;border-radius:99px;background:#1a2030;color:#8b98b0;
   }
 
+  .ffBar{
+    margin-top:12px;padding:12px 14px;border-radius:12px;
+    background:rgba(124,92,255,.08);
+    border:1px solid rgba(124,92,255,.28);
+  }
+  .ffBar .ffTitle{
+    display:flex;align-items:center;gap:8px;margin-bottom:8px;
+    font-size:12.5px;font-weight:700;color:#c9beff;letter-spacing:.03em;
+  }
+  .ffBar .ffTitle .spinner{border-top-color:#c9beff}
+
   .foot{
     color:#5d6982;font-size:11.5px;text-align:center;
     margin-top:24px;line-height:1.6;
@@ -344,7 +362,7 @@
     <div class="logo">&#9654;</div>
     <div>
       <h1>Free Video Downloader</h1>
-      <p class="sub">Auto-detects working APIs &middot; YouTube &middot; TikTok &middot; Instagram &middot; +more</p>
+      <p class="sub">Auto-detects working APIs &middot; FFmpeg.wasm &middot; YouTube &middot; TikTok &middot; Instagram &middot; +more</p>
     </div>
   </header>
 
@@ -374,7 +392,7 @@
 
       <details class="adv" id="settingsPanel">
         <summary>
-          <span>API instances</span>
+          <span>API instances &amp; FFmpeg</span>
           <span id="instanceStatus" class="badge info">Checking…</span>
           <span id="savedFlag" class="saved">Saved</span>
         </summary>
@@ -410,10 +428,20 @@
             <button id="resetCfgBtn" class="ghost" type="button" style="flex:1">Reset overrides</button>
           </div>
 
+          <div class="lbl lbl2">FFmpeg AI model (MP3 conversion)</div>
+          <div class="detectRow" style="margin-bottom:0">
+            <span id="ffmpegSettingsIcon" class="spinner" style="display:none"></span>
+            <span class="text" id="ffmpegSettingsText">Not loaded — will load on first MP3 conversion.</span>
+            <span id="ffmpegSettingsBadge" class="badge ff">Idle</span>
+            <button id="loadFFmpegBtn" class="ghost small" type="button">Load</button>
+          </div>
+
           <p class="hint">
-            The app tests a short list of public instances on first load and only uses
-            the ones that respond with CORS. Instance URLs are never sent to us —
-            everything happens in your browser.
+            Instances are tested on first load and only CORS-friendly ones are used.
+            FFmpeg.wasm includes <code>libavutil</code>, <code>libavcodec</code>,
+            <code>libavformat</code>, <code>libavdevice</code>, <code>libavfilter</code>,
+            <code>libswscale</code> and <code>libswresample</code> — it downloads on demand
+            and runs entirely in your browser.
           </p>
         </div>
       </details>
@@ -460,12 +488,36 @@
         <button id="cancelBtn" class="ghost danger hidden" type="button">Cancel</button>
       </div>
 
+      <div class="btnRow" style="margin-top:8px">
+        <button id="mp3Btn" class="primary ffmpeg" type="button" style="flex:1">
+          Convert to MP3 with FFmpeg
+        </button>
+      </div>
+      <p class="hint" style="margin-top:8px;text-align:center">
+        Direct download for MP4, or extract audio as MP3 (320 kbps) with FFmpeg.wasm.
+      </p>
+
       <div class="shareRow">
         <button id="copyBtn" class="ghost" type="button">Copy link</button>
         <button id="openSrcBtn" class="ghost" type="button">Open source</button>
       </div>
 
       <div id="pickerRow" class="pickerRow hidden"></div>
+
+      <!-- FFmpeg model loading / conversion progress -->
+      <div id="ffmpegWrap" class="ffBar hidden">
+        <div class="ffTitle">
+          <span id="ffmpegSpinner" class="spinner"></span>
+          <span>FFmpeg AI Model — Loading &amp; Fetching</span>
+        </div>
+        <div class="barTrack" style="margin-top:0">
+          <div id="ffmpegBar" class="barFill green"></div>
+        </div>
+        <div class="barMeta">
+          <span id="ffmpegStatus">Preparing…</span>
+          <span id="ffmpegPct">0%</span>
+        </div>
+      </div>
 
       <div id="barWrap" class="hidden">
         <div class="barTrack"><div id="bar" class="barFill"></div></div>
@@ -517,17 +569,22 @@
 
   <!-- ========================== INFO ========================== -->
   <div class="note">
-    <strong>Formats supported</strong>
+    <strong>FFmpeg.wasm — bundled libraries</strong>
     <ul>
-      <li><strong>Video:</strong> MP4 / H.264 — resolution follows the source (up to 4K on merged Cobalt streams).</li>
-      <li><strong>Audio:</strong> MP3, M4A, Opus, OGG, WAV, WebM.</li>
-      <li><strong>Multi-item posts</strong> (carousels, slideshows, playlists) expose a picker so you can grab any item.</li>
+      <li><code>libavutil</code> — random generators, data structures, maths routines, core multimedia utilities.</li>
+      <li><code>libavcodec</code> — decoders &amp; encoders for audio/video codecs (including <code>libmp3lame</code>).</li>
+      <li><code>libavformat</code> — demuxers &amp; muxers for MP4, WebM, M4A, MP3, OGG and more.</li>
+      <li><code>libavdevice</code> — input/output device handling (used internally by the core).</li>
+      <li><code>libavfilter</code> — media filters (applied internally during conversion).</li>
+      <li><code>libswscale</code> — image scaling and pixel format conversion.</li>
+      <li><code>libswresample</code> — audio resampling, rematrixing and sample format conversion.</li>
     </ul>
-    <strong style="display:block;margin-top:10px">What changed in this build</strong>
+    <strong style="display:block;margin-top:10px">How it works</strong>
     <ul>
-      <li><strong>Cobalt 404 fixed</strong> — the old <code>/api/json</code> endpoint is gone; only <code>POST /</code> on the base URL is used, matching current Cobalt v10.</li>
-      <li><strong>Auto-detect</strong> — working Piped, Invidious and Cobalt instances are discovered on first load and refreshed on demand.</li>
-      <li><strong>Multi-instance failover</strong> — each download tries the detected list in order; your manual override always goes first.</li>
+      <li><strong>Direct download</strong> — the selected stream (MP4 / M4A / WebM) is downloaded as-is.</li>
+      <li><strong>MP4 → MP3</strong> — the source is piped through FFmpeg (libavcodec + libmp3lame) at 320 kbps.</li>
+      <li><strong>AI model loading</strong> — the FFmpeg core (WASM) downloads once, shows a progress bar, and stays cached for the session.</li>
+      <li><strong>No server</strong> — every conversion happens in your browser; nothing is uploaded.</li>
     </ul>
     <strong style="display:block;margin-top:10px">Limits</strong>
     Direct YouTube streams top out around 128–160 kbps audio and 360p/720p muxed video.
@@ -538,11 +595,18 @@
 
   <p class="foot">
     Interface inspired by <a href="https://github.com/HexSleuth/YouTube-Downloader/" target="_blank" rel="noopener noreferrer">𓋹•HexSleuth•𓃠</a>
-    &middot; Engine modelled on <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a><br>
+    &middot; Engine modelled on <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a>
+    &middot; Conversion by <a href="https://ffmpegwasm.netlify.app/" target="_blank" rel="noopener noreferrer">FFmpeg.wasm</a><br>
     Download only content you own or are legally allowed to download.<br>
     Respect each platform's Terms of Service and local copyright law.
   </p>
 </div>
+
+<!-- ================================================================== *
+     FFmpeg.wasm — UMD builds from jsDelivr
+     ================================================================== -->
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
 
 <script>
 (function () {
@@ -613,6 +677,12 @@
 
   function errName(e) { return (e && e.name) || ""; }
 
+  function makeAbortError() {
+    const e = new Error("Aborted");
+    e.name = "AbortError";
+    return e;
+  }
+
   function looksLikeNetworkError(e) {
     const msg = String((e && e.message) || e || "");
     return (e instanceof TypeError) ||
@@ -620,29 +690,19 @@
            errName(e) === "NetworkError";
   }
 
-  function withTimeout(promise, ms, message) {
-    return new Promise((resolve, reject) => {
-      const t = setTimeout(() => {
-        const e = new Error(message || "Timed out after " + ms + " ms");
-        e.name = "TimeoutError";
-        reject(e);
-      }, ms);
-      promise.then(
-        (v) => { clearTimeout(t); resolve(v); },
-        (e) => { clearTimeout(t); reject(e); }
-      );
-    });
+  function guessExtFromMime(mime, fallback) {
+    if (!mime) return fallback || "bin";
+    const m = String(mime).toLowerCase();
+    if (m.indexOf("mp4") >= 0) return "mp4";
+    if (m.indexOf("webm") >= 0) return "webm";
+    if (m.indexOf("mpeg") >= 0) return "mp3";
+    if (m.indexOf("aac") >= 0) return "aac";
+    if (m.indexOf("ogg") >= 0) return "ogg";
+    return fallback || "bin";
   }
 
   /* ================================================================== *
    * 1. Instance lists
-   * ------------------------------------------------------------------
-   * These are just CANDIDATES. On first load (and whenever you press
-   * "Detect now") each one is pinged and only CORS-friendly, responsive
-   * instances end up in the working set used for downloads.
-   *
-   * The old /api/json Cobalt endpoint is intentionally NOT tried — it
-   * returns 404 on every current Cobalt v10 instance.
    * ================================================================== */
   const INSTANCES = {
     piped: [
@@ -690,11 +750,11 @@
   const TEST_VIDEO_ID = "dQw4w9WgXcQ";
 
   /* ================================================================== *
-   * 2. Config (manual overrides) — separate from detection cache
+   * 2. Config (manual overrides)
    * ================================================================== */
-  const CFG_KEY = "ytc:cfg:v3";
-  const DETECT_KEY = "ytc:detect:v3";
-  const DETECT_TTL = 60 * 60 * 1000;   // 1 h
+  const CFG_KEY = "ytc:cfg:v4";
+  const DETECT_KEY = "ytc:detect:v4";
+  const DETECT_TTL = 60 * 60 * 1000;
 
   const cfg = { piped: "", invidious: "", cobalt: "" };
 
@@ -796,7 +856,6 @@
         return { ok: !!(data && (data.title || data.formatStreams)), reason: "no title/formats" };
       }
 
-      /* cobalt: POST to the base URL only. /api/json is gone (404). */
       const res = await fetch(base, {
         method: "POST",
         signal: ctrl.signal,
@@ -810,9 +869,6 @@
         body: JSON.stringify({ url: "https://example.com/probe.txt" }),
       });
 
-      /* Any structured response (200 / 400 / 422 / 429) means the server is
-         alive and speaking CORS. 401 / 403 mean auth is required (unusable).
-         404 / 405 / 501 mean the endpoint doesn't exist. */
       if (res.status === 200 || res.status === 400 || res.status === 422 || res.status === 429) {
         return { ok: true, reason: "HTTP " + res.status };
       }
@@ -1253,7 +1309,7 @@
   }
 
   /* ================================================================== *
-   * 11. Cobalt — fixed endpoint
+   * 11. Cobalt
    * ================================================================== */
   const COBALT_ERRORS = {
     "error.api.link.invalid":              "That link is not valid for this Cobalt instance.",
@@ -1296,8 +1352,6 @@
   }
 
   async function tryCobaltAt(base, mode, opts) {
-    /* IMPORTANT: only POST to the base URL. Cobalt v10 has no /api/json —
-       posting there returns 404 on every current instance. */
     const body = cobaltBodyFor(mode, opts);
 
     const ctrl = new AbortController();
@@ -1361,8 +1415,7 @@
 
       if (data.status === "local-processing") {
         throw new Error(
-          "This Cobalt instance wants to process the file locally, which is not supported here. " +
-          "Use another instance."
+          "This Cobalt instance wants to process the file locally, which is not supported here."
         );
       }
 
@@ -1407,7 +1460,252 @@
   }
 
   /* ================================================================== *
-   * 12. DOM
+   * 12. FFmpeg.wasm integration
+   * ------------------------------------------------------------------
+   * Loads @ffmpeg/core once. Bundles libavutil, libavcodec, libavformat,
+   * libavdevice, libavfilter, libswscale, libswresample.
+   *
+   * Uses the single-threaded UMD core so no COOP/COEP headers are needed.
+   * ================================================================== */
+  const FFMPEG_CORE_VERSION = "0.12.6";
+  const FFMPEG_CDN_BASES = [
+    "https://cdn.jsdelivr.net/npm/@ffmpeg/core@" + FFMPEG_CORE_VERSION + "/dist/umd",
+    "https://unpkg.com/@ffmpeg/core@" + FFMPEG_CORE_VERSION + "/dist/umd",
+  ];
+
+  const ffmpegState = {
+    instance: null,
+    promise: null,
+    loaded: false,
+    loading: false,
+    error: null,
+    fetchProgress: 0,
+    execProgress: 0,
+  };
+
+  function getFFmpegGlobal() {
+    return (typeof window !== "undefined" && window.FFmpegWASM) || null;
+  }
+  function getUtilGlobal() {
+    return (typeof window !== "undefined" && window.FFmpegUtil) || null;
+  }
+
+  function setFFmpegUI(text, pct, showSpinner) {
+    const wrap = $("ffmpegWrap");
+    const bar = $("ffmpegBar");
+    const status = $("ffmpegStatus");
+    const pctEl = $("ffmpegPct");
+    const sp = $("ffmpegSpinner");
+    if (!wrap) return;
+
+    wrap.classList.remove("hidden");
+    if (bar && pct != null) bar.style.width = Math.round(pct * 100) + "%";
+    if (status && text) status.textContent = text;
+    if (pctEl && pct != null) pctEl.textContent = Math.round(pct * 100) + "%";
+    if (sp) sp.style.display = showSpinner ? "" : "none";
+  }
+
+  function hideFFmpegUI(delay) {
+    setTimeout(() => {
+      const wrap = $("ffmpegWrap");
+      if (wrap) wrap.classList.add("hidden");
+    }, delay == null ? 1500 : delay);
+  }
+
+  function updateFFmpegSettingsBadge(state, text) {
+    const badge = $("ffmpegSettingsBadge");
+    const label = $("ffmpegSettingsText");
+    const icon = $("ffmpegSettingsIcon");
+    const btn = $("loadFFmpegBtn");
+    if (badge) {
+      badge.className = "badge " + (state === "ready" ? "ok" : state === "loading" ? "warn" : state === "error" ? "err" : "ff");
+      badge.textContent =
+        state === "ready" ? "Ready" :
+        state === "loading" ? "Loading…" :
+        state === "error" ? "Error" : "Idle";
+    }
+    if (label && text != null) label.textContent = text;
+    if (icon) icon.style.display = state === "loading" ? "" : "none";
+    if (btn) {
+      btn.disabled = state === "loading" || state === "ready";
+      btn.textContent = state === "ready" ? "Loaded" : state === "loading" ? "Loading…" : "Load";
+    }
+  }
+
+  async function loadFFmpeg() {
+    if (ffmpegState.loaded) return ffmpegState.instance;
+    if (ffmpegState.promise) return ffmpegState.promise;
+
+    const F = getFFmpegGlobal();
+    const U = getUtilGlobal();
+    if (!F || !F.FFmpeg || !U || !U.toBlobURL) {
+      const e = new Error(
+        "FFmpeg.wasm UMD scripts failed to load from the CDN. " +
+        "Check your internet connection or ad‑blocker and retry."
+      );
+      ffmpegState.error = e;
+      updateFFmpegSettingsBadge("error", "CDN script not available");
+      throw e;
+    }
+
+    ffmpegState.loading = true;
+    updateFFmpegSettingsBadge("loading", "Loading & Fetching AI model…");
+    setFFmpegUI("Loading FFmpeg (free AI model)…", 0, true);
+
+    ffmpegState.promise = (async () => {
+      const { FFmpeg } = F;
+      const { toBlobURL } = U;
+
+      const ffmpeg = new FFmpeg();
+
+      ffmpeg.on("log", ({ message }) => {
+        // Kept for debugging; do not spam the UI.
+        // console.log("[ffmpeg]", message);
+      });
+
+      ffmpeg.on("progress", ({ progress }) => {
+        if (typeof progress === "number" && progress >= 0 && progress <= 1) {
+          ffmpegState.execProgress = progress;
+          setFFmpegUI(
+            "Converting with FFmpeg… " + Math.round(progress * 100) + "%",
+            progress,
+            true
+          );
+        }
+      });
+
+      let lastErr = null;
+
+      for (let i = 0; i < FFMPEG_CDN_BASES.length; i++) {
+        const base = FFMPEG_CDN_BASES[i];
+        try {
+          setFFmpegUI("Fetching AI model core…", 0.02, true);
+
+          const coreURL = await toBlobURL(base + "/ffmpeg-core.js", "text/javascript");
+
+          setFFmpegUI("Fetching AI model (WASM)…", 0.06, true);
+
+          const wasmURL = await toBlobURL(
+            base + "/ffmpeg-core.wasm",
+            "application/wasm",
+            true,
+            (data) => {
+              const received = Number(data && data.received) || 0;
+              const total = Number(data && data.total) || 0;
+              if (total > 0) {
+                const p = received / total;
+                const overall = 0.06 + p * 0.84;
+                ffmpegState.fetchProgress = overall;
+                setFFmpegUI(
+                  "Downloading AI model… " + Math.round(p * 100) + "%  (" +
+                    fmtBytes(received) + " / " + fmtBytes(total) + ")",
+                  overall,
+                  true
+                );
+              } else {
+                setFFmpegUI(
+                  "Downloading AI model… " + fmtBytes(received),
+                  0.5,
+                  true
+                );
+              }
+            }
+          );
+
+          setFFmpegUI("Initialising FFmpeg…", 0.92, true);
+
+          await ffmpeg.load({ coreURL, wasmURL });
+
+          ffmpegState.instance = ffmpeg;
+          ffmpegState.loaded = true;
+          ffmpegState.loading = false;
+          ffmpegState.error = null;
+
+          updateFFmpegSettingsBadge(
+            "ready",
+            "Ready — libavutil · libavcodec · libavformat · libavfilter · libswscale · libswresample"
+          );
+
+          setFFmpegUI("FFmpeg ready ✓", 1, false);
+          hideFFmpegUI(1400);
+
+          return ffmpeg;
+        } catch (e) {
+          lastErr = e;
+          // try next CDN
+        }
+      }
+
+      ffmpegState.error = lastErr || new Error("Unknown FFmpeg load failure");
+      ffmpegState.loading = false;
+      ffmpegState.promise = null;
+      ffmpegState.instance = null;
+
+      updateFFmpegSettingsBadge(
+        "error",
+        "Load failed: " + ((lastErr && lastErr.message) || lastErr)
+      );
+      setFFmpegUI("FFmpeg load failed", 0, false);
+      hideFFmpegUI(4000);
+
+      throw ffmpegState.error;
+    })();
+
+    try {
+      return await ffmpegState.promise;
+    } catch (e) {
+      ffmpegState.promise = null;
+      throw e;
+    }
+  }
+
+  /* ================================================================== *
+   * 13. Blob fetch with progress
+   * ================================================================== */
+  async function fetchToBlob(url, signal, onProgress) {
+    const t0 = Date.now();
+    const res = await fetch(url, {
+      signal,
+      credentials: "omit",
+      mode: "cors",
+      referrerPolicy: "no-referrer",
+    });
+    if (!res.ok) throw new Error("Stream server returned HTTP " + res.status);
+
+    const total = Number(res.headers.get("content-length") || 0);
+    const type = res.headers.get("content-type") || "application/octet-stream";
+
+    if (!res.body || !res.body.getReader) {
+      const blob = await res.blob();
+      if (onProgress) onProgress(blob.size, total || blob.size);
+      return { blob, mime: type, size: blob.size, t0 };
+    }
+
+    const reader = res.body.getReader();
+    const chunks = [];
+    let received = 0;
+    let last = 0;
+
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      received += value.length;
+
+      const now = Date.now();
+      if (onProgress && now - last > 200) {
+        last = now;
+        onProgress(received, total);
+      }
+    }
+
+    if (onProgress) onProgress(received, total || received);
+
+    return { blob: new Blob(chunks, { type }), mime: type, size: received, t0 };
+  }
+
+  /* ================================================================== *
+   * 14. DOM
    * ================================================================== */
   const ui = {
     tabs:              $all(".tab"),
@@ -1430,6 +1728,8 @@
     showInstBtn:       $("showInstBtn"),
     instList:          $("instList"),
 
+    loadFFmpegBtn:     $("loadFFmpegBtn"),
+
     infoCard:          $("infoCard"),
     thumb:             $("thumb"),
     title:             $("title"),
@@ -1448,6 +1748,7 @@
 
     dlBtn:             $("dlBtn"),
     cancelBtn:         $("cancelBtn"),
+    mp3Btn:            $("mp3Btn"),
     copyBtn:           $("copyBtn"),
     openSrcBtn:        $("openSrcBtn"),
     pickerRow:         $("pickerRow"),
@@ -1469,7 +1770,7 @@
   };
 
   /* ================================================================== *
-   * 13. State
+   * 15. State
    * ================================================================== */
   const state = {
     url: "", platform: null,
@@ -1478,6 +1779,7 @@
     mode: "video", busy: false,
     controller: null, blobUrl: null,
     pendingAudio: false,
+    pendingMp3: false,
   };
 
   const VIDEO_QUALITIES = [
@@ -1500,7 +1802,7 @@
   const AUDIO_BITRATES = ["320", "256", "192", "128", "64"];
 
   /* ================================================================== *
-   * 14. Status / error UI
+   * 16. Status / error UI
    * ================================================================== */
   function setStatus(text, cls) {
     ui.status.textContent = text || "";
@@ -1546,7 +1848,7 @@
   }
 
   /* ================================================================== *
-   * 15. Fetch flow
+   * 17. Fetch flow
    * ================================================================== */
   async function doFetch() {
     if (state.busy) return;
@@ -1642,6 +1944,11 @@
           setTimeout(() => doDownload(), 150);
         }
       }
+
+      if (state.pendingMp3) {
+        state.pendingMp3 = false;
+        setTimeout(() => doConvertToMp3(), 200);
+      }
     } catch (e) {
       handleFetchError(e);
     } finally {
@@ -1699,7 +2006,7 @@
   }
 
   /* ================================================================== *
-   * 16. Render — direct streams
+   * 18. Render — direct streams
    * ================================================================== */
   function renderDirect(data, videoId) {
     state.backend = state.backend === "invidious" ? "invidious" : "piped";
@@ -1743,6 +2050,7 @@
     ui.dlBtn.textContent = "Download";
     ui.dlBtn.classList.remove("green");
     ui.cancelBtn.classList.add("hidden");
+    if (ui.mp3Btn) ui.mp3Btn.disabled = false;
     state.controller = null;
 
     if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
@@ -1793,7 +2101,7 @@
   }
 
   /* ================================================================== *
-   * 17. Render — Cobalt conversion options
+   * 19. Render — Cobalt conversion options
    * ================================================================== */
   function renderConvert(info, videoId) {
     ui.title.textContent = info.title || "Ready to convert";
@@ -1832,6 +2140,7 @@
     ui.dlBtn.textContent = "Convert & Download";
     ui.dlBtn.classList.add("green");
     ui.cancelBtn.classList.add("hidden");
+    if (ui.mp3Btn) ui.mp3Btn.disabled = false;
     state.controller = null;
   }
 
@@ -1846,7 +2155,7 @@
   }
 
   /* ================================================================== *
-   * 18. Mode switching
+   * 20. Mode switching
    * ================================================================== */
   function setMode(mode, force) {
     const next = mode === "audio" ? "audio" : "video";
@@ -1868,7 +2177,7 @@
   }
 
   /* ================================================================== *
-   * 19. Download — direct stream
+   * 21. Download — direct stream (no FFmpeg)
    * ================================================================== */
   async function doDownload() {
     if (state.controller) return;
@@ -1886,7 +2195,7 @@
   }
 
   /* ================================================================== *
-   * 20. Download — Cobalt
+   * 22. Download — Cobalt
    * ================================================================== */
   async function convertAndDownload() {
     if (!state.url) return;
@@ -1905,6 +2214,7 @@
 
     ui.dlBtn.disabled = true;
     ui.dlBtn.textContent = "Converting…";
+    if (ui.mp3Btn) ui.mp3Btn.disabled = true;
     ui.cancelBtn.classList.remove("hidden");
     ui.barWrap.classList.add("hidden");
     setStatus("Requesting conversion from Cobalt…", "");
@@ -1920,6 +2230,7 @@
         renderPicker(result);
         ui.dlBtn.disabled = false;
         ui.dlBtn.textContent = "Convert & Download";
+        if (ui.mp3Btn) ui.mp3Btn.disabled = false;
         ui.cancelBtn.classList.add("hidden");
         state.controller = null;
         return;
@@ -1957,6 +2268,7 @@
 
       ui.dlBtn.disabled = false;
       ui.dlBtn.textContent = "Convert & Download";
+      if (ui.mp3Btn) ui.mp3Btn.disabled = false;
       ui.cancelBtn.classList.add("hidden");
       state.controller = null;
     }
@@ -1981,7 +2293,7 @@
   }
 
   /* ================================================================== *
-   * 21. Streaming download with progress
+   * 23. Download streaming with progress
    * ================================================================== */
   async function downloadToFile(url, filename, mime) {
     if (state.controller) return;
@@ -1995,6 +2307,7 @@
     ui.speed.textContent = "";
     setStatus("Connecting to stream…", "");
     ui.dlBtn.disabled = true;
+    if (ui.mp3Btn) ui.mp3Btn.disabled = true;
     ui.cancelBtn.classList.remove("hidden");
 
     state.controller = new AbortController();
@@ -2058,6 +2371,7 @@
       ui.barWrap.classList.add("hidden");
       ui.dlBtn.disabled = false;
       ui.dlBtn.textContent = state.backend === "cobalt" ? "Convert & Download" : "Retry download";
+      if (ui.mp3Btn) ui.mp3Btn.disabled = false;
       ui.cancelBtn.classList.add("hidden");
       state.controller = null;
     }
@@ -2108,6 +2422,7 @@
 
     ui.dlBtn.disabled = false;
     ui.dlBtn.textContent = state.backend === "cobalt" ? "Convert & Download" : "Download again";
+    if (ui.mp3Btn) ui.mp3Btn.disabled = false;
     ui.cancelBtn.classList.add("hidden");
     state.controller = null;
   }
@@ -2122,7 +2437,187 @@
   }
 
   /* ================================================================== *
-   * 22. MP3 search
+   * 24. MP4 → MP3 conversion via FFmpeg.wasm
+   * ================================================================== */
+  function getSourceForMp3() {
+    // Piped / Invidious path only — Cobalt is handled separately.
+    if (state.backend === "cobalt") return null;
+
+    const current = state.filtered[state.selected];
+    if (current) return current;
+
+    const audio = state.streams.find((s) => s.kind === "audio");
+    if (audio) return audio;
+
+    const video = state.streams.find((s) => s.kind === "video");
+    return video || null;
+  }
+
+  async function getCobaltVideoSource() {
+    setStatus("Requesting video from Cobalt…", "");
+    const result = await cobaltConvert("video", {
+      url: state.url,
+      videoQuality: "max",
+    });
+
+    if (result.kind === "single") {
+      return {
+        url: result.url,
+        ext: "mp4",
+        kind: "video",
+        mime: "video/mp4",
+        label: "Cobalt video",
+      };
+    }
+
+    if (result.kind === "picker" && result.items && result.items[0]) {
+      return {
+        url: result.items[0].url,
+        ext: "mp4",
+        kind: "video",
+        mime: "video/mp4",
+        label: "Cobalt item",
+      };
+    }
+
+    throw new Error("Cobalt did not return a single downloadable video.");
+  }
+
+  async function doConvertToMp3() {
+    if (state.controller || state.busy) return;
+
+    if (!state.url) {
+      setStatus("Fetch a video first.", "warn");
+      return;
+    }
+
+    clearErr();
+    hideFileRow();
+    hidePicker();
+
+    // Reset UI
+    ui.dlBtn.disabled = true;
+    ui.dlBtn.textContent = "Download";
+    if (ui.mp3Btn) ui.mp3Btn.disabled = true;
+    ui.cancelBtn.classList.remove("hidden");
+    ui.barWrap.classList.add("hidden");
+    setStatus("Preparing MP3 conversion…", "");
+
+    state.controller = new AbortController();
+    const signal = state.controller.signal;
+    const t0 = Date.now();
+
+    try {
+      // 1. Resolve source
+      let source;
+      if (state.backend === "cobalt") {
+        source = await getCobaltVideoSource();
+      } else {
+        source = getSourceForMp3();
+      }
+      if (!source) {
+        throw new Error("No downloadable stream is available to convert.");
+      }
+      if (signal.aborted) throw makeAbortError();
+
+      // 2. Load FFmpeg (shows "Loading & Fetching AI model")
+      setStatus("Loading FFmpeg AI model (loading & fetching)…", "");
+      setFFmpegUI("Loading FFmpeg (free AI model)…", 0, true);
+      const ffmpeg = await loadFFmpeg();
+      if (signal.aborted) throw makeAbortError();
+
+      // 3. Download source
+      ui.barWrap.classList.remove("hidden");
+      ui.bar.style.width = "0%";
+      ui.pct.textContent = "0%";
+      ui.speed.textContent = "";
+      setStatus("Downloading source media…", "");
+
+      const downloaded = await fetchToBlob(source.url, signal, (received, total) => {
+        paintProgress(received, total, t0);
+      });
+      if (signal.aborted) throw makeAbortError();
+
+      const blob = downloaded.blob;
+      const mime = downloaded.mime;
+
+      // 4. Determine input filename / extension
+      let inputExt = source.ext || "";
+      if (!inputExt || inputExt === "bin") {
+        inputExt = guessExtFromMime(mime, "bin");
+      }
+      const inputName = "input." + inputExt;
+      const outputName = "output.mp3";
+
+      // 5. Write to FFmpeg FS
+      setStatus("Preparing FFmpeg input…", "");
+      setFFmpegUI("Writing input to FFmpeg virtual FS…", 0, true);
+      const inputBuf = new Uint8Array(await blob.arrayBuffer());
+      await ffmpeg.writeFile(inputName, inputBuf);
+      if (signal.aborted) throw makeAbortError();
+
+      // 6. Run conversion
+      setStatus("Converting to MP3 (320 kbps)…", "");
+      setFFmpegUI("Converting to MP3 with FFmpeg…", 0, true);
+
+      await ffmpeg.exec([
+        "-i", inputName,
+        "-vn",
+        "-acodec", "libmp3lame",
+        "-b:a", "320k",
+        "-ar", "44100",
+        "-y",
+        outputName,
+      ]);
+
+      if (signal.aborted) throw makeAbortError();
+
+      // 7. Read output
+      setFFmpegUI("Reading MP3 output…", 0.99, true);
+      const data = await ffmpeg.readFile(outputName);
+      const mp3Blob = new Blob([data.buffer], { type: "audio/mpeg" });
+
+      // 8. Cleanup FFmpeg FS
+      try { await ffmpeg.deleteFile(inputName); } catch (e) { /* ignore */ }
+      try { await ffmpeg.deleteFile(outputName); } catch (e) { /* ignore */ }
+
+      // 9. Save
+      const baseName = safeFilename(
+        (state.info && state.info.title) ||
+        (state.platform && state.platform.name) ||
+        hostOf(state.url) ||
+        "audio"
+      );
+
+      setFFmpegUI("MP3 ready ✓", 1, false);
+      hideFFmpegUI(1200);
+
+      ui.barWrap.classList.add("hidden");
+      finishDownload(mp3Blob, baseName + ".mp3", t0);
+    } catch (e) {
+      console.error(e);
+
+      if (errName(e) === "AbortError") {
+        setStatus("MP3 conversion cancelled.", "warn");
+        setFFmpegUI("Cancelled", 0, false);
+        hideFFmpegUI(1500);
+      } else {
+        setStatus("MP3 conversion failed: " + ((e && e.message) || e), "bad");
+        setFFmpegUI("Failed: " + ((e && e.message) || e), 0, false);
+        hideFFmpegUI(5000);
+      }
+
+      ui.barWrap.classList.add("hidden");
+      ui.dlBtn.disabled = false;
+      ui.dlBtn.textContent = state.backend === "cobalt" ? "Convert & Download" : "Download";
+      if (ui.mp3Btn) ui.mp3Btn.disabled = false;
+      ui.cancelBtn.classList.add("hidden");
+      state.controller = null;
+    }
+  }
+
+  /* ================================================================== *
+   * 25. MP3 search
    * ================================================================== */
   async function doSearch() {
     if (state.busy) return;
@@ -2246,6 +2741,7 @@
       btn.title = "Download as MP3 (~" + kbps + " kbps)";
       btn.addEventListener("click", () => {
         state.pendingAudio = true;
+        state.pendingMp3 = true;
         setTab("download");
         ui.url.value = "https://www.youtube.com/watch?v=" + it.videoId;
         updateBadge();
@@ -2260,7 +2756,7 @@
   }
 
   /* ================================================================== *
-   * 23. Sharing / handoff
+   * 26. Sharing
    * ================================================================== */
   function currentUrl() {
     if (state.url) return state.url;
@@ -2278,7 +2774,7 @@
   }
 
   /* ================================================================== *
-   * 24. Tabs
+   * 27. Tabs
    * ================================================================== */
   function setTab(name) {
     ui.tabs.forEach((t) => {
@@ -2291,7 +2787,7 @@
   }
 
   /* ================================================================== *
-   * 25. Deep links
+   * 28. Deep links
    * ================================================================== */
   function initFromLocation() {
     let params, hash;
@@ -2319,13 +2815,15 @@
   }
 
   /* ================================================================== *
-   * 26. Event wiring
+   * 29. Event wiring
    * ================================================================== */
   ui.tabs.forEach((t) => t.addEventListener("click", () => setTab(t.dataset.tab)));
 
   ui.fetchBtn.addEventListener("click", doFetch);
   ui.dlBtn.addEventListener("click", doDownload);
   ui.searchBtn.addEventListener("click", doSearch);
+
+  if (ui.mp3Btn) ui.mp3Btn.addEventListener("click", doConvertToMp3);
 
   ui.copyBtn.addEventListener("click", () => {
     const target = currentUrl();
@@ -2428,8 +2926,18 @@
     if (!hidden) renderInstanceList();
   });
 
+  if (ui.loadFFmpegBtn) {
+    ui.loadFFmpegBtn.addEventListener("click", async () => {
+      try {
+        await loadFFmpeg();
+      } catch (e) {
+        /* error already shown in badge + ffmpeg bar */
+      }
+    });
+  }
+
   /* ================================================================== *
-   * 27. Boot
+   * 30. Boot
    * ================================================================== */
   loadCfg();
   loadDetectionCache();
@@ -2445,8 +2953,9 @@
   setTab("download");
   updateBadge();
   updateDetectionUI();
+  updateFFmpegSettingsBadge("idle", "Not loaded — will load on first MP3 conversion.");
 
-  /* Kick off detection in the background on first load. */
+  /* Kick off instance detection in the background on first load. */
   runDetection(false).catch(() => { /* status shown in UI */ });
 
   initFromLocation();
