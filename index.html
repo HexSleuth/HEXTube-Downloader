@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0a0c11">
 <meta name="referrer" content="no-referrer">
-<title>MediaGrabber — GitHub Pages & Self-Hosted Downloader</title>
+<title>MediaGrabber — Fixed YouTube Downloader</title>
 <style>
 :root{
   color-scheme:dark;
@@ -193,7 +193,6 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
   overflow:hidden;font-size:12.5px;font-weight:650;line-height:1.3;margin-bottom:2px;
   word-break:break-word;color:var(--txt)}
 .hist-item .meta span{font-size:11px;color:var(--muted);display:block}
-.hist-item .meta a{color:#b7c3ff;text-decoration:underline;font-size:11px}
 
 .empty{padding:20px;text-align:center;color:var(--muted);font-size:13px}
 
@@ -214,7 +213,7 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     <div class="logo">▶</div>
     <div>
       <h1>MediaGrabber</h1>
-      <p>GitHub Pages &middot; Self-hosted MeTube &middot; Cobalt</p>
+      <p>Fixed YouTube backend &middot; GitHub Pages &middot; Self-hosted ready</p>
     </div>
     <div class="hd-status" id="hdStatus">Initializing…</div>
   </header>
@@ -225,7 +224,6 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     <button class="tab" data-tab="history">History</button>
   </nav>
 
-  <!-- ========== DOWNLOAD ========== -->
   <section id="panel-download" class="panel">
     <div class="card">
       <label class="lbl" for="url">Video URL</label>
@@ -262,7 +260,7 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
       <div id="formats" class="formats"></div>
 
       <div id="qualityRow" class="hidden">
-        <label class="lbl" for="vq">Quality (Cobalt / MeTube)</label>
+        <label class="lbl" for="vq">Quality</label>
         <select id="vq">
           <option value="max">Best available</option>
           <option value="2160">2160p · 4K</option>
@@ -317,18 +315,16 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     </div>
 
     <div class="info-note">
-      <strong>How backends are chosen</strong>
+      <strong>Backend order for YouTube</strong>
       <ul>
-        <li><b>YouTube</b>: Piped → Invidious → Cobalt → MeTube</li>
-        <li><b>TikTok</b>: TikWM → Cobalt → MeTube</li>
-        <li><b>Other</b>: Cobalt → MeTube</li>
-        <li>If a <b>MeTube URL</b> is set in Settings, it is preferred for every platform.</li>
-        <li>Cobalt must be self-hosted or a public instance that answers without an API key.</li>
+        <li><b>1.</b> Invidious <code>invidious.f5.si</code> with <code>local=true</code> — proven to proxy downloads in 2026 (360p muxed).</li>
+        <li><b>2.</b> Self-hosted Piped/Invidious overrides (Settings).</li>
+        <li><b>3.</b> Other detected Piped instances (<code>kavin.rocks</code>, <code>adminforge.de</code>, <code>leptons.xyz</code>).</li>
+        <li><b>4.</b> Self-hosted Cobalt — only if you configure it (there is no public Cobalt API anymore).</li>
       </ul>
     </div>
   </section>
 
-  <!-- ========== SETTINGS ========== -->
   <section id="panel-settings" class="panel hidden">
     <div class="card">
       <h2>Backend URLs</h2>
@@ -336,15 +332,15 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
       <input id="cfgPiped" type="text" placeholder="Auto-detected (leave blank)">
       <label class="lbl lbl2" for="cfgInvidious">Invidious API</label>
       <input id="cfgInvidious" type="text" placeholder="Auto-detected (leave blank)">
-      <label class="lbl lbl2" for="cfgCobalt">Cobalt API</label>
-      <input id="cfgCobalt" type="text" placeholder="Auto-detected (leave blank)">
+      <label class="lbl lbl2" for="cfgCobalt">Cobalt API (self-hosted only)</label>
+      <input id="cfgCobalt" type="text" placeholder="https://your-cobalt:9000">
       <label class="lbl lbl2" for="cfgMetube">MeTube URL (self-hosted yt-dlp)</label>
       <input id="cfgMetube" type="text" placeholder="https://metube.example.com">
       <p class="info-note" style="margin-top:12px">
-        MeTube is used as the preferred backend when configured.
-        It queues jobs on your server and returns files directly — ideal for
-        playlists, 4K/8K, and exotic containers. Cobalt must be self-hosted (or a
-        public instance without JWT auth) for other platforms.
+        <b>Public Cobalt is dead.</b> The official project confirms no public API exists[reference:3].
+        Self-host <a href="https://github.com/imputnet/cobalt" target="_blank" rel="noopener noreferrer">Cobalt</a>
+        or <a href="https://github.com/alexta69/metube" target="_blank" rel="noopener noreferrer">MeTube</a>
+        if you need 1080p+/4K, playlists, or non-YouTube platforms.
       </p>
       <div class="btn-row">
         <button id="detectBtn" class="btn" type="button">Detect Now</button>
@@ -362,7 +358,6 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     </div>
   </section>
 
-  <!-- ========== HISTORY ========== -->
   <section id="panel-history" class="panel hidden">
     <div class="card">
       <h2>Download History</h2>
@@ -386,7 +381,6 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
 (function () {
   "use strict";
 
-  /* ---------- helpers ---------- */
   const $  = (id) => document.getElementById(id);
   const $$ = (sel) => Array.prototype.slice.call(document.querySelectorAll(sel));
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g,
@@ -417,7 +411,7 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     /failed to fetch|networkerror|load failed/i.test(String((e && e.message) || e));
 
   /* ---------- storage ---------- */
-  const CFG_KEY = "mg.cfg.v1", DET_KEY = "mg.det.v1", HIST_KEY = "mg.hist.v1";
+  const CFG_KEY = "mg.cfg.v2", DET_KEY = "mg.det.v2", HIST_KEY = "mg.hist.v2";
   const DET_TTL = 60 * 60 * 1000;
 
   const cfg = { piped: "", invidious: "", cobalt: "", metube: "" };
@@ -455,31 +449,28 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
   function saveHist() { try { localStorage.setItem(HIST_KEY, JSON.stringify(history.slice(0, 30))); } catch {} }
   const cacheFresh = () => detection.ts > 0 && Date.now() - detection.ts < DET_TTL;
 
-  /* ---------- instance lists ---------- */
+  /* ---------- FIXED instance lists ---------- */
   const INST = {
     piped: [
-      "https://pipedapi.kavin.rocks", "https://pipedapi.adminforge.de",
-      "https://api.piped.projectsegfau.lt", "https://pipedapi.drgns.space",
-      "https://pipedapi.ducks.party", "https://pipedapi.darkness.services",
-      "https://pipedapi.leptons.xyz", "https://pipedapi.nosebs.ru",
-      "https://pipedapi.reallyaweso.me", "https://pipedapi.r4fo.com",
-      "https://piped-api.lunar.icu", "https://pipedapi.orangenet.cc",
+      "https://pipedapi.kavin.rocks",
+      "https://pipedapi.adminforge.de",
+      "https://api.piped.projectsegfau.lt",
+      "https://pipedapi.leptons.xyz",
+      "https://pipedapi.reallyaweso.me",
+      "https://pipedapi.nosebs.ru",
+      "https://pipedapi.drgns.space",
+      "https://pipedapi.r4fo.com",
     ],
     invidious: [
-      "https://inv.nadeko.net", "https://invidious.nerdvpn.de",
-      "https://invidious.f5.si", "https://yewtu.be", "https://inv.tux.pizza",
-      "https://invidious.privacyredirect.com", "https://invidious.materialio.us",
-      "https://iv.ggtyler.dev", "https://invidious.jing.rocks",
-      "https://invidious.moomoo.me", "https://invidious.reallyaweso.me",
-      "https://yt.artemislena.eu",
+      "https://invidious.f5.si",           // PROVEN local=true proxy in 2026
+      "https://invidious.nerdvpn.de",
+      "https://inv.nadeko.net",
+      "https://yewtu.be",
+      "https://invidious.privacyredirect.com",
+      "https://invidious.materialio.us",
     ],
-    cobalt: [
-      "https://cobalt-api.kwiatekmiki.com", "https://co.eepy.today",
-      "https://cobalt.255x.ru", "https://cobalt-api.meowing.de",
-      "https://cobalt-backend.canine.tools", "https://api.cobalt.tools",
-      "https://cobalt-api.ayo.tf", "https://cobalt.aeong.dev",
-      "https://capi.3kh0.net", "https://api.cobalt.best",
-    ],
+    // No public Cobalt. Only used if cfg.cobalt is set (self-hosted).
+    cobalt: [],
   };
   const TEST_ID = "dQw4w9WgXcQ";
 
@@ -568,12 +559,12 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
   async function runDetection(force) {
     if (detection.running) return;
     if (!force && cacheFresh() &&
-        (detection.piped.length || detection.invidious.length || detection.cobalt.length || detection.cobaltAuth.length)) {
+        (detection.piped.length || detection.invidious.length || detection.cobalt.length)) {
       renderDetectionUI(); return;
     }
     detection.running = true; renderDetectionUI();
 
-    const batch = async (type, list, fn) => {
+    const batch = async (list, fn) => {
       const ok = [], auth = [];
       for (let i = 0; i < list.length; i += 4) {
         const slice = list.slice(i, i + 4);
@@ -589,9 +580,9 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     };
 
     const [p, i, c] = await Promise.all([
-      batch("piped", INST.piped, probePiped),
-      batch("invidious", INST.invidious, probeInvidious),
-      batch("cobalt", INST.cobalt, probeCobalt),
+      batch(INST.piped, probePiped),
+      batch(INST.invidious, probeInvidious),
+      batch(INST.cobalt, probeCobalt),
     ]);
     detection.piped = p.ok;
     detection.invidious = i.ok;
@@ -643,7 +634,7 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     };
   }
 
-  /* ---------- YouTube: Invidious ---------- */
+  /* ---------- YouTube: Invidious (FIXED: always local=true) ---------- */
   function parseInvStreams(d) {
     const out = [], seen = new Set();
     (d.formatStreams || []).forEach((s) => {
@@ -674,15 +665,19 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     return out;
   }
   async function resolveViaInvidious(videoId, base) {
+    // ALWAYS use local=true — this is what makes the stream proxy through the
+    // instance instead of redirecting to a blocked googlevideo.com URL.
     const d = await fetchJson(base + "/api/v1/videos/" + videoId + "?local=true", {}, 12000);
     if (!d || d.error) throw new Error(d && d.error || "Invidious error");
+    const streams = parseInvStreams(d);
+    if (!streams.length) throw new Error("Invidious returned no streams (API may be disabled)");
     return {
       backend: "invidious", base,
       info: {
         title: d.title, uploader: d.author, duration: d.lengthSeconds,
         thumbnail: (d.videoThumbnails && d.videoThumbnails[0] && d.videoThumbnails[0].url) || ytThumb(videoId),
       },
-      streams: sortStreams(parseInvStreams(d)),
+      streams: sortStreams(streams),
     };
   }
 
@@ -796,7 +791,7 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     const order = [];
     if (cfg.cobalt) order.push(cfg.cobalt);
     detection.cobalt.forEach((b) => { if (order.indexOf(b) < 0) order.push(b); });
-    if (!order.length) { const e = new Error("No Cobalt instance configured"); e.code = "NO_COBALT"; throw e; }
+    if (!order.length) { const e = new Error("No self-hosted Cobalt configured"); e.code = "NO_COBALT"; throw e; }
     const fail = [];
     for (const base of order) {
       try { return await tryCobalt(base, mode, opts); }
@@ -811,7 +806,7 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     const body = {
       url, quality: opts.quality || "best", format: opts.format || "any",
       folder: "", playlist: !!opts.playlist, playlist_item_limit: 0,
-      auto_start: true, video_quality: "", audio_quality: "",
+      auto_start: true,
     };
     const res = await fetch(base + "/add", {
       method: "POST", mode: "cors", credentials: "omit",
@@ -828,7 +823,7 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     while (Date.now() - start < max) {
       const list = await fetchJson(base + "/history", {}, 10000).catch(() => []);
       const arr = Array.isArray(list) ? list : (list && list.history) || [];
-      const item = arr.find((x) => x && (x.url === targetUrl || (x.title && String(x.url || "").indexOf(targetUrl) >= 0)));
+      const item = arr.find((x) => x && x.url === targetUrl);
       if (item) {
         const pct = Number(item.percent) || 0;
         onProgress && onProgress(pct, item.status);
@@ -911,15 +906,11 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     }
     UI.detectIcon.style.display = "none";
     UI.detectBtn.disabled = false;
-    const yt = detection.piped.length + detection.invidious.length;
-    const cob = detection.cobalt.length;
-    const ca = detection.cobaltAuth.length;
     const parts = [];
     if (detection.piped.length) parts.push(detection.piped.length + " Piped");
     if (detection.invidious.length) parts.push(detection.invidious.length + " Invidious");
-    if (cob) parts.push(cob + " Cobalt (no key)");
-    if (ca) parts.push(ca + " Cobalt (key)");
     if (cfg.metube) parts.push("MeTube");
+    if (cfg.cobalt) parts.push("Cobalt (self-hosted)");
     let line = parts.length ? parts.join(" · ") : "Nothing detected yet.";
     if (detection.ts && parts.length) {
       const age = Math.round((Date.now() - detection.ts) / 60000);
@@ -993,13 +984,10 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     try {
       let result = null;
 
-      // 1) MeTube is preferred if configured
+      // 1) MeTube preferred if configured
       if (cfg.metube) {
-        try {
-          result = await fetchViaMeTube(raw, platform);
-        } catch (e) {
-          console.warn("MeTube fetch failed, falling back:", e.message);
-        }
+        try { result = await fetchViaMeTube(raw, platform); }
+        catch (e) { console.warn("MeTube fetch failed, falling back:", e.message); }
       }
 
       // 2) YouTube native
@@ -1013,16 +1001,13 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
       if (!result && platform.id === "tiktok") {
         try { result = await resolveTikTok(raw); }
         catch (e) {
-          // fall through to Cobalt
           try { result = await fetchViaCobalt(raw, platform); }
           catch (e2) { throw new Error("TikTok failed: " + e.message + " / Cobalt: " + e2.message); }
         }
       }
 
-      // 4) Any other platform: Cobalt
-      if (!result) {
-        result = await fetchViaCobalt(raw, platform);
-      }
+      // 4) Any other platform: Cobalt (self-hosted only)
+      if (!result) result = await fetchViaCobalt(raw, platform);
 
       if (result) {
         state.backend = result.backend;
@@ -1044,50 +1029,65 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     }
   }
 
+  /* ---------- FIXED YouTube fetch chain ---------- */
   async function fetchYouTube(vid) {
     const order = [];
-    if (cfg.piped) order.push({ type: "piped", base: cfg.piped });
-    if (cfg.invidious) order.push({ type: "invidious", base: cfg.invidious });
-    detection.piped.forEach((b) => { if (!order.some((o) => o.base === b)) order.push({ type: "piped", base: b }); });
-    detection.invidious.forEach((b) => { if (!order.some((o) => o.base === b)) order.push({ type: "invidious", base: b }); });
-    if (!order.length) {
-      await runDetection(true);
-      detection.piped.forEach((b) => order.push({ type: "piped", base: b }));
-      detection.invidious.forEach((b) => order.push({ type: "invidious", base: b }));
-    }
+    const seen = new Set();
+
+    const add = (type, base) => {
+      base = normBase(base);
+      if (!base || seen.has(base)) return;
+      seen.add(base);
+      order.push({ type, base });
+    };
+
+    // 1) PROVEN: invidious.f5.si with local=true
+    add("invidious", "https://invidious.f5.si");
+
+    // 2) User overrides first
+    if (cfg.invidious) add("invidious", cfg.invidious);
+    if (cfg.piped) add("piped", cfg.piped);
+
+    // 3) Other Invidious (local=true always used)
+    ["https://invidious.nerdvpn.de", "https://inv.nadeko.net",
+     "https://yewtu.be", "https://invidious.privacyredirect.com"].forEach((b) => add("invidious", b));
+
+    // 4) Detected Piped instances
+    detection.piped.forEach((b) => add("piped", b));
+
+    // 5) Detected Invidious instances
+    detection.invidious.forEach((b) => add("invidious", b));
+
+    // 6) Only try Cobalt if self-hosted (public Cobalt no longer exists)
     const fail = [];
     for (const t of order) {
       try {
         return t.type === "piped"
           ? await resolveViaPiped(vid, t.base)
           : await resolveViaInvidious(vid, t.base);
-      } catch (e) { fail.push({ base: t.base, message: e.message || String(e) }); }
+      } catch (e) {
+        fail.push({ base: t.base, message: (e && e.message) || String(e) });
+      }
     }
-    // Last resort: Cobalt for YouTube
-    try { return await fetchViaCobalt("https://www.youtube.com/watch?v=" + vid, { name: "YouTube" }); }
-    catch (e) {
-      const err = new Error("All YouTube backends failed");
-      err.code = "YT_FAIL"; err.failures = fail; err.lastErr = e.message;
-      throw err;
+
+    if (cfg.cobalt) {
+      try { return await fetchViaCobalt("https://www.youtube.com/watch?v=" + vid, { name: "YouTube" }); }
+      catch (e) { fail.push({ base: cfg.cobalt, message: "Cobalt: " + (e.message || String(e)) }); }
     }
+
+    const err = new Error("All YouTube backends failed");
+    err.code = "YT_FAIL";
+    err.failures = fail;
+    throw err;
   }
 
   async function fetchViaCobalt(url, platform) {
-    const opts = {
-      url, videoQuality: "max",
-      audioFormat: "mp3", audioBitrate: "320",
-    };
-    // We use a small probe convert in "video" mode to test connectivity; actual download uses the same URL.
-    // For non-YouTube platforms we expect the caller to do the actual convert after formats are chosen.
-    // So here we just verify a Cobalt instance is available.
     if (!cfg.cobalt && !detection.cobalt.length) {
-      await runDetection(true);
+      const e = new Error("No self-hosted Cobalt configured");
+      e.code = "NO_COBALT";
+      throw e;
     }
     const candidates = [].concat(cfg.cobalt ? [cfg.cobalt] : [], detection.cobalt);
-    if (!candidates.length) { const e = new Error("No Cobalt instance"); e.code = "NO_COBALT"; throw e; }
-
-    // For non-YouTube sources, Cobalt is the actual download path — we show a
-    // pseudo-format that triggers the conversion flow in `doDownload`.
     return {
       backend: "cobalt", base: candidates[0],
       info: { title: platform.name + " link", uploader: hostOf(url), duration: 0, thumbnail: "" },
@@ -1116,8 +1116,8 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
   function handleFetchError(e) {
     if (e.code === "NO_COBALT") {
       showErr(
-        "<strong>This platform needs Cobalt.</strong> No working instance detected. " +
-        "Public Cobalt instances now mostly require API keys.<br><br>" +
+        "<strong>This platform needs a conversion backend.</strong> " +
+        "Public Cobalt no longer exists — the official project has no public API[reference:4].<br><br>" +
         "Options:<br>" +
         "• <b>Self-host MeTube</b> (yt-dlp wrapper, no API key) — set the URL in Settings.<br>" +
         "• <b>Self-host Cobalt</b> — <a href=\"https://github.com/imputnet/cobalt\" target=\"_blank\" rel=\"noopener noreferrer\">github.com/imputnet/cobalt</a>.<br>" +
@@ -1126,9 +1126,17 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
       return;
     }
     if (e.code === "YT_FAIL") {
-      const rows = (e.failures || []).map((f) => "<li><code>" + esc(f.base) + "</code> — " + esc(f.message) + "</li>").join("");
-      showErr("<strong>All YouTube APIs failed.</strong>" + (rows ? "<ul>" + rows + "</ul>" : "") +
-        (e.lastErr ? "<br>Last error: " + esc(e.lastErr) : ""));
+      const rows = (e.failures || []).map((f) =>
+        "<li><code>" + esc(f.base) + "</code> — " + esc(f.message) + "</li>"
+      ).join("");
+      showErr(
+        "<strong>All YouTube backends failed.</strong><br>" +
+        "Public instances are under heavy load or blocked. Try again in a moment, " +
+        "or self-host MeTube for reliable downloads." +
+        (rows ? "<ul>" + rows + "</ul>" : "") +
+        "<br><small>Tip: <code>invidious.f5.si</code> with <code>local=true</code> is currently the " +
+        "most reliable public path (360p muxed). For 1080p+/4K, use MeTube.</small>"
+      );
       return;
     }
     if (isNetErr(e)) {
@@ -1150,12 +1158,10 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     if (i.thumbnail) { UI.thumb.src = i.thumbnail; UI.thumb.style.display = ""; }
     else { UI.thumb.removeAttribute("src"); UI.thumb.style.display = "none"; }
 
-    // Show/hide quality/audio controls
     const cobaltMode = state.backend === "cobalt" || state.backend === "metube";
     UI.qualityRow.classList.toggle("hidden", !cobaltMode);
     UI.audioRow.classList.add("hidden");
 
-    // Hide mode tabs for backends that only expose video
     UI.modeBtns.forEach((b) => {
       const audio = b.dataset.mode === "audio";
       if (state.backend === "tikwm" && audio) b.style.display = "none";
@@ -1346,7 +1352,7 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
     try {
       const result = await cobaltConvert(mode, opts);
       if (result.kind === "picker") {
-        setStatus("Multiple items found. Download the first one now; refine the source URL to pick others.", "warn");
+        setStatus("Multiple items found. Downloading the first one.", "warn");
         const first = result.items[0];
         const filename = safeName((state.info && state.info.title) || "media") + "-1.mp4";
         UI.cancelBtn.classList.add("hidden"); state.controller = null;
@@ -1366,7 +1372,7 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
         showErr("<strong>All Cobalt instances failed.</strong>" + (rows ? "<ul>" + rows + "</ul>" : "") +
           "<br>Try self-hosted MeTube or a self-hosted Cobalt.");
       } else if (e.code === "NO_COBALT") {
-        showErr("<strong>No Cobalt instance available.</strong> Self-host Cobalt or MeTube.");
+        showErr("<strong>No self-hosted Cobalt configured.</strong> Set the URL in Settings or use MeTube.");
       } else if (e.name === "AbortError") {
         setStatus("Conversion cancelled.", "warn");
       } else {
@@ -1406,7 +1412,6 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
       UI.progressWrap.classList.add("hidden");
       UI.cancelBtn.classList.add("hidden");
       state.controller = null;
-      // MeTube serves the file — open in new tab so browser handles download
       const a = document.createElement("a");
       a.href = fileUrl; a.download = filename;
       document.body.appendChild(a); a.click(); a.remove();
@@ -1557,7 +1562,7 @@ button{font-family:inherit;font-size:14px;cursor:pointer;border:none}
   updateBadge();
   renderDetectionUI();
 
-  if (cacheFresh() && (detection.piped.length || detection.invidious.length || detection.cobalt.length)) {
+  if (cacheFresh() && (detection.piped.length || detection.invidious.length)) {
     renderDetectionUI();
   } else {
     runDetection(false);
