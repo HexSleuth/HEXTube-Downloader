@@ -529,7 +529,7 @@
 
       <div id="status" class="status"></div>
       <div id="fileRow" class="hidden">
-        <a id="saveLink" class="save" href="#" download>Save file again</a>
+        <a id="saveLink" class="save" href="#" download target="_blank" rel="noopener noreferrer">Save file again</a>
       </div>
     </section>
   </div>
@@ -1327,6 +1327,8 @@
     "error.api.auth.jwt.missing":          "This Cobalt instance requires an API key. Use another instance.",
     "error.api.auth.jwt.invalid":          "This Cobalt instance rejected the request (invalid API key).",
     "error.api.turnstile.missing":         "This instance requires a Turnstile token. Use another instance.",
+    "error.api.turnstile.invalid":         "This instance rejected the Turnstile token. Use another instance.",
+    "error.api.invalid_body":              "This instance rejected the request body (invalid options).",
   };
 
   function cobaltErrorText(code) {
@@ -1342,10 +1344,14 @@
       disableMetadata: false,
     };
     if (mode === "audio") {
-      body.audioFormat  = opts.audioFormat || "mp3";
-      body.audioBitrate = String(opts.audioBitrate || "320");
+      const fmt = String(opts.audioFormat || "mp3").toLowerCase();
+      const safe = ["mp3", "opus", "ogg", "wav", "best"];
+      body.audioFormat  = safe.includes(fmt) ? fmt : "mp3";
+      const br = String(opts.audioBitrate || "320");
+      const safeBr = ["320", "256", "128", "96", "64", "8"];
+      body.audioBitrate = safeBr.includes(br) ? br : "320";
     } else {
-      body.videoQuality = opts.videoQuality || "max";
+      body.videoQuality = String(opts.videoQuality || "max");
       body.youtubeVideoCodec = "h264";
     }
     return body;
@@ -1398,7 +1404,10 @@
         throw new Error(cobaltErrorText(typeof code === "string" ? code : "unknown"));
       }
 
-      if (data.status === "redirect" || data.status === "tunnel") {
+      // Cobalt v10 uses "tunnel"/"redirect"; older versions used "stream"/"success".
+      // Accept all four so older instances still work.
+      if (data.status === "redirect" || data.status === "tunnel" ||
+          data.status === "stream"   || data.status === "success") {
         if (!data.url) throw new Error("Cobalt returned no download URL.");
         return { kind: "single", url: data.url, filename: data.filename || "" };
       }
@@ -1415,7 +1424,7 @@
 
       if (data.status === "local-processing") {
         throw new Error(
-          "This Cobalt instance wants to process the file locally, which is not supported here."
+          "This Cobalt instance requires local processing — try another instance or use a different link."
         );
       }
 
@@ -1659,7 +1668,6 @@
       signal,
       credentials: "omit",
       mode: "cors",
-      referrerPolicy: "no-referrer",
     });
     if (!res.ok) throw new Error("Stream server returned HTTP " + res.status);
 
@@ -1782,13 +1790,12 @@
     { v: "480",  l: "480p" },
     { v: "360",  l: "360p" },
   ];
+  // Only formats Cobalt actually supports — m4a/flac were silently failing.
   const AUDIO_FORMATS  = [
     { v: "mp3",  l: "MP3" },
     { v: "opus", l: "Opus" },
     { v: "ogg",  l: "OGG" },
     { v: "wav",  l: "WAV" },
-    { v: "m4a",  l: "M4A / AAC" },
-    { v: "flac", l: "FLAC" },
   ];
   const AUDIO_BITRATES = ["320", "256", "192", "128", "64"];
 
@@ -1848,7 +1855,6 @@
     hideFileRow();
     hidePicker();
 
-    // Capture and reset pending flags up-front so a failed fetch doesn't leave them stale.
     const wantMp3   = !!state.pendingMp3;
     const wantAudio = !!state.pendingAudio;
     state.pendingMp3   = false;
@@ -1926,8 +1932,6 @@
       ui.infoCard.classList.remove("hidden");
       ui.infoCard.scrollIntoView({ behavior: "smooth", block: "start" });
 
-      // MP3 takes priority over raw-audio download. Previously both ran, and the
-      // raw download locked state.controller, silently killing the MP3 conversion.
       if (wantMp3) {
         setTimeout(() => doConvertToMp3(), 250);
       } else if (wantAudio) {
@@ -2041,7 +2045,6 @@
     hideFileRow();
     hidePicker();
     setStatus("", "");
-    // Note: dlBtn.disabled is controlled by renderChips() inside setMode().
     ui.dlBtn.textContent = "Download";
     ui.dlBtn.classList.remove("green");
     ui.cancelBtn.classList.add("hidden");
@@ -2175,7 +2178,10 @@
    * 21. Download — direct stream (no FFmpeg)
    * ================================================================== */
   async function doDownload() {
-    if (state.controller) return;
+    if (state.controller) {
+      setStatus("Another download is already in progress. Press Cancel first.", "warn");
+      return;
+    }
 
     if (state.backend === "cobalt") {
       await convertAndDownload();
@@ -2193,7 +2199,10 @@
    * 22. Download — Cobalt
    * ================================================================== */
   async function convertAndDownload() {
-    if (!state.url) return;
+    if (!state.url) {
+      setStatus("Paste a link and press Fetch Video first.", "warn");
+      return;
+    }
 
     const mode = state.mode;
     const opts = {
@@ -2216,6 +2225,7 @@
 
     const ctrl = new AbortController();
     state.controller = ctrl;
+    let downloadPayload = null;
 
     try {
       const result = await cobaltConvert(mode, opts);
@@ -2223,11 +2233,6 @@
       if (result.kind === "picker") {
         setStatus("The link contains multiple items — pick one to download.", "warn");
         renderPicker(result);
-        ui.dlBtn.disabled = false;
-        ui.dlBtn.textContent = "Convert & Download";
-        if (ui.mp3Btn) ui.mp3Btn.disabled = false;
-        ui.cancelBtn.classList.add("hidden");
-        state.controller = null;
         return;
       }
 
@@ -2238,10 +2243,7 @@
       const filename = result.filename ? safeFilename(result.filename) : fallbackName;
       const mime = mode === "audio" ? ("audio/" + (opts.audioFormat || "mpeg")) : "video/mp4";
 
-      ui.cancelBtn.classList.add("hidden");
-      state.controller = null;
-
-      await downloadToFile(result.url, filename, mime);
+      downloadPayload = { url: result.url, filename: filename, mime: mime };
     } catch (e) {
       console.error(e);
 
@@ -2253,19 +2255,35 @@
         showErrHtml(
           "<strong>All Cobalt instances failed.</strong>" +
           (rows ? "<ul>" + rows + "</ul>" : "") +
-          "<br>Press <strong>Detect now</strong> in API instances to refresh the list."
+          "<br>Press <strong>Detect now</strong> in API instances to refresh the list, " +
+          "or add a manual Cobalt override above."
+        );
+      } else if (e && e.code === "NO_COBALT") {
+        ui.settings.open = true;
+        setStatus(
+          "No Cobalt instances detected. Open API instances, press Detect now, or add a manual Cobalt URL.",
+          "bad"
         );
       } else if (errName(e) === "AbortError") {
         setStatus("Conversion cancelled.", "warn");
       } else {
-        setStatus((e && e.message) || "Conversion failed.", "bad");
+        setStatus("Conversion failed: " + ((e && e.message) || "unknown"), "bad");
       }
+    } finally {
+      if (state.controller === ctrl) state.controller = null;
+      if (!downloadPayload) {
+        ui.dlBtn.disabled = false;
+        ui.dlBtn.textContent = "Convert & Download";
+        if (ui.mp3Btn) ui.mp3Btn.disabled = false;
+        ui.cancelBtn.classList.add("hidden");
+      }
+    }
 
-      ui.dlBtn.disabled = false;
-      ui.dlBtn.textContent = "Convert & Download";
-      if (ui.mp3Btn) ui.mp3Btn.disabled = false;
+    // Run the actual download outside the try/finally so downloadToFile owns its own
+    // controller and UI can reset cleanly.
+    if (downloadPayload) {
       ui.cancelBtn.classList.add("hidden");
-      state.controller = null;
+      await downloadToFile(downloadPayload.url, downloadPayload.filename, downloadPayload.mime);
     }
   }
 
@@ -2291,7 +2309,10 @@
    * 23. Download streaming with progress
    * ================================================================== */
   async function downloadToFile(url, filename, mime) {
-    if (state.controller) return;
+    if (state.controller) {
+      setStatus("Another operation is in progress. Cancel it first.", "warn");
+      return;
+    }
 
     hideFileRow();
     if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
@@ -2314,7 +2335,6 @@
         signal,
         credentials: "omit",
         mode: "cors",
-        referrerPolicy: "no-referrer",
       });
       if (!res.ok) throw new Error("Stream server returned HTTP " + res.status);
 
@@ -2354,7 +2374,7 @@
       } else if (looksLikeNetworkError(e)) {
         setStatus(
           "The stream host blocked the browser (CORS) or the signed URL expired. " +
-          "A direct link is offered below.",
+          "Use the button below to open it in a new tab and save manually.",
           "bad"
         );
         offerDirectLink(url, filename, true);
@@ -2426,9 +2446,17 @@
     ui.fileRow.classList.remove("hidden");
     ui.saveLink.href = url;
     ui.saveLink.setAttribute("download", filename);
+    ui.saveLink.setAttribute("target", "_blank");
+    ui.saveLink.setAttribute("rel", "noopener noreferrer");
     ui.saveLink.textContent = corsBlocked
-      ? "Open stream URL directly (may play instead of save)"
+      ? "Open media in new tab (save manually)"
       : "Try direct link";
+
+    // Best-effort: kick the browser into opening the URL in a new tab so the
+    // user has an immediate download/save fallback instead of a dead button.
+    if (corsBlocked) {
+      try { window.open(url, "_blank", "noopener,noreferrer"); } catch (e) { /* popup blocked */ }
+    }
   }
 
   /* ================================================================== *
@@ -2437,11 +2465,9 @@
   function getSourceForMp3() {
     if (state.backend === "cobalt") return null;
 
-    // Prefer a dedicated audio-only stream: no video decode, smaller download.
     const audio = state.streams.find((s) => s.kind === "audio" && s.url);
     if (audio) return audio;
 
-    // Fall back to whatever the user has selected, then any video.
     const current = state.filtered[state.selected];
     if (current && current.url) return current;
 
@@ -2506,7 +2532,6 @@
     let outputName = "output.mp3";
 
     try {
-      // 1. Resolve source
       let source;
       if (state.backend === "cobalt") {
         source = await getCobaltVideoSource();
@@ -2518,13 +2543,11 @@
       }
       if (signal.aborted) throw makeAbortError();
 
-      // 2. Load FFmpeg (shows "Loading & Fetching AI model")
       setStatus("Loading FFmpeg AI model (loading & fetching)…", "");
       setFFmpegUI("Loading FFmpeg (free AI model)…", 0, true);
       const ffmpeg = await loadFFmpeg();
       if (signal.aborted) throw makeAbortError();
 
-      // 3. Download source
       ui.barWrap.classList.remove("hidden");
       ui.bar.style.width = "0%";
       ui.pct.textContent = "0%";
@@ -2539,21 +2562,18 @@
       const blob = downloaded.blob;
       const mime = downloaded.mime;
 
-      // 4. Determine input filename / extension
       let inputExt = source.ext || "";
       if (!inputExt || inputExt === "bin") {
         inputExt = guessExtFromMime(mime, "bin");
       }
       inputName = "input." + inputExt;
 
-      // 5. Write to FFmpeg FS
       setStatus("Preparing FFmpeg input…", "");
       setFFmpegUI("Writing input to FFmpeg virtual FS…", 0, true);
       const inputBuf = new Uint8Array(await blob.arrayBuffer());
       await ffmpeg.writeFile(inputName, inputBuf);
       if (signal.aborted) throw makeAbortError();
 
-      // 6. Run conversion — check exit code (this used to be ignored)
       setStatus("Converting to MP3 (320 kbps)…", "");
       setFFmpegUI("Converting to MP3 with FFmpeg…", 0, true);
 
@@ -2576,18 +2596,14 @@
 
       if (signal.aborted) throw makeAbortError();
 
-      // 7. Read output — readFile returns a Uint8Array view; build the Blob
-      //    from the view itself, not .buffer (which can over-read).
       setFFmpegUI("Reading MP3 output…", 0.99, true);
       const data = await ffmpeg.readFile(outputName);
       const bytes = (typeof data === "string") ? new TextEncoder().encode(data) : data;
       const mp3Blob = new Blob([bytes], { type: "audio/mpeg" });
 
-      // 8. Cleanup FFmpeg FS
       try { await ffmpeg.deleteFile(inputName); } catch (e) { /* ignore */ }
       try { await ffmpeg.deleteFile(outputName); } catch (e) { /* ignore */ }
 
-      // 9. Save
       const baseName = safeFilename(
         (state.info && state.info.title) ||
         (state.platform && state.platform.name) ||
@@ -2603,7 +2619,6 @@
     } catch (e) {
       console.error(e);
 
-      // Best-effort FS cleanup on failure
       try {
         if (ffmpegState.instance) {
           if (inputName) try { await ffmpegState.instance.deleteFile(inputName); } catch (x) {}
@@ -2754,9 +2769,6 @@
       btn.textContent = "MP3";
       btn.title = "Download as MP3 (~" + kbps + " kbps)";
       btn.addEventListener("click", () => {
-        // Only request MP3. Setting pendingAudio here caused a race that made
-        // doFetch download the raw audio stream and silently block the MP3
-        // conversion.
         state.pendingAudio = false;
         state.pendingMp3 = true;
         setTab("download");
@@ -2891,7 +2903,6 @@
 
   ui.clearBtn.addEventListener("click", () => {
     ui.url.value = "";
-    // Reset all related state so "Copy link" / "Open source" don't use the old URL.
     state.url = "";
     state.platform = null;
     state.info = null;
@@ -2990,10 +3001,7 @@
 })();
 </script>
 <script>
-/* Consolidated anti-devtools / anti-copy block.
-   - Blocks right-click, F12, Ctrl+Shift+I/J/C, Ctrl+U everywhere.
-   - Allows normal editing (incl. paste) inside form fields, which the old
-     duplicated handlers blocked by accident. */
+/* Consolidated anti-devtools / anti-copy block. */
 (function () {
   "use strict";
   function isEditable(t) {
@@ -3001,21 +3009,17 @@
     var tag = (t.tagName || "").toLowerCase();
     return tag === "input" || tag === "textarea" || tag === "select" || t.isContentEditable;
   }
-
   document.addEventListener("contextmenu", function (e) { e.preventDefault(); }, false);
-
   document.addEventListener("selectstart", function (e) {
     if (!isEditable(e.target)) e.preventDefault();
   }, false);
-
   document.addEventListener("keydown", function (e) {
     var k = e.keyCode;
-    // Devtools shortcuts
     if (k === 123) return e.preventDefault();
     if (e.ctrlKey && e.shiftKey && (k === 73 || k === 74 || k === 67)) return e.preventDefault();
     if (e.ctrlKey && k === 85) return e.preventDefault();
-    if (e.ctrlKey && k === 83) return e.preventDefault(); // Ctrl+S
-    if (isEditable(e.target)) return; // allow normal typing/pasting in fields
+    if (e.ctrlKey && k === 83) return e.preventDefault();
+    if (isEditable(e.target)) return;
     if (e.ctrlKey && (k === 67 || k === 88 || k === 86 || k === 65 || k === 70 || k === 72 || k === 69 || k === 89 || k === 90)) {
       return e.preventDefault();
     }
