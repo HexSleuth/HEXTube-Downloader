@@ -298,6 +298,7 @@ main{padding:38px 0 80px}
   display:grid;place-items:center;padding:20px;
   animation:fade .18s ease;
 }
+.modal-backdrop.turnstile{z-index:300}
 .modal{
   width:100%;max-width:560px;max-height:88vh;overflow-y:auto;
   animation:pop .22s cubic-bezier(.2,.9,.3,1.2);
@@ -333,6 +334,8 @@ main{padding:38px 0 80px}
 .field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.16)}
 .field .hint{font-size:11.5px;color:var(--muted);line-height:1.45}
 .divider{height:1px;background:var(--border-soft);margin:2px 0}
+.session-line{font-size:12px;font-weight:600;padding:7px 10px;border-radius:9px;background:var(--card-2);border:1px solid var(--border);color:var(--muted)}
+#turnstileContainer{min-height:65px;display:grid;place-items:center}
 
 /* ============================================================
    DOC / SELF-HOST SECTIONS
@@ -564,12 +567,13 @@ footer .heart{color:var(--err)}
     <!-- cobalt -->
     <div class="doc-section">
       <h3><span class="dot"></span>2 · cobalt API (what this page talks to by default)</h3>
-      <p>cobalt is a privacy-first media downloader. Its API is a single <code>POST /</code> endpoint that returns a tunnel or redirect URL — no ads, no trackers, no cookies required.</p>
+      <p>cobalt is a privacy-first media downloader. Its API is a single <code>POST /</code> endpoint that returns a tunnel or redirect URL — no ads, no trackers.</p>
       <ul>
         <li>Default port <b>9000</b></li>
         <li>Set <code>API_URL</code> to the public URL of your instance</li>
-        <li>Optional: mount a <code>cookies.json</code> for age-restricted content</li>
-        <li>Then point VidGrab → <b>⚙ Settings → cobalt instance URL</b> at your own host</li>
+        <li>If you enable <b>Turnstile</b>, VidGrab will pop the challenge automatically</li>
+        <li>If you enable an <b>API key</b>, paste it in ⚙ Settings → cobalt → API key</li>
+        <li>If you leave both disabled, VidGrab works with <b>no auth at all</b></li>
       </ul>
       <div class="code-block">
         <div class="code-head"><span>docker-compose.yml</span><button class="ghost-btn tiny" type="button" data-copy="cobalt">Copy</button></div>
@@ -664,12 +668,14 @@ footer .heart{color:var(--err)}
     </div>
 
     <div class="doc-section" style="margin-top:22px">
-      <h3><span class="dot"></span>How VidGrab works</h3>
+      <h3><span class="dot"></span>How VidGrab handles cobalt auth</h3>
       <ul>
-        <li><b>No backend of its own.</b> It POSTs your link to a cobalt instance, or GETs a yt-dlp JSON API, entirely from your browser.</li>
-        <li><b>No storage.</b> Nothing is uploaded anywhere except to the API you choose. Settings and history live in <code>localStorage</code>.</li>
-        <li><b>No tracking.</b> Zero analytics, zero cookies, zero external requests besides the API call you trigger.</li>
-        <li><b>Bring your own instance.</b> Public instances are rate-limited and come and go — self-host for reliability.</li>
+        <li>cobalt v10+ requires a short-lived <b>JWT session token</b> for its official instance, issued after a Cloudflare <b>Turnstile</b> challenge.</li>
+        <li>On first download VidGrab calls <code>GET /session</code>, detects whether auth is needed, runs the challenge if present, then <code>POST /session</code> to obtain the JWT.</li>
+        <li>The JWT is cached in <code>localStorage</code> and attached as <code>Authorization: Bearer …</code>. Expired or rejected tokens are refreshed automatically and the request is retried once.</li>
+        <li>Instances that use <b>API keys</b> instead are supported via <code>Authorization: Api-Key …</code>. You can also paste a bearer token manually.</li>
+        <li>Instances with no auth (typical self-hosted setup) work without any token.</li>
+        <li>Turnstile sitekeys are usually <b>domain-restricted</b>: the official instance's challenge will not succeed when this page is hosted on GitHub Pages. Self-host cobalt, or use the yt-dlp engine.</li>
       </ul>
     </div>
 
@@ -688,6 +694,26 @@ footer .heart{color:var(--err)}
 </footer>
 
 <!-- ============================================================
+     TURNSTILE MODAL
+     ============================================================ -->
+<div class="modal-backdrop turnstile hidden" id="turnstileModal">
+  <div class="modal card" style="max-width:480px">
+    <div class="modal-head">
+      <h3>🔐 Verify to continue</h3>
+      <button class="icon-btn" type="button" id="closeTurnstile" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="muted" style="font-size:13.5px;margin-bottom:0">
+        This cobalt instance requires a Cloudflare Turnstile challenge before it will issue a session token.
+        Solve it below to continue. The token is cached locally and refreshed automatically.
+      </p>
+      <div id="turnstileContainer"></div>
+      <div class="hint" id="turnstileHint"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
      SETTINGS MODAL
      ============================================================ -->
 <div class="modal-backdrop hidden" id="settingsModal">
@@ -704,7 +730,7 @@ footer .heart{color:var(--err)}
           <option value="cobalt">cobalt API — POST /</option>
           <option value="ytdlp">yt-dlp JSON API — GET /video/</option>
         </select>
-        <div class="hint">cobalt gives tunnel/redirect links. The yt-dlp mode expects a JSON endpoint returning <code>{ links: [{ url, format, itag }] }</code>.</div>
+        <div class="hint">cobalt gives tunnel/redirect links (needs a JWT or API key on official instances). yt-dlp mode expects a JSON endpoint returning <code>{ links: [{ url, format, itag }] }</code>.</div>
       </div>
 
       <div class="divider"></div>
@@ -714,16 +740,31 @@ footer .heart{color:var(--err)}
           <label for="setApiBase">cobalt instance URL</label>
           <input id="setApiBase" type="url" list="instancePresets" placeholder="https://api.cobalt.tools" spellcheck="false">
           <datalist id="instancePresets">
-            <option value="https://api.cobalt.tools">Official instance</option>
+            <option value="https://api.cobalt.tools">Official instance (Turnstile)</option>
             <option value="https://cobalt-api.kwiatekmiki.com">Community instance</option>
             <option value="http://localhost:9000">Local docker (port 9000)</option>
           </datalist>
-          <div class="hint">Public instances get rate-limited. Self-host cobalt for a reliable setup.</div>
+          <div class="hint">Public instances are rate-limited and their Turnstile sitekeys are usually domain-restricted. Self-host cobalt for a reliable setup.</div>
         </div>
 
         <div class="field" style="margin-top:16px">
           <label for="setApiKey">API key (optional)</label>
           <input id="setApiKey" type="password" placeholder="sent as: Authorization: Api-Key …" spellcheck="false">
+          <div class="hint">For instances running with <code>API_KEY_URL</code>. Leave empty if not used.</div>
+        </div>
+
+        <div class="field" style="margin-top:16px">
+          <label for="setBearerToken">Bearer token (optional, advanced)</label>
+          <input id="setBearerToken" type="password" placeholder="paste a JWT obtained from /session" spellcheck="false">
+          <div class="hint">Overrides the automatic Turnstile flow. Expired tokens are ignored.</div>
+        </div>
+
+        <div class="field" style="margin-top:16px">
+          <label>Session state</label>
+          <div class="session-line" id="sessionStatus">No session yet.</div>
+          <button class="ghost-btn small" type="button" id="refreshSessionBtn" style="margin-top:8px;width:100%">
+            Test / refresh session
+          </button>
         </div>
 
         <div class="field" style="margin-top:16px">
@@ -783,11 +824,13 @@ footer .heart{color:var(--err)}
   var LS_SETTINGS = 'vidgrab.settings.v1';
   var LS_HISTORY  = 'vidgrab.history.v1';
   var LS_THEME    = 'vidgrab.theme.v1';
+  var COBALT_SESSION_KEY = 'vidgrab.cobalt.session.v1';
 
   var DEFAULT_SETTINGS = {
     engine: 'cobalt',
     apiBase: 'https://api.cobalt.tools',
     apiKey: '',
+    bearerToken: '',
     filenameStyle: 'pretty',
     videoCodec: 'h264',
     ytdlpBase: '',
@@ -829,22 +872,28 @@ footer .heart{color:var(--err)}
 '    ports:\n' +
 '      - "9000:9000"\n' +
 '    environment:\n' +
-'      # Public URL of this instance (must match how you reach it):\n' +
+'      # Public URL of this instance (must match how you reach it, trailing slash):\n' +
 '      API_URL: "http://localhost:9000/"\n' +
-'      # Optional: turnstile / api key\n' +
-'      # API_KEY_URL: "https://your-host/auth"\n' +
+'      # Allow any origin (needed when this page is served from another host):\n' +
+'      CORS_WILDCARD: "1"\n' +
+'      # Or restrict to your front-end:\n' +
+'      # CORS_URL: "https://your-frontend.example"\n' +
+'      #\n' +
+'      # OPTIONAL — Cloudflare Turnstile. If enabled, VidGrab pops\n' +
+'      # the challenge automatically before calling POST /.\n' +
 '      # TURNSTILE_SITEKEY: "0x4AAAAAAA..."\n' +
 '      # TURNSTILE_SECRET: "0x4AAAAAAA..."\n' +
+'      #\n' +
+'      # OPTIONAL — API-key auth. Clients send "Authorization: Api-Key <key>".\n' +
+'      # API_KEY_URL: "https://your-auth.example/check"\n' +
 '    volumes:\n' +
-'      # Optional cookies for age-restricted content:\n' +
-'      # - ./cookies.json:/cookies.json\n' +
 '      - ./cobalt-data:/data\n' +
 '\n' +
-'# Usage from the CLI:\n' +
-'#   curl -X POST http://localhost:9000/ \\\n' +
-'#     -H "Accept: application/json" \\\n' +
-'#     -H "Content-Type: application/json" \\\n' +
-'#     -d \'{"url":"https://youtu.be/dQw4w9WgXcQ","videoQuality":"1080"}\'\n',
+'# Quick test after it boots:\n' +
+'#   curl -s http://localhost:9000/session | jq\n' +
+'#   curl -s -X POST http://localhost:9000/ \\\n' +
+'#     -H "Accept: application/json" -H "Content-Type: application/json" \\\n' +
+'#     -d \'{"url":"https://youtu.be/dQw4w9WgXcQ","videoQuality":"1080"}\' | jq\n',
 
     phpApi:
 '<?php\n' +
@@ -1115,7 +1164,7 @@ footer .heart{color:var(--err)}
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () {
       toastEl.className = 'toast';
-    }, 3400);
+    }, 3600);
   }
 
   /* ==========================================================
@@ -1257,7 +1306,6 @@ footer .heart{color:var(--err)}
     try {
       var u = new URL(url);
 
-      // YouTube
       if (/(^|\.)youtube\.com$/.test(u.hostname)) {
         var v = u.searchParams.get('v');
         if (v) { name = 'youtube_' + v; }
@@ -1277,7 +1325,221 @@ footer .heart{color:var(--err)}
   }
 
   /* ==========================================================
-     COBALT ENGINE
+     COBALT AUTH  (JWT session / Turnstile / API key)
+     ========================================================== */
+
+  var turnstileLoader = null;
+
+  function loadTurnstile() {
+    if (window.turnstile) { return Promise.resolve(window.turnstile); }
+    if (turnstileLoader) { return turnstileLoader; }
+
+    turnstileLoader = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      s.async = true;
+      s.defer = true;
+      s.onload = function () {
+        if (window.turnstile) { resolve(window.turnstile); }
+        else { reject(new Error('Turnstile script loaded but window.turnstile is missing.')); }
+      };
+      s.onerror = function () {
+        reject(new Error('Could not load the Turnstile script. An ad-blocker, DNS filter, or network policy may be blocking challenges.cloudflare.com.'));
+      };
+      document.head.appendChild(s);
+    });
+
+    return turnstileLoader;
+  }
+
+  function loadCobaltSession() {
+    try {
+      var raw = localStorage.getItem(COBALT_SESSION_KEY);
+      if (!raw) { return { token: null, exp: 0, base: null }; }
+      var s = JSON.parse(raw);
+      if (!s || typeof s !== 'object') { return { token: null, exp: 0, base: null }; }
+      return { token: s.token || null, exp: Number(s.exp) || 0, base: s.base || null };
+    } catch (e) {
+      return { token: null, exp: 0, base: null };
+    }
+  }
+
+  function saveCobaltSession(s) {
+    try { localStorage.setItem(COBALT_SESSION_KEY, JSON.stringify(s)); } catch (e) { /* ignore */ }
+  }
+
+  function clearCobaltSession() {
+    try { localStorage.removeItem(COBALT_SESSION_KEY); } catch (e) { /* ignore */ }
+  }
+
+  function decodeJwtExp(token) {
+    try {
+      var parts = String(token).split('.');
+      if (parts.length !== 3) { return 0; }
+      var payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (payload.length % 4) { payload += '='; }
+      var json = JSON.parse(atob(payload));
+      if (json && typeof json.exp === 'number') { return json.exp * 1000; }
+    } catch (e) { /* not a JWT */ }
+    return 0;
+  }
+
+  function runTurnstile(sitekey) {
+    return loadTurnstile().then(function (ts) {
+      return new Promise(function (resolve, reject) {
+        var modal     = $('#turnstileModal');
+        var container = $('#turnstileContainer');
+        var hint      = $('#turnstileHint');
+        var closeBtn  = $('#closeTurnstile');
+
+        container.innerHTML = '';
+        hint.textContent = 'Loading challenge…';
+        modal.classList.remove('hidden');
+
+        var widgetId = null;
+        var settled  = false;
+
+        function cleanup() {
+          if (settled) { return; }
+          settled = true;
+          try {
+            if (widgetId !== null && window.turnstile) {
+              window.turnstile.remove(widgetId);
+            }
+          } catch (e) { /* ignore */ }
+          modal.classList.add('hidden');
+          container.innerHTML = '';
+          hint.textContent = '';
+          closeBtn.removeEventListener('click', onClose);
+        }
+
+        function onClose() {
+          cleanup();
+          reject(new Error('Verification cancelled.'));
+        }
+
+        closeBtn.addEventListener('click', onClose);
+
+        try {
+          widgetId = ts.render(container, {
+            sitekey: sitekey,
+            theme: document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
+            callback: function (token) {
+              if (settled) { return; }
+              hint.textContent = '';
+              cleanup();
+              resolve(token);
+            },
+            'error-callback': function (code) {
+              hint.textContent =
+                'Turnstile error: ' + (code || 'unknown') +
+                '. If this keeps failing, the sitekey may be restricted to a different domain. ' +
+                'Self-host cobalt, or switch engine to yt-dlp.';
+            },
+            'expired-callback': function () {
+              hint.textContent = 'Challenge expired. Close and retry.';
+            }
+          });
+          hint.textContent = '';
+        } catch (e) {
+          cleanup();
+          reject(new Error('Could not render Turnstile widget: ' + (e && e.message ? e.message : e)));
+        }
+      });
+    });
+  }
+
+  function fetchSessionToken(baseUrl) {
+    var sessionUrl = baseUrl + '/session?t=' + Date.now();
+
+    return fetch(sessionUrl, {
+      method: 'GET',
+      cache: 'no-store',
+      credentials: 'omit',
+      headers: { 'Accept': 'application/json' }
+    }).then(function (res) {
+      if (res.status === 404) {
+        // Instance without /session endpoint — assume no auth.
+        return null;
+      }
+      if (!res.ok) {
+        return res.text().then(function (text) {
+          throw new Error('GET /session failed (HTTP ' + res.status + '): ' + String(text).slice(0, 200));
+        });
+      }
+      return res.json().catch(function () {
+        throw new Error('GET /session returned non-JSON. The instance may be misconfigured.');
+      });
+    }).then(function (session) {
+      if (!session) { return {}; }
+
+      var sitekey = session.turnstileSitekey ||
+                    (session.turnstile && session.turnstile.sitekey) || null;
+
+      if (!sitekey) {
+        if (session.apiKey && !settings.apiKey) {
+          throw new Error('This cobalt instance requires an API key. Add one in ⚙ Settings → cobalt → API key.');
+        }
+        return {};
+      }
+
+      return runTurnstile(sitekey).then(function (token) {
+        return fetch(baseUrl + '/session', {
+          method: 'POST',
+          credentials: 'omit',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ turnstile: token })
+        });
+      }).then(function (res) {
+        return res.text().then(function (text) {
+          var data;
+          try { data = JSON.parse(text); }
+          catch (e) {
+            throw new Error('POST /session returned non-JSON (HTTP ' + res.status + ').');
+          }
+          if (!data || data.status !== 'OK' || !data.token) {
+            var code = (data && data.error && data.error.code) ? data.error.code : ('HTTP ' + res.status);
+            throw new Error('Could not obtain session token: ' + code);
+          }
+          var exp = decodeJwtExp(data.token) || (Date.now() + 4 * 60 * 1000);
+          saveCobaltSession({ token: data.token, exp: exp, base: baseUrl });
+          toast('cobalt session obtained', 'ok');
+          return { 'Authorization': 'Bearer ' + data.token };
+        });
+      });
+    });
+  }
+
+  function getCobaltAuth(baseUrl, override) {
+    override = override || {};
+    var apiKey = (override.apiKey !== undefined) ? override.apiKey : settings.apiKey;
+    var bearer = (override.bearerToken !== undefined) ? override.bearerToken : settings.bearerToken;
+
+    if (apiKey) {
+      return Promise.resolve({ 'Authorization': 'Api-Key ' + apiKey });
+    }
+
+    if (bearer) {
+      var bexp = decodeJwtExp(bearer) || 0;
+      if (!bexp || (bexp - 30000) > Date.now()) {
+        return Promise.resolve({ 'Authorization': 'Bearer ' + bearer });
+      }
+    }
+
+    var cached = loadCobaltSession();
+    var now = Date.now();
+    if (cached.token && cached.base === baseUrl && cached.exp && (cached.exp - 30000) > now) {
+      return Promise.resolve({ 'Authorization': 'Bearer ' + cached.token });
+    }
+
+    return fetchSessionToken(baseUrl);
+  }
+
+  /* ==========================================================
+     COBALT PAYLOAD / RESPONSE PARSING
      ========================================================== */
   function buildCobaltPayload(url) {
     var payload = { url: url };
@@ -1302,62 +1564,6 @@ footer .heart{color:var(--err)}
     return payload;
   }
 
-  function runCobalt(url) {
-    var base = String(settings.apiBase || '').replace(/\/+$/, '');
-
-    if (!base) {
-      return Promise.reject(new Error('No cobalt instance configured. Open ⚙ Settings and set an instance URL.'));
-    }
-
-    var headers = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    };
-    if (settings.apiKey) {
-      headers['Authorization'] = 'Api-Key ' + settings.apiKey;
-    }
-
-    var body = JSON.stringify(buildCobaltPayload(url));
-
-    return fetch(base + '/', {
-      method: 'POST',
-      headers: headers,
-      body: body,
-      mode: 'cors',
-      credentials: 'omit'
-    }).then(function (res) {
-      return res.text().then(function (raw) {
-        var data;
-        try {
-          data = JSON.parse(raw);
-        } catch (e) {
-          throw new Error(
-            'The instance returned a non-JSON response (HTTP ' + res.status + '). ' +
-            'It may require a browser session / Turnstile challenge, may be rate-limited, ' +
-            'or the URL may be wrong. Try another instance or self-host cobalt.'
-          );
-        }
-
-        if (!res.ok && !data.status) {
-          var code = (data.error && data.error.code) ? data.error.code : ('HTTP ' + res.status);
-          throw new Error('cobalt error: ' + code);
-        }
-
-        return data;
-      });
-    }).then(function (data) {
-      return parseCobaltResponse(data, url);
-    }).catch(function (err) {
-      if (err && err.name === 'TypeError') {
-        throw new Error(
-          'Could not reach ' + base + '. The instance may be down, blocking cross-origin ' +
-          'requests (CORS), or offline. Self-host cobalt and set your own URL in ⚙ Settings.'
-        );
-      }
-      throw err;
-    });
-  }
-
   function parseCobaltResponse(data, sourceUrl) {
     var status = data && data.status;
     var baseName = guessName(sourceUrl);
@@ -1380,13 +1586,13 @@ footer .heart{color:var(--err)}
     if (status === 'picker') {
       var picker = data.picker || [];
       picker.forEach(function (p, i) {
-        var isPhoto = p.type === 'photo' || p.type === 'gif';
+        var isPhoto = (p.type === 'photo' || p.type === 'gif');
         items.push({
           kind: isPhoto ? 'image' : 'video',
           url: p.url,
           filename: baseName + '_' + (i + 1) + (isPhoto ? '.jpg' : '.mp4'),
           tunnel: false,
-          label: isPhoto ? 'Image / GIF #' + (i + 1) : 'Video #' + (i + 1) + (p.thumb ? '' : '')
+          label: isPhoto ? ('Image / GIF #' + (i + 1)) : ('Video #' + (i + 1))
         });
       });
       if (data.audio) {
@@ -1413,6 +1619,94 @@ footer .heart{color:var(--err)}
   }
 
   /* ==========================================================
+     COBALT ENGINE  (with automatic auth retry)
+     ========================================================== */
+  function runCobalt(url) {
+    var base = String(settings.apiBase || '').replace(/\/+$/, '');
+
+    if (!base) {
+      return Promise.reject(new Error('No cobalt instance configured. Open ⚙ Settings and set an instance URL.'));
+    }
+
+    var payload = buildCobaltPayload(url);
+
+    function attempt(isRetry) {
+      return getCobaltAuth(base).then(function (authHeaders) {
+        var headers = {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        };
+        Object.keys(authHeaders || {}).forEach(function (k) {
+          headers[k] = authHeaders[k];
+        });
+
+        return fetch(base + '/', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(payload),
+          mode: 'cors',
+          credentials: 'omit'
+        });
+      }).then(function (res) {
+        return res.text().then(function (raw) {
+          var data;
+          try { data = JSON.parse(raw); }
+          catch (e) {
+            throw new Error(
+              'The instance returned a non-JSON response (HTTP ' + res.status + '). ' +
+              'This usually means it needs an interactive browser session, is rate-limited, ' +
+              'or is down. Try another instance or self-host cobalt.'
+            );
+          }
+
+          var code = data && data.error && data.error.code;
+
+          // --- JWT / session errors → clear cache and retry once ---
+          if (code === 'error.api.auth.jwt.missing' ||
+              code === 'error.api.auth.jwt.invalid' ||
+              code === 'error.api.auth.jwt.expired') {
+            clearCobaltSession();
+            if (!isRetry) { return attempt(true); }
+            throw new Error(
+              'cobalt rejected the session token (' + code + ') even after refreshing. ' +
+              'The instance may refuse to issue sessions to this origin (Turnstile sitekey is ' +
+              'usually domain-restricted). Self-host cobalt, or switch engine to yt-dlp.'
+            );
+          }
+
+          // --- API key errors ---
+          if (code === 'error.api.auth.key.missing' || code === 'error.api.auth.key.invalid') {
+            throw new Error('This cobalt instance requires an API key. Add one in ⚙ Settings → cobalt → API key.');
+          }
+
+          // --- Rate limits ---
+          if (code === 'error.api.rate_exceeded') {
+            throw new Error('Rate limit exceeded on this cobalt instance. Wait a bit, or self-host cobalt.');
+          }
+
+          if (!res.ok && !data.status) {
+            throw new Error('cobalt error: ' + (code || ('HTTP ' + res.status)));
+          }
+
+          return data;
+        });
+      });
+    }
+
+    return attempt(false).then(function (data) {
+      return parseCobaltResponse(data, url);
+    }).catch(function (err) {
+      if (err && err.name === 'TypeError') {
+        throw new Error(
+          'Could not reach ' + base + '. The instance may be down, blocking cross-origin ' +
+          'requests (CORS), or offline. Self-host cobalt and set your own URL in ⚙ Settings.'
+        );
+      }
+      throw err;
+    });
+  }
+
+  /* ==========================================================
      YT-DLP ENGINE
      ========================================================== */
   function runYtdlp(url) {
@@ -1432,9 +1726,8 @@ footer .heart{color:var(--err)}
     }).then(function (res) {
       return res.text().then(function (raw) {
         var data;
-        try {
-          data = JSON.parse(raw);
-        } catch (e) {
+        try { data = JSON.parse(raw); }
+        catch (e) {
           throw new Error('yt-dlp API returned non-JSON (HTTP ' + res.status + '). Check your endpoint.');
         }
 
@@ -1452,21 +1745,24 @@ footer .heart{color:var(--err)}
         }
 
         var proxy = settings.downloadProxy || '';
-        var title = data.title ? String(data.title).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 60) : guessName(url);
+        var title = data.title
+          ? String(data.title).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 60)
+          : guessName(url);
 
         return links.map(function (l, i) {
           var mediaUrl = l.url;
-          var format = l.format || ('format ' + (i + 1));
-          var itag = l.itag ? ('itag ' + l.itag) : '';
-          var ext = l.ext || 'mp4';
+          var format   = l.format || ('format ' + (i + 1));
+          var itag     = l.itag ? ('itag ' + l.itag) : '';
+          var ext      = l.ext || 'mp4';
+          var isAudio  = /audio|m4a|mp3|opus|webm-audio/i.test(format) && !l.height;
 
           return {
-            kind: /audio|m4a|mp3|opus|webm-audio/i.test(format) && !l.height ? 'audio' : 'file',
+            kind: isAudio ? 'audio' : 'file',
             url: mediaUrl,
-            downloadUrl: proxy ? proxy + encodeURIComponent(mediaUrl) : mediaUrl,
+            downloadUrl: proxy ? (proxy + encodeURIComponent(mediaUrl)) : mediaUrl,
             filename: title + '_' + (l.itag || (i + 1)) + '.' + ext,
             tunnel: false,
-            label: format + (itag ? ' · ' + itag : '')
+            label: format + (itag ? (' · ' + itag) : '')
           };
         });
       });
@@ -1638,9 +1934,12 @@ footer .heart{color:var(--err)}
 
     setBusy(true);
     resultsEl.innerHTML = '';
-    showStatus('Contacting the ' + (settings.engine === 'cobalt' ? 'cobalt' : 'yt-dlp') + ' backend…', 'info');
+    showStatus(
+      'Contacting the ' + (settings.engine === 'cobalt' ? 'cobalt' : 'yt-dlp') + ' backend…',
+      'info'
+    );
 
-    var runner = settings.engine === 'ytdlp' ? runYtdlp : runCobalt;
+    var runner = (settings.engine === 'ytdlp') ? runYtdlp : runCobalt;
 
     runner(url).then(function (items) {
       hideStatus();
@@ -1688,16 +1987,49 @@ footer .heart{color:var(--err)}
   /* ==========================================================
      SETTINGS MODAL
      ========================================================== */
+  function updateSessionStatus(baseUrl) {
+    var line = $('#sessionStatus');
+    if (!line) { return; }
+
+    var cached = loadCobaltSession();
+    var now = Date.now();
+
+    line.style.color = '';
+
+    if (cached.token && cached.base === baseUrl && cached.exp > now) {
+      line.textContent = 'Active session — valid until ' + new Date(cached.exp).toLocaleTimeString();
+      line.style.color = 'var(--ok)';
+      return;
+    }
+
+    if (settings.apiKey) {
+      line.textContent = 'Using API key auth.';
+      line.style.color = 'var(--ok)';
+      return;
+    }
+
+    if (settings.bearerToken) {
+      line.textContent = 'Using manually pasted bearer token.';
+      line.style.color = 'var(--ok)';
+      return;
+    }
+
+    line.textContent = 'No session yet — will be requested on first download.';
+  }
+
   function openSettings() {
-    $('#setEngine').value = settings.engine;
-    $('#setApiBase').value = settings.apiBase || '';
-    $('#setApiKey').value = settings.apiKey || '';
+    $('#setEngine').value        = settings.engine;
+    $('#setApiBase').value       = settings.apiBase || '';
+    $('#setApiKey').value        = settings.apiKey || '';
+    $('#setBearerToken').value   = settings.bearerToken || '';
     $('#setFilenameStyle').value = settings.filenameStyle || 'pretty';
-    $('#setCodec').value = settings.videoCodec || 'h264';
-    $('#setYtdlpBase').value = settings.ytdlpBase || '';
-    $('#setProxy').value = settings.downloadProxy || '';
+    $('#setCodec').value         = settings.videoCodec || 'h264';
+    $('#setYtdlpBase').value     = settings.ytdlpBase || '';
+    $('#setProxy').value         = settings.downloadProxy || '';
 
     toggleEngineFields(settings.engine);
+    updateSessionStatus((settings.apiBase || '').replace(/\/+$/, ''));
+
     settingsModal.classList.remove('hidden');
   }
 
@@ -1726,14 +2058,64 @@ footer .heart{color:var(--err)}
     toggleEngineFields(this.value);
   });
 
+  $('#setApiBase').addEventListener('input', function () {
+    updateSessionStatus(this.value.trim().replace(/\/+$/, ''));
+  });
+
+  $('#setApiKey').addEventListener('input', function () {
+    updateSessionStatus($('#setApiBase').value.trim().replace(/\/+$/, ''));
+  });
+
+  $('#setBearerToken').addEventListener('input', function () {
+    updateSessionStatus($('#setApiBase').value.trim().replace(/\/+$/, ''));
+  });
+
+  $('#refreshSessionBtn').addEventListener('click', function () {
+    var base = $('#setApiBase').value.trim().replace(/\/+$/, '');
+    if (!base) {
+      toast('Enter a cobalt instance URL first', 'err');
+      return;
+    }
+
+    clearCobaltSession();
+    updateSessionStatus(base);
+
+    var overrideKey    = $('#setApiKey').value.trim();
+    var overrideBearer = ''; // ignore manual bearer for the explicit refresh
+
+    toast('Opening session flow…', 'info');
+
+    getCobaltAuth(base, { apiKey: overrideKey, bearerToken: overrideBearer })
+      .then(function (headers) {
+        var kind = headers && headers.Authorization
+          ? headers.Authorization.split(' ')[0]
+          : 'none';
+        toast('Session OK (auth: ' + kind + ').', 'ok');
+        updateSessionStatus(base);
+      })
+      .catch(function (err) {
+        toast('Session failed: ' + (err && err.message ? err.message : err), 'err');
+        updateSessionStatus(base);
+      });
+  });
+
   $('#saveSettings').addEventListener('click', function () {
-    settings.engine = $('#setEngine').value;
-    settings.apiBase = $('#setApiBase').value.trim();
-    settings.apiKey = $('#setApiKey').value.trim();
+    var prevBase = settings.apiBase;
+    var prevKey  = settings.apiKey;
+
+    settings.engine        = $('#setEngine').value;
+    settings.apiBase       = $('#setApiBase').value.trim();
+    settings.apiKey        = $('#setApiKey').value.trim();
+    settings.bearerToken   = $('#setBearerToken').value.trim();
     settings.filenameStyle = $('#setFilenameStyle').value;
-    settings.videoCodec = $('#setCodec').value;
-    settings.ytdlpBase = $('#setYtdlpBase').value.trim();
+    settings.videoCodec    = $('#setCodec').value;
+    settings.ytdlpBase     = $('#setYtdlpBase').value.trim();
     settings.downloadProxy = $('#setProxy').value.trim();
+
+    // If auth-relevant settings changed, drop the cached JWT.
+    if (prevBase !== settings.apiBase || prevKey !== settings.apiKey) {
+      clearCobaltSession();
+    }
 
     saveSettings();
     closeSettings();
@@ -1747,6 +2129,7 @@ footer .heart{color:var(--err)}
         settings[key] = DEFAULT_SETTINGS[key];
       }
     }
+    clearCobaltSession();
     saveSettings();
     openSettings();
     setMode(settings.mode, false);
