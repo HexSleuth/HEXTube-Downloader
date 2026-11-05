@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0a0c11">
 <meta name="referrer" content="no-referrer">
-<title>YouTube Downloader — Client-side · GitHub Pages</title>
+<title>Free Video Downloader — YouTube, TikTok, Instagram → MP3 &amp; MP4</title>
 <style>
   :root{
     color-scheme: dark;
@@ -32,9 +32,9 @@
     padding-top:env(safe-area-inset-top);
     padding-bottom:env(safe-area-inset-bottom);
   }
-  .wrap{max-width:640px;margin:0 auto;padding:20px 14px 44px}
+  .wrap{max-width:680px;margin:0 auto;padding:20px 14px 44px}
 
-  header{display:flex;align-items:center;gap:12px;margin:6px 0 18px}
+  header{display:flex;align-items:center;gap:12px;margin:6px 0 16px}
   .logo{
     width:44px;height:44px;flex:0 0 44px;border-radius:13px;
     display:flex;align-items:center;justify-content:center;
@@ -44,6 +44,21 @@
   }
   h1{font-size:19px;margin:0;letter-spacing:-.02em;font-weight:700}
   .sub{margin:1px 0 0;font-size:12.5px;color:var(--muted)}
+
+  /* ---------------- tabs ---------------- */
+  .tabs{
+    display:flex;gap:6px;background:#12161f;border:1px solid var(--line);
+    border-radius:14px;padding:5px;margin-bottom:14px;
+  }
+  .tab{
+    flex:1 1 0;padding:11px 8px;border-radius:10px;background:transparent;
+    color:var(--muted);font-weight:700;font-size:14px;transition:.15s;border:none;cursor:pointer;
+    font-family:inherit;
+  }
+  .tab.active{
+    background:linear-gradient(135deg,rgba(124,92,255,.28),rgba(255,45,85,.22));
+    color:#fff;box-shadow:0 0 0 2px rgba(124,92,255,.2) inset;
+  }
 
   .card{
     background:linear-gradient(180deg,var(--card),var(--card-2));
@@ -62,7 +77,7 @@
   }
   .lbl2{margin-top:14px}
 
-  .inputRow{display:flex;gap:8px;margin-bottom:12px}
+  .inputRow{display:flex;gap:8px;margin-bottom:10px}
   input[type=url],input[type=text]{
     flex:1 1 auto;min-width:0;
     background:#0b0f17;color:var(--txt);
@@ -72,18 +87,15 @@
     outline:none;
     transition:border-color .15s,box-shadow .15s;
   }
-  input[type=url]::placeholder,input[type=text]::placeholder{color:#5d6982}
-  input[type=url]:focus,input[type=text]:focus{
-    border-color:var(--accent-2);
-    box-shadow:0 0 0 3px rgba(124,92,255,.18);
-  }
+  input::placeholder{color:#5d6982}
+  input:focus{border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(124,92,255,.18)}
 
   select{
     width:100%;
     background:#0b0f17;color:var(--txt);
     border:1px solid var(--line);
     border-radius:12px;
-    padding:13px 14px;font-size:16px;
+    padding:12px 14px;font-size:15px;
     outline:none;appearance:none;
     background-image:linear-gradient(45deg,transparent 50%,#8b98b0 50%),
                      linear-gradient(135deg,#8b98b0 50%,transparent 50%);
@@ -103,30 +115,48 @@
   }
   .primary:active{transform:scale(.985)}
   .primary:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+  .primary.green{
+    background:linear-gradient(135deg,#4ade80,#22c55e);
+    color:#04220f;box-shadow:0 10px 26px rgba(34,197,94,.25);
+  }
   .ghost{
-    flex:0 0 auto;padding:13px 16px;border-radius:12px;font-weight:600;
+    flex:0 0 auto;padding:12px 16px;border-radius:12px;font-weight:600;
     color:var(--txt);background:#1b2130;border:1px solid var(--line);
     transition:background .15s;
   }
   .ghost:active{background:#232b3d}
   .ghost.danger{color:#ffd5d5;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35)}
   .ghost.danger:active{background:rgba(239,68,68,.22)}
-  .ghost.small{padding:10px 14px;font-size:14px}
+  .linkBtn{
+    background:none;border:none;color:var(--muted);font-size:12.5px;
+    text-decoration:underline;padding:0;cursor:pointer;font-family:inherit;
+  }
+  .linkBtn:hover{color:var(--txt)}
 
-  .btnRow{display:flex;gap:8px;margin-top:18px}
+  .platRow{display:flex;align-items:center;gap:10px;margin-bottom:12px;min-height:24px}
+  .badge{
+    display:inline-block;padding:5px 10px;border-radius:99px;
+    font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+    background:#1a2030;border:1px solid var(--line);color:var(--muted);
+  }
+  .badge.yt{color:#ff9fae;border-color:rgba(255,45,85,.4);background:rgba(255,45,85,.12)}
+  .badge.ok{color:#7ef0a6;border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.12)}
+  .badge.warn{color:#ffd08a;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.12)}
+
+  .btnRow{display:flex;gap:8px;margin-top:16px}
   .btnRow .primary{flex:1 1 auto}
-  .shareRow{display:flex;gap:8px;margin-top:10px}
-  .shareRow .ghost{flex:1 1 0;font-size:14px;padding:11px 10px}
+  .shareRow{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .shareRow .ghost{flex:1 1 0;font-size:13.5px;padding:11px 8px;min-width:120px}
 
   .err{
-    margin-top:12px;padding:11px 13px;border-radius:11px;font-size:14px;
+    margin-top:12px;padding:11px 13px;border-radius:11px;font-size:13.5px;
     color:#ffd5d5;background:rgba(239,68,68,.13);
     border:1px solid rgba(239,68,68,.4);
-    word-break:break-word;line-height:1.5;
+    word-break:break-word;line-height:1.55;
   }
-  .err a{color:#ffd5d5;font-weight:700}
+  .err code{background:rgba(0,0,0,.35);border-radius:5px;padding:1px 5px;font-size:12px}
 
-  .media{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+  .media{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px}
   .media img{
     width:132px;height:74px;object-fit:cover;border-radius:11px;
     background:#0b0f17;border:1px solid var(--line);flex:0 0 auto;
@@ -138,6 +168,18 @@
     overflow:hidden;word-break:break-word;
   }
   .muted{color:var(--muted);font-size:13px;margin:0;word-break:break-word}
+
+  /* ---------------- mode toggle ---------------- */
+  .modeToggle{
+    display:flex;gap:6px;background:#0b0f17;border:1px solid var(--line);
+    border-radius:12px;padding:4px;margin-bottom:14px;
+  }
+  .mode{
+    flex:1;padding:10px;border-radius:9px;background:transparent;
+    color:var(--muted);font-weight:700;font-size:14px;border:none;cursor:pointer;
+    transition:.15s;
+  }
+  .mode.active{background:linear-gradient(135deg,var(--accent-2),#5b3ee0);color:#fff}
 
   .chips{display:flex;flex-wrap:wrap;gap:8px}
   .chip{
@@ -154,16 +196,12 @@
     border-color:var(--accent-2);color:#fff;
     box-shadow:0 0 0 2px rgba(124,92,255,.22) inset;
   }
-  .chip small{
-    display:block;font-size:11px;color:var(--muted);
-    font-weight:500;margin-top:2px;
-  }
+  .chip small{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:2px}
   .chip.active small{color:rgba(255,255,255,.75)}
 
   .barTrack{
     margin-top:16px;height:10px;border-radius:99px;
-    background:#0b0f17;border:1px solid var(--line);
-    overflow:hidden;
+    background:#0b0f17;border:1px solid var(--line);overflow:hidden;
   }
   .barFill{
     height:100%;width:0%;border-radius:99px;
@@ -177,7 +215,7 @@
   }
   .status{
     margin-top:10px;font-size:13.5px;color:var(--muted);
-    min-height:18px;word-break:break-word;line-height:1.5;
+    min-height:18px;word-break:break-word;line-height:1.55;
   }
   .status.ok{color:var(--ok);font-weight:600}
   .status.bad{color:var(--err);font-weight:600}
@@ -192,15 +230,35 @@
   }
   .save:active{filter:brightness(.95)}
 
+  .pickerRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+
+  /* ---------------- search list ---------------- */
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{
+    display:flex;gap:10px;align-items:center;padding:9px;
+    border-radius:12px;background:#141a27;border:1px solid var(--line);
+  }
+  .item img{width:96px;height:54px;border-radius:8px;object-fit:cover;flex:0 0 auto;background:#0b0f17}
+  .item .meta{min-width:0;flex:1 1 auto}
+  .item .meta b{
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;font-size:13.5px;font-weight:650;line-height:1.3;margin-bottom:3px;
+    word-break:break-word;
+  }
+  .item .meta span{font-size:11.5px;color:var(--muted);display:block}
+  .item .ghost{padding:9px 12px;font-size:13px}
+
   .note{
     padding:12px 14px;margin-top:14px;
     border-radius:11px;font-size:12.5px;
-    color:#b8c5d9;line-height:1.55;
+    color:#b8c5d9;line-height:1.6;
     background:rgba(124,92,255,.08);
     border:1px solid rgba(124,92,255,.22);
   }
   .note strong{color:#d9e0ee}
   .note code{background:#0b0f17;border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:11.5px}
+  .note ul{margin:8px 0 0;padding-left:18px}
+  .note li{margin-bottom:4px}
 
   details.adv{
     margin-top:14px;border-radius:12px;border:1px solid var(--line);
@@ -212,25 +270,27 @@
     display:flex;align-items:center;gap:8px;
   }
   details.adv summary::-webkit-details-marker{display:none}
-  details.adv summary::before{content:"▸";transition:transform .15s;font-size:12px}
+  details.adv summary::before{content:"▸";font-size:12px;transition:transform .15s}
   details.adv[open] summary::before{content:"▾"}
   details.adv[open] summary{border-bottom:1px solid var(--line)}
   .advBody{padding:14px}
   .advBody .lbl{margin-bottom:6px}
-  .hint{font-size:12px;color:#5d6982;margin:6px 0 0;line-height:1.5}
+  .hint{font-size:12px;color:#5d6982;margin:8px 0 0;line-height:1.55}
   .saved{font-size:11.5px;color:var(--ok);font-weight:600;margin-left:auto;opacity:0;transition:opacity .2s}
   .saved.show{opacity:1}
 
   .foot{
     color:#5d6982;font-size:11.5px;text-align:center;
-    margin-top:24px;line-height:1.55;
+    margin-top:24px;line-height:1.6;
   }
+  .foot a{color:#7f8ca5}
 
   @media (max-width:400px){
     .media img{width:104px;height:60px}
     .chip{padding:9px 12px;font-size:13px}
     .wrap{padding:16px 12px 40px}
-    .shareRow .ghost{font-size:13px}
+    .shareRow .ghost{font-size:12.5px}
+    .item img{width:80px;height:46px}
   }
 </style>
 </head>
@@ -239,103 +299,198 @@
   <header>
     <div class="logo">&#9654;</div>
     <div>
-      <h1>YouTube Downloader</h1>
-      <p class="sub">Free &middot; Client-side &middot; No login &middot; GitHub Pages ready</p>
+      <h1>Free Video Downloader</h1>
+      <p class="sub">YouTube &middot; TikTok &middot; Instagram &middot; Facebook &middot; +more &middot; MP3 / MP4</p>
     </div>
   </header>
 
-  <!-- ============================ INPUT CARD ============================ -->
-  <section class="card">
-    <label class="lbl" for="url">YouTube URL</label>
-    <div class="inputRow">
-      <input id="url" type="url" inputmode="url" autocomplete="off"
-             autocapitalize="off" spellcheck="false"
-             placeholder="https://www.youtube.com/watch?v=...">
-      <button id="pasteBtn" class="ghost" type="button">Paste</button>
-    </div>
-    <button id="fetchBtn" class="primary" type="button">Fetch Video</button>
-    <div id="err" class="err hidden"></div>
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="download" role="tab" aria-selected="true">Downloader</button>
+    <button class="tab" data-tab="search" role="tab" aria-selected="false">MP3 Search</button>
+  </div>
 
-    <details class="adv" id="settingsPanel">
-      <summary>
-        <span>API instance — required</span>
-        <span id="savedFlag" class="saved">Saved</span>
-      </summary>
-      <div class="advBody">
-        <label class="lbl" for="apiType">API type</label>
-        <select id="apiType">
-          <option value="piped">Piped</option>
-          <option value="invidious">Invidious</option>
-        </select>
-
-        <label class="lbl lbl2" for="apiBase">API base URL</label>
-        <input id="apiBase" type="text" inputmode="url"
-               autocomplete="off" autocapitalize="off" spellcheck="false"
-               placeholder="https://pipedapi.example.com">
-
-        <p class="hint">
-          There is no built-in mirror list. You must enter one Piped or Invidious
-          instance that <strong>allows browser CORS requests</strong>
-          (<code>Access-Control-Allow-Origin: *</code>) — otherwise the browser
-          will report <em>“Failed to fetch”</em>.
-        </p>
-        <p class="hint">
-          Examples of the format: <code>https://pipedapi.example.com</code> for
-          Piped, <code>https://invidious.example.com</code> for Invidious.
-          Use the <strong>ytdlnis</strong> app if no instance is reachable.
-        </p>
+  <!-- ================= DOWNLOADER ================= -->
+  <div id="panel-download" class="panel">
+    <section class="card">
+      <label class="lbl" for="url">Video URL</label>
+      <div class="inputRow">
+        <input id="url" type="url" inputmode="url" autocomplete="off"
+               autocapitalize="off" spellcheck="false"
+               placeholder="Paste a YouTube, TikTok, Instagram… link">
+        <button id="pasteBtn" class="ghost" type="button">Paste</button>
       </div>
-    </details>
-  </section>
 
-  <!-- ============================ RESULT CARD =========================== -->
-  <section id="infoCard" class="card hidden">
-    <div class="media">
-      <img id="thumb" alt="" referrerpolicy="no-referrer">
-      <div class="mediaInfo">
-        <h2 id="title">&mdash;</h2>
-        <p id="meta" class="muted"></p>
+      <div class="platRow">
+        <span id="platBadge" class="badge">Paste a link</span>
+        <button id="clearBtn" class="linkBtn" type="button">Clear</button>
       </div>
-    </div>
 
-    <div class="lbl">Available formats</div>
-    <div id="chips" class="chips"></div>
+      <button id="fetchBtn" class="primary" type="button">Fetch Video</button>
+      <div id="err" class="err hidden"></div>
 
-    <div class="btnRow">
-      <button id="dlBtn" class="primary" type="button">Download</button>
-      <button id="cancelBtn" class="ghost danger hidden" type="button">Cancel</button>
-    </div>
+      <details class="adv" id="settingsPanel">
+        <summary>
+          <span>API instances &amp; settings</span>
+          <span id="savedFlag" class="saved">Saved</span>
+        </summary>
+        <div class="advBody">
+          <label class="lbl" for="setPiped">Piped API (YouTube)</label>
+          <input id="setPiped" type="text" inputmode="url" autocomplete="off"
+                 autocapitalize="off" spellcheck="false"
+                 placeholder="https://pipedapi.example.com">
 
-    <div class="shareRow">
-      <button id="ytdlnisBtn" class="ghost" type="button">Open in ytdlnis</button>
-      <button id="copyBtn" class="ghost" type="button">Copy video URL</button>
-    </div>
+          <label class="lbl lbl2" for="setInvidious">Invidious API (YouTube fallback)</label>
+          <input id="setInvidious" type="text" inputmode="url" autocomplete="off"
+                 autocapitalize="off" spellcheck="false"
+                 placeholder="https://invidious.example.com">
 
-    <div id="barWrap" class="hidden">
-      <div class="barTrack"><div id="bar" class="barFill"></div></div>
-      <div class="barMeta">
-        <span id="pct">0%</span>
-        <span id="speed"></span>
+          <label class="lbl lbl2" for="setCobalt">Cobalt API (all platforms)</label>
+          <input id="setCobalt" type="text" inputmode="url" autocomplete="off"
+                 autocapitalize="off" spellcheck="false"
+                 placeholder="https://api.cobalt.tools">
+
+          <p class="hint">
+            <strong>Piped / Invidious</strong> resolve YouTube streams and power the
+            MP3 search. <strong>Cobalt</strong> is the multi-platform converter used for
+            TikTok, Instagram, Facebook, Dailymotion, Youku, X, Vimeo, SoundCloud and
+            YouTube when no Piped instance is set.
+          </p>
+          <p class="hint">
+            Every instance must send <code>Access-Control-Allow-Origin</code>, otherwise
+            the browser reports <em>“Failed to fetch”</em>. Self-host if public
+            instances are blocked.
+          </p>
+
+          <div class="btnRow" style="margin-top:14px">
+            <button id="resetCfgBtn" class="ghost" type="button" style="flex:1">Reset to defaults</button>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- result -->
+    <section id="infoCard" class="card hidden">
+      <div class="media">
+        <img id="thumb" alt="" referrerpolicy="no-referrer">
+        <div class="mediaInfo">
+          <h2 id="title">&mdash;</h2>
+          <p id="meta" class="muted"></p>
+        </div>
       </div>
-    </div>
 
-    <div id="status" class="status"></div>
-    <div id="fileRow" class="hidden">
-      <a id="saveLink" class="save" href="#" download>Save file again</a>
-    </div>
-  </section>
+      <div class="modeToggle" role="group" aria-label="Format mode">
+        <button class="mode active" data-mode="video" type="button">Video</button>
+        <button class="mode" data-mode="audio" type="button">Audio</button>
+      </div>
 
+      <!-- direct streams (Piped / Invidious) -->
+      <div id="directFormats">
+        <div class="lbl">Available streams</div>
+        <div id="chips" class="chips"></div>
+      </div>
+
+      <!-- server-side conversion (Cobalt) -->
+      <div id="convertFormats" class="hidden">
+        <div id="videoOpts">
+          <label class="lbl" for="vQuality">Video quality</label>
+          <select id="vQuality"></select>
+          <p class="hint" id="vHint">Output container follows the source (MP4 / H.264 preferred).</p>
+        </div>
+        <div id="audioOpts" class="hidden">
+          <label class="lbl" for="aFormat">Audio format</label>
+          <select id="aFormat"></select>
+          <label class="lbl lbl2" for="aBitrate">Bitrate</label>
+          <select id="aBitrate"></select>
+        </div>
+      </div>
+
+      <div class="btnRow">
+        <button id="dlBtn" class="primary" type="button">Download</button>
+        <button id="cancelBtn" class="ghost danger hidden" type="button">Cancel</button>
+      </div>
+
+      <div class="shareRow">
+        <button id="ytdlnisBtn" class="ghost" type="button">Open in ytdlnis</button>
+        <button id="copyBtn" class="ghost" type="button">Copy link</button>
+        <button id="openSrcBtn" class="ghost" type="button">Open source</button>
+      </div>
+
+      <div id="pickerRow" class="pickerRow hidden"></div>
+
+      <div id="barWrap" class="hidden">
+        <div class="barTrack"><div id="bar" class="barFill"></div></div>
+        <div class="barMeta">
+          <span id="pct">0%</span>
+          <span id="speed"></span>
+        </div>
+      </div>
+
+      <div id="status" class="status"></div>
+      <div id="fileRow" class="hidden">
+        <a id="saveLink" class="save" href="#" download>Save file again</a>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= MP3 SEARCH ================= -->
+  <div id="panel-search" class="panel hidden">
+    <section class="card">
+      <label class="lbl" for="q">Search music</label>
+      <div class="inputRow">
+        <input id="q" type="text" autocomplete="off" autocapitalize="off"
+               spellcheck="false" placeholder="Song, artist, album…">
+        <button id="searchBtn" class="ghost" type="button">Search</button>
+      </div>
+
+      <label class="lbl lbl2" for="searchBitrate">Preferred MP3 bitrate</label>
+      <select id="searchBitrate">
+        <option value="320">320 kbps (best)</option>
+        <option value="256">256 kbps</option>
+        <option value="192">192 kbps</option>
+        <option value="128" selected>128 kbps</option>
+        <option value="64">64 kbps (smallest)</option>
+      </select>
+
+      <div id="searchErr" class="err hidden"></div>
+
+      <p class="hint">
+        Search runs against your configured <strong>Piped</strong> or
+        <strong>Invidious</strong> instance. Choose a result to load it into the
+        downloader with audio mode preselected.
+      </p>
+    </section>
+
+    <section id="searchResultsCard" class="card hidden">
+      <div class="lbl">Results</div>
+      <div id="searchList" class="list"></div>
+    </section>
+  </div>
+
+  <!-- ================= INFO ================= -->
   <div class="note">
-    <strong>How this works:</strong> 100% client-side — no server, no backend.
-    You point the app at <em>one</em> Piped or Invidious API instance that sends
-    CORS headers, and it returns proxied stream URLs that the browser can fetch.
-    Muxed MP4 (typically 360p / 720p) and audio-only streams download here.
-    For 1080p+ and merged output, use <strong>Open in ytdlnis</strong> (Android).
+    <strong>Supported formats</strong>
+    <ul>
+      <li><strong>Video:</strong> MP4 (H.264), WEBM — up to 4K where the source allows</li>
+      <li><strong>Audio:</strong> MP3, M4A, Opus, OGG, WAV — up to 320 kbps through server-side conversion</li>
+      <li>Direct YouTube streams are capped by the source (~128–160 kbps audio, 360p / 720p muxed video). Use Cobalt or <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a> for higher bitrates and merged 1080p+.</li>
+    </ul>
+    <strong style="display:block;margin-top:10px">How it works</strong>
+    Nothing is uploaded to us. The browser calls public API instances directly:
+    Piped / Invidious return proxied YouTube streams, Cobalt performs the
+    multi-platform conversion and returns a direct download URL.
+    <br><br>
+    <strong>Unlimited &amp; free</strong> — no account, no usage counter, no server
+    of ours in the middle. Speed depends on the instance you point the app at.
+    For the full format matrix (AVI, FLV, WMV, 3GP, M4V, merged 4K) use
+    <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a>
+    with ffmpeg on desktop, or the ytdlnis app on Android.
   </div>
 
   <p class="foot">
+    Interface inspired by <a href="https://limbuilder.github.io/yt-converter/" target="_blank" rel="noopener noreferrer">limbuilder.github.io/yt-converter</a>
+    &middot; Download engine modelled on <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a><br>
     Download only content you own or are legally allowed to download.<br>
-    Respect YouTube's Terms of Service and local copyright law.
+    Respect each platform's Terms of Service and local copyright law.
   </p>
 </div>
 
@@ -343,113 +498,38 @@
 (function () {
   "use strict";
 
-  /* ------------------------------------------------------------------ *
-   *  DOM refs
-   * ------------------------------------------------------------------ */
+  /* ================================================================== *
+   *  0. Tiny helpers
+   * ================================================================== */
   const $  = (id) => document.getElementById(id);
-  const ui = {
-    url:         $("url"),
-    pasteBtn:    $("pasteBtn"),
-    fetchBtn:    $("fetchBtn"),
-    err:         $("err"),
-    settings:    $("settingsPanel"),
-    apiType:     $("apiType"),
-    apiBase:     $("apiBase"),
-    savedFlag:   $("savedFlag"),
-    infoCard:    $("infoCard"),
-    thumb:       $("thumb"),
-    title:       $("title"),
-    meta:        $("meta"),
-    chips:       $("chips"),
-    dlBtn:       $("dlBtn"),
-    cancelBtn:   $("cancelBtn"),
-    ytdlnisBtn:  $("ytdlnisBtn"),
-    copyBtn:     $("copyBtn"),
-    barWrap:     $("barWrap"),
-    bar:         $("bar"),
-    pct:         $("pct"),
-    speed:       $("speed"),
-    status:      $("status"),
-    fileRow:     $("fileRow"),
-    saveLink:    $("saveLink"),
-  };
+  const $all = (sel) => Array.prototype.slice.call(document.querySelectorAll(sel));
 
-  /* ------------------------------------------------------------------ *
-   *  State + config
-   * ------------------------------------------------------------------ */
-  const state = {
-    videoId:    null,
-    info:       null,
-    formats:    [],
-    selected:   0,
-    source:     "",
-    sourceHost: "",
-    controller: null,
-    blobUrl:    null,
-    busy:       false,
-  };
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
 
-  const CFG_KEY = "ytdl-cfg-v2";
-  const cfg = {
-    type: "piped",   // "piped" | "invidious"
-    base: "",        // e.g. "https://pipedapi.example.com"
-  };
-
-  function loadCfg() {
-    try {
-      const raw = localStorage.getItem(CFG_KEY);
-      if (!raw) return;
-      const o = JSON.parse(raw);
-      if (!o || typeof o !== "object") return;
-      if (o.type === "piped" || o.type === "invidious") cfg.type = o.type;
-      if (typeof o.base === "string") cfg.base = o.base.trim();
-    } catch (e) { /* ignore */ }
-  }
-  function saveCfg() {
-    try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) { /* ignore */ }
-    flashSaved();
-  }
-  let savedTimer = null;
-  function flashSaved() {
-    ui.savedFlag.classList.add("show");
-    clearTimeout(savedTimer);
-    savedTimer = setTimeout(() => ui.savedFlag.classList.remove("show"), 1400);
-  }
-  function syncSettingsUI() {
-    ui.apiType.value = cfg.type;
-    ui.apiBase.value = cfg.base;
-  }
-
-  /* ------------------------------------------------------------------ *
-   *  Utilities
-   * ------------------------------------------------------------------ */
-  function showErr(html) {
-    ui.err.innerHTML = html;
-    ui.err.classList.remove("hidden");
-  }
-  function clearErr() {
-    ui.err.textContent = "";
-    ui.err.classList.add("hidden");
-  }
-  function fmtDur(s) {
+  function fmtDur(sec) {
+    const s = Math.round(Number(sec) || 0);
     if (!s) return "";
-    s = Math.round(Number(s));
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     const x = s % 60;
     const p = (n) => (n < 10 ? "0" + n : "" + n);
     return h > 0 ? h + ":" + p(m) + ":" + p(x) : m + ":" + p(x);
   }
+
   function fmtBytes(n) {
-    if (!n || !isFinite(n)) return "";
+    n = Number(n);
+    if (!n || !isFinite(n) || n < 0) return "";
     const u = ["B", "KB", "MB", "GB"];
     let i = 0;
     while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
     return (Math.round(n * 10) / 10) + " " + u[i];
   }
+
   function parseSize(v) {
-    if (!v) return 0;
-    if (typeof v === "number") return v;
+    if (v == null || v === "") return 0;
+    if (typeof v === "number") return isFinite(v) ? v : 0;
     const s = String(v).trim();
     if (/^\d+$/.test(s)) return Number(s);
     const m = s.match(/([\d.]+)\s*(B|KB|KiB|MB|MiB|GB|GiB)/i);
@@ -459,108 +539,249 @@
     const mult = unit[0] === "g" ? 1e9 : unit[0] === "m" ? 1e6 : unit[0] === "k" ? 1e3 : 1;
     return Math.round(n * mult);
   }
-  function sanitizeFilename(name) {
+
+  function safeFilename(name) {
     return String(name || "video")
       .replace(/[<>:"\/\\|?*\x00-\x1f]/g, "_")
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 120) || "video";
   }
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, (c) => (
-      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
-    ));
-  }
-  function extractVideoId(input) {
-    const raw = String(input || "").trim();
-    if (!raw) return null;
-    if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
-    const m = raw.match(
-      /(?:youtu\.be\/|youtube\.com\/(?:watch\?[^#]*\bv=|embed\/|v\/|shorts\/|live\/|.*[?&]v=))([A-Za-z0-9_-]{11})/
-    );
-    return m ? m[1] : null;
-  }
-  function hostOf(url) {
-    try { return new URL(url).hostname; } catch (e) { return ""; }
-  }
-  function normalizeBase(base) {
-    let b = String(base || "").trim();
-    if (!b) return "";
-    if (!/^https?:\/\//i.test(b)) b = "https://" + b;
-    return b.replace(/\/+$/, "");
+
+  function normBase(b) {
+    let s = String(b || "").trim();
+    if (!s) return "";
+    if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+    return s.replace(/\/+$/, "");
   }
 
-  /* ------------------------------------------------------------------ *
-   *  Single-endpoint fetch (no mirror list, no silent failover)
-   * ------------------------------------------------------------------ */
-  function fetchJson(url, timeout) {
+  function hostOf(u) {
+    try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; }
+  }
+
+  function errName(e) {
+    return (e && e.name) || "";
+  }
+
+  function looksLikeNetworkError(e) {
+    const msg = String((e && e.message) || e || "");
+    return (e instanceof TypeError) ||
+           /failed to fetch|networkerror|load failed|network request failed/i.test(msg) ||
+           errName(e) === "NetworkError";
+  }
+
+  /* ================================================================== *
+   *  1. Config
+   * ================================================================== */
+  const CFG_KEY = "ytc:cfg:v2";
+  const DEFAULT_CFG = {
+    piped:     "https://pipedapi.kavin.rocks",
+    invidious: "",
+    cobalt:    "https://api.cobalt.tools",
+  };
+  const cfg = Object.assign({}, DEFAULT_CFG);
+
+  function loadCfg() {
+    try {
+      const raw = localStorage.getItem(CFG_KEY);
+      if (!raw) return;
+      const o = JSON.parse(raw);
+      if (!o || typeof o !== "object") return;
+      ["piped", "invidious", "cobalt"].forEach((k) => {
+        if (typeof o[k] === "string") cfg[k] = o[k];
+      });
+    } catch (e) { /* ignore */ }
+  }
+  function saveCfg() {
+    try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) { /* ignore */ }
+    flashSaved();
+  }
+  let savedTimer = null;
+  function flashSaved() {
+    const el = $("savedFlag");
+    if (!el) return;
+    el.classList.add("show");
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(() => el.classList.remove("show"), 1400);
+  }
+
+  /* ================================================================== *
+   *  2. DOM
+   * ================================================================== */
+  const ui = {
+    tabs:            $all(".tab"),
+    panelDownload:   $("panel-download"),
+    panelSearch:     $("panel-search"),
+
+    url:             $("url"),
+    pasteBtn:        $("pasteBtn"),
+    clearBtn:        $("clearBtn"),
+    platBadge:       $("platBadge"),
+    fetchBtn:        $("fetchBtn"),
+    err:             $("err"),
+
+    settings:        $("settingsPanel"),
+    setPiped:        $("setPiped"),
+    setInvidious:    $("setInvidious"),
+    setCobalt:       $("setCobalt"),
+    resetCfgBtn:     $("resetCfgBtn"),
+
+    infoCard:        $("infoCard"),
+    thumb:           $("thumb"),
+    title:           $("title"),
+    meta:            $("meta"),
+    modeBtns:        $all(".mode"),
+
+    directFormats:   $("directFormats"),
+    chips:           $("chips"),
+
+    convertFormats:  $("convertFormats"),
+    videoOpts:       $("videoOpts"),
+    audioOpts:       $("audioOpts"),
+    vQuality:        $("vQuality"),
+    aFormat:         $("aFormat"),
+    aBitrate:        $("aBitrate"),
+
+    dlBtn:           $("dlBtn"),
+    cancelBtn:       $("cancelBtn"),
+    ytdlnisBtn:      $("ytdlnisBtn"),
+    copyBtn:         $("copyBtn"),
+    openSrcBtn:      $("openSrcBtn"),
+    pickerRow:       $("pickerRow"),
+
+    barWrap:         $("barWrap"),
+    bar:             $("bar"),
+    pct:             $("pct"),
+    speed:           $("speed"),
+    status:          $("status"),
+    fileRow:         $("fileRow"),
+    saveLink:        $("saveLink"),
+
+    q:               $("q"),
+    searchBtn:       $("searchBtn"),
+    searchBitrate:   $("searchBitrate"),
+    searchErr:       $("searchErr"),
+    searchResultsCard: $("searchResultsCard"),
+    searchList:      $("searchList"),
+  };
+
+  /* ================================================================== *
+   *  3. State
+   * ================================================================== */
+  const state = {
+    url:        "",
+    platform:   null,          // { id, name }
+    backend:    null,          // 'piped' | 'invidious' | 'cobalt'
+    base:       "",
+    info:       null,
+    streams:    [],            // direct streams
+    filtered:   [],
+    selected:   0,
+    mode:       "video",       // 'video' | 'audio'
+    busy:       false,
+    controller: null,
+    blobUrl:    null,
+    pendingAudio: false,       // auto-download after search
+  };
+
+  const VIDEO_QUALITIES = [
+    { v: "max",  l: "Best available (up to 4K)" },
+    { v: "2160", l: "2160p — 4K" },
+    { v: "1440", l: "1440p — 2K" },
+    { v: "1080", l: "1080p — Full HD" },
+    { v: "720",  l: "720p — HD" },
+    { v: "480",  l: "480p" },
+    { v: "360",  l: "360p" },
+  ];
+  const AUDIO_FORMATS = [
+    { v: "mp3",  l: "MP3" },
+    { v: "opus", l: "Opus" },
+    { v: "ogg",  l: "OGG" },
+    { v: "wav",  l: "WAV" },
+  ];
+  const AUDIO_BITRATES = ["320", "256", "192", "128", "64"];
+
+  /* ================================================================== *
+   *  4. Platform detection
+   * ================================================================== */
+  const PLATFORMS = [
+    { id: "youtube",     name: "YouTube",     re: /(?:^|\/\/)(?:www\.|m\.|music\.)?(?:youtube\.com|youtu\.be)\//i },
+    { id: "facebook",    name: "Facebook",    re: /(?:^|\/\/)(?:www\.|m\.|web\.)?(?:facebook\.com|fb\.watch)\//i },
+    { id: "tiktok",      name: "TikTok",      re: /(?:^|\/\/)(?:www\.)?tiktok\.com\//i },
+    { id: "instagram",   name: "Instagram",   re: /(?:^|\/\/)(?:www\.)?instagram\.com\//i },
+    { id: "dailymotion", name: "Dailymotion", re: /(?:^|\/\/)(?:www\.)?(?:dailymotion\.com|dai\.ly)\//i },
+    { id: "youku",       name: "Youku",       re: /(?:^|\/\/)(?:v\.)?youku\.com\//i },
+    { id: "twitter",     name: "X / Twitter", re: /(?:^|\/\/)(?:www\.)?(?:twitter\.com|x\.com)\//i },
+    { id: "vimeo",       name: "Vimeo",       re: /(?:^|\/\/)(?:www\.)?vimeo\.com\//i },
+    { id: "reddit",      name: "Reddit",      re: /(?:^|\/\/)(?:www\.)?reddit\.com\//i },
+    { id: "soundcloud",  name: "SoundCloud",  re: /(?:^|\/\/)(?:www\.)?soundcloud\.com\//i },
+    { id: "bilibili",    name: "Bilibili",    re: /(?:^|\/\/)(?:www\.)?(?:bilibili\.com|b23\.tv)\//i },
+  ];
+
+  function detectPlatform(u) {
+    const s = String(u || "");
+    for (const p of PLATFORMS) {
+      if (p.re.test(s)) return { id: p.id, name: p.name };
+    }
+    return { id: "other", name: hostOf(s) || "Link" };
+  }
+
+  const VIDEO_ID_RE =
+    /(?:youtu\.be\/|youtube\.com\/(?:watch\?[^#]*\bv=|embed\/|v\/|shorts\/|live\/|.*[?&]v=))([A-Za-z0-9_-]{11})/;
+
+  function extractVideoId(u) {
+    const raw = String(u || "").trim();
+    if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
+    const m = raw.match(VIDEO_ID_RE);
+    return m ? m[1] : null;
+  }
+
+  function youtubeThumb(id, quality) {
+    return "https://i.ytimg.com/vi/" + id + "/" + (quality || "hqdefault") + ".jpg";
+  }
+
+  /* ================================================================== *
+   *  5. HTTP helpers
+   * ================================================================== */
+  function fetchJson(url, timeoutMs) {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeout || 12000);
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs || 12000);
     return fetch(url, {
       signal: ctrl.signal,
       credentials: "omit",
       mode: "cors",
       referrerPolicy: "no-referrer",
-      headers: { "Accept": "application/json" },
+      headers: { Accept: "application/json" },
     })
       .then((res) => {
-        if (!res.ok) throw new Error("HTTP " + res.status + " " + (res.statusText || ""));
+        if (!res.ok) throw new Error("HTTP " + res.status + (res.statusText ? " " + res.statusText : ""));
         return res.json();
       })
       .finally(() => clearTimeout(timer));
   }
 
-  function apiUrlFor(videoId) {
-    const base = normalizeBase(cfg.base);
-    if (cfg.type === "piped") return base + "/streams/" + videoId;
-    // ?local=true makes Invidious rewrite stream URLs to its own origin,
-    // which is what makes browser-side fetch() work (CORS).
-    return base + "/api/v1/videos/" + videoId + "?local=true";
+  function networkHint(service, base) {
+    return (
+      "<strong>Failed to fetch.</strong> The browser could not reach " +
+      (base ? "<code>" + esc(base) + "</code>" : "the " + service + " instance") + "." +
+      "<br>• The instance may be offline, rate‑limited or blocking your region." +
+      "<br>• It must send <code>Access-Control-Allow-Origin</code> (CORS) or the browser discards the response." +
+      "<br>• An <code>http://</code> URL on an <code>https://</code> page is blocked as mixed content." +
+      "<br><br>Open <strong>API instances &amp; settings</strong> and enter a working " +
+      service + " instance, or self‑host one."
+    );
   }
 
-  function explainFetchError(e, phase) {
-    const name = e && e.name;
-    const msg  = (e && e.message) || String(e);
-
-    if (name === "AbortError") {
-      return "The API request timed out. The instance is slow or unreachable — " +
-             "try another instance in <strong>API instance</strong> settings.";
-    }
-    if (e instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(msg)) {
-      return (
-        "<strong>Failed to fetch.</strong> The browser could not talk to " +
-        "<code>" + escapeHtml(normalizeBase(cfg.base) || "(no instance set)") + "</code>." +
-        "<br>Common causes:" +
-        "<br>• The instance is offline or blocking requests." +
-        "<br>• It doesn't send <code>Access-Control-Allow-Origin</code> (CORS), so the browser blocks the response." +
-        "<br>• Mixed content (an <code>http://</code> URL on an <code>https://</code> page)." +
-        "<br><br>Set a working CORS-enabled " +
-        (cfg.type === "piped" ? "Piped" : "Invidious") +
-        " instance under <strong>API instance</strong>, or use the ytdlnis app."
-      );
-    }
-    if (/^HTTP (4\d\d|5\d\d)/.test(msg)) {
-      return (
-        "<strong>" + escapeHtml(msg) + "</strong> — the instance rejected the request. " +
-        (cfg.type === "piped"
-          ? "Piped instances often rate-limit or return 502 when overloaded. "
-          : "Invidious instances often return 500 when their session expires. ") +
-        "Try again or pick another instance under <strong>API instance</strong>."
-      );
-    }
-    return escapeHtml(msg || "Unknown error while fetching.");
-  }
-
-  /* ------------------------------------------------------------------ *
-   *  Format parsers
-   * ------------------------------------------------------------------ */
+  /* ================================================================== *
+   *  6. YouTube resolvers (Piped → Invidious)
+   * ================================================================== */
   function pickQualityLabel(q) {
     if (!q) return "";
     const s = String(q).toLowerCase();
     const ladder = ["4320", "2160", "1440", "1080", "720", "480", "360", "240", "144"];
     for (const n of ladder) if (s.indexOf(n) >= 0) return n + "p";
     if (s === "highres") return "Highres";
-    return q;
+    return String(q);
   }
 
   function parsePiped(data) {
@@ -576,9 +797,9 @@
       seen.add(key);
       out.push({
         kind: "video",
-        label: pickQualityLabel(s.quality) + " MP4",
+        label: pickQualityLabel(s.quality) + " · MP4",
         sublabel: (s.codec || "H.264") + (s.fps ? " · " + s.fps + "fps" : ""),
-        mimeType: s.mimeType || "video/mp4",
+        mime: s.mimeType || "video/mp4",
         ext: "mp4",
         url: url,
         size: parseSize(s.contentLength || s.size),
@@ -596,7 +817,7 @@
         kind: "audio",
         label: "Audio " + (s.quality || ""),
         sublabel: isM4a ? "M4A" : "Opus / WebM",
-        mimeType: isM4a ? "audio/mp4" : "audio/webm",
+        mime: isM4a ? "audio/mp4" : "audio/webm",
         ext: isM4a ? "m4a" : "webm",
         url: url,
         size: parseSize(s.contentLength || s.size),
@@ -617,9 +838,9 @@
       seen.add(key);
       out.push({
         kind: "video",
-        label: pickQualityLabel(s.qualityLabel) + " MP4",
+        label: pickQualityLabel(s.qualityLabel) + " · MP4",
         sublabel: s.resolution || "Video",
-        mimeType: "video/mp4",
+        mime: "video/mp4",
         ext: "mp4",
         url: s.url,
         size: parseSize(s.clen || s.contentLength || s.size),
@@ -638,7 +859,7 @@
         kind: "audio",
         label: "Audio " + (bps ? Math.round(bps / 1000) + " kbps" : ""),
         sublabel: isM4a ? "M4A" : "Opus / WebM",
-        mimeType: isM4a ? "audio/mp4" : "audio/webm",
+        mime: isM4a ? "audio/mp4" : "audio/webm",
         ext: isM4a ? "m4a" : "webm",
         url: s.url,
         size: parseSize(s.clen || s.contentLength || s.size),
@@ -648,118 +869,416 @@
     return out;
   }
 
-  /* ------------------------------------------------------------------ *
-   *  Fetch video info
-   * ------------------------------------------------------------------ */
-  function doFetch() {
+  function sortStreams(list) {
+    const order = {
+      "4320p": 9, "2160p": 8, "1440p": 7, "1080p": 6,
+      "720p": 5, "480p": 4, "360p": 3, "240p": 2, "144p": 1,
+    };
+    return list.slice().sort((a, b) => {
+      if (a.kind !== b.kind) return a.kind === "video" ? -1 : 1;
+      if (a.kind === "video") {
+        const qa = order[String(a.label).split(" ")[0]] || 0;
+        const qb = order[String(b.label).split(" ")[0]] || 0;
+        return qb - qa;
+      }
+      return (b.size || 0) - (a.size || 0);
+    });
+  }
+
+  async function resolveYouTube(videoId) {
+    const targets = [];
+    const pipedBase = normBase(cfg.piped);
+    const invBase   = normBase(cfg.invidious);
+    if (pipedBase) targets.push({ type: "piped", base: pipedBase });
+    if (invBase)   targets.push({ type: "invidious", base: invBase });
+
+    if (!targets.length) {
+      const e = new Error("NO_YOUTUBE_API");
+      e.code = "NO_YOUTUBE_API";
+      throw e;
+    }
+
+    const failures = [];
+
+    for (const t of targets) {
+      try {
+        const url = t.type === "piped"
+          ? t.base + "/streams/" + videoId
+          : t.base + "/api/v1/videos/" + videoId + "?local=true";
+
+        const data = await fetchJson(url, 14000);
+        if (!data || typeof data !== "object") throw new Error("Unexpected response");
+        if (data.error) throw new Error(String(data.error));
+
+        const streams = sortStreams(t.type === "piped" ? parsePiped(data) : parseInvidious(data));
+        if (!streams.length) throw new Error("No downloadable streams returned");
+
+        return { backend: t.type, base: t.base, data: data, streams: streams };
+      } catch (e) {
+        failures.push({
+          type: t.type,
+          base: t.base,
+          network: looksLikeNetworkError(e),
+          message: (e && e.message) || String(e),
+        });
+      }
+    }
+
+    const err = new Error("ALL_YOUTUBE_FAILED");
+    err.code = "ALL_YOUTUBE_FAILED";
+    err.failures = failures;
+    throw err;
+  }
+
+  /* ================================================================== *
+   *  7. Cobalt (multi-platform converter)
+   * ================================================================== */
+  const COBALT_ERRORS = {
+    "error.api.link.invalid":            "That link is not valid for this Cobalt instance.",
+    "error.api.link.unsupported":        "This service is not supported by the Cobalt instance.",
+    "error.api.link.too_long":           "The link is too long for this instance.",
+    "error.api.content.video.unavailable": "The video is unavailable — private, removed or region‑locked.",
+    "error.api.content.video.live":      "Live streams cannot be converted.",
+    "error.api.content.video.age":       "The video is age‑restricted and cannot be fetched.",
+    "error.api.content.post.unavailable": "The post is unavailable or private.",
+    "error.api.content.short.doesnt_exist": "That short does not exist.",
+    "error.api.fetch.empty":             "The instance could not fetch any media for that link.",
+    "error.api.fetch.critical":          "The source site returned a critical error.",
+    "error.api.fetch.rate":              "The instance is rate‑limited. Wait a moment and retry.",
+    "error.api.rate_exceeded":           "Rate limit reached on this instance. Retry later.",
+    "error.api.auth.jwt.missing":        "This Cobalt instance requires an API key. Set your own instance in Settings.",
+    "error.api.auth.jwt.invalid":        "This Cobalt instance rejected the request (invalid API key).",
+    "error.api.turnstile.missing":       "This instance requires a Turnstile token. Use a different instance.",
+  };
+
+  function cobaltErrorText(code) {
+    if (!code) return "The Cobalt instance returned an unknown error.";
+    return COBALT_ERRORS[code] || ("Cobalt error: " + code);
+  }
+
+  async function cobaltConvert(url, mode, opts) {
+    const base = normBase(cfg.cobalt);
+    if (!base) {
+      const e = new Error("NO_COBALT");
+      e.code = "NO_COBALT";
+      throw e;
+    }
+
+    const body = {
+      url: url,
+      downloadMode: mode === "audio" ? "audio" : "auto",
+      filenameStyle: "basic",
+      disableMetadata: false,
+    };
+
+    if (mode === "audio") {
+      body.audioFormat = opts.audioFormat || "mp3";
+      body.audioBitrate = String(opts.audioBitrate || "320");
+    } else {
+      body.videoQuality = opts.videoQuality || "max";
+      body.youtubeVideoCodec = "h264";
+    }
+
+    const endpoints = [base, base + "/api/json"];
+
+    let lastErr = null;
+    for (const endpoint of endpoints) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 45000);
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          signal: ctrl.signal,
+          credentials: "omit",
+          mode: "cors",
+          referrerPolicy: "no-referrer",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (res.status === 404 || res.status === 405 || res.status === 501) {
+          lastErr = new Error("HTTP " + res.status + " from " + endpoint);
+          continue;
+        }
+
+        let data = null;
+        try { data = await res.json(); } catch (e) { data = null; }
+
+        if (!res.ok) {
+          const code = data && data.error && (data.error.code || data.error);
+          throw new Error(typeof code === "string" ? cobaltErrorText(code) : "HTTP " + res.status);
+        }
+        if (!data || typeof data !== "object") throw new Error("Empty response from Cobalt.");
+
+        if (data.status === "error") {
+          const code = (data.error && (data.error.code || data.error)) || "unknown";
+          throw new Error(cobaltErrorText(typeof code === "string" ? code : "unknown"));
+        }
+
+        if (data.status === "redirect" || data.status === "tunnel") {
+          if (!data.url) throw new Error("Cobalt returned no download URL.");
+          return { kind: "single", url: data.url, filename: data.filename || "" };
+        }
+
+        if (data.status === "picker") {
+          const items = (data.picker || []).map((p) => ({
+            url: p.url,
+            thumb: p.thumb || "",
+            type: p.type || "video",
+          })).filter((p) => p.url);
+          if (!items.length) throw new Error("Cobalt returned an empty picker.");
+          return { kind: "picker", items: items, audio: (data.audio || []).map((a) => a.url) };
+        }
+
+        if (data.status === "local-processing") {
+          throw new Error(
+            "This Cobalt instance wants to process the file locally, which is not supported here. " +
+            "Use another instance or the ytdlnis app."
+          );
+        }
+
+        throw new Error("Unexpected Cobalt status: " + String(data.status));
+      } catch (e) {
+        lastErr = e;
+        if (errName(e) === "AbortError") {
+          lastErr = new Error("The conversion request timed out after 45 s.");
+        }
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    if (lastErr && looksLikeNetworkError(lastErr)) {
+      const e = new Error("COBALT_NETWORK");
+      e.code = "COBALT_NETWORK";
+      e.base = base;
+      throw e;
+    }
+    throw lastErr || new Error("Cobalt conversion failed.");
+  }
+
+  /* ================================================================== *
+   *  8. Status / error UI
+   * ================================================================== */
+  function setStatus(text, cls) {
+    ui.status.textContent = text || "";
+    ui.status.className = "status" + (cls ? " " + cls : "");
+  }
+  function showErrHtml(html) {
+    ui.err.innerHTML = html;
+    ui.err.classList.remove("hidden");
+  }
+  function clearErr() {
+    ui.err.textContent = "";
+    ui.err.classList.add("hidden");
+  }
+  function showSearchErr(text) {
+    ui.searchErr.textContent = text;
+    ui.searchErr.classList.remove("hidden");
+  }
+  function clearSearchErr() {
+    ui.searchErr.textContent = "";
+    ui.searchErr.classList.add("hidden");
+  }
+
+  function hideFileRow() {
+    ui.fileRow.classList.add("hidden");
+    ui.saveLink.href = "#";
+    ui.saveLink.textContent = "Save file again";
+  }
+  function hidePicker() {
+    ui.pickerRow.innerHTML = "";
+    ui.pickerRow.classList.add("hidden");
+  }
+
+  /* ================================================================== *
+   *  9. Platform badge
+   * ================================================================== */
+  function updateBadge() {
+    const raw = ui.url.value.trim();
+    if (!raw) {
+      ui.platBadge.className = "badge";
+      ui.platBadge.textContent = "Paste a link";
+      return;
+    }
+    const plat = detectPlatform(raw);
+    ui.platBadge.textContent = plat.name;
+    ui.platBadge.className = "badge " + (plat.id === "youtube" ? "yt" : "ok");
+  }
+
+  /* ================================================================== *
+   * 10. Fetch flow
+   * ================================================================== */
+  async function doFetch() {
     if (state.busy) return;
+
     clearErr();
     hideFileRow();
+    hidePicker();
 
     const raw = ui.url.value.trim();
-    if (!raw) { showErr("Paste a YouTube URL first."); return; }
+    if (!raw) { showErrHtml("Paste a video link first."); return; }
 
-    const videoId = extractVideoId(raw);
-    if (!videoId) { showErr("Could not find a YouTube video ID in that URL."); return; }
-
-    if (!normalizeBase(cfg.base)) {
-      ui.settings.open = true;
-      showErr(
-        "No API instance configured. Open <strong>API instance</strong> below, " +
-        "pick Piped or Invidious, and enter a CORS-enabled base URL."
-      );
-      ui.apiBase.focus();
+    let parsed;
+    try { parsed = new URL(raw); } catch (e) {
+      showErrHtml("That doesn’t look like a valid URL. Include <code>https://</code>.");
+      return;
+    }
+    if (!/^https?:$/.test(parsed.protocol)) {
+      showErrHtml("Only <code>http</code> and <code>https</code> links are supported.");
       return;
     }
 
-    cfg.base = normalizeBase(cfg.base);
-    ui.apiBase.value = cfg.base;
-    saveCfg();
+    const platform = detectPlatform(raw);
+    state.platform = platform;
+    state.url = raw;
+
+    const ytId = platform.id === "youtube" ? extractVideoId(raw) : null;
+    if (platform.id === "youtube" && !ytId) {
+      showErrHtml("Could not find a YouTube video ID in that URL.");
+      return;
+    }
 
     state.busy = true;
     ui.fetchBtn.disabled = true;
     ui.fetchBtn.textContent = "Fetching…";
     ui.infoCard.classList.add("hidden");
 
-    const endpoint = apiUrlFor(videoId);
+    const hasYT = platform.id === "youtube" && (normBase(cfg.piped) || normBase(cfg.invidious));
 
-    fetchJson(endpoint, 12000)
-      .then((data) => {
-        if (!data || typeof data !== "object") {
-          throw new Error("The instance returned an unexpected response.");
-        }
-        if (data.error) {
-          throw new Error(String(data.error));
-        }
-
-        const formats =
-          cfg.type === "piped" ? parsePiped(data) : parseInvidious(data);
-
-        if (!formats.length) {
-          throw new Error(
-            "The instance returned no downloadable formats. " +
-            (cfg.type === "piped"
-              ? "This Piped server may be rate-limited or missing proxy URLs."
-              : "This Invidious server may not support local stream rewrites.")
-          );
-        }
-
-        const order = {
-          "4320p": 9, "2160p": 8, "1440p": 7, "1080p": 6,
-          "720p": 5, "480p": 4, "360p": 3, "240p": 2, "144p": 1,
-        };
-        formats.sort((a, b) => {
-          if (a.kind !== b.kind) return a.kind === "video" ? -1 : 1;
-          if (a.kind === "video") {
-            const qa = order[a.label.split(" ")[0]] || 0;
-            const qb = order[b.label.split(" ")[0]] || 0;
-            return qb - qa;
+    try {
+      if (hasYT) {
+        try {
+          const r = await resolveYouTube(ytId);
+          state.backend = r.backend;
+          state.base = r.base;
+          state.info = r.data;
+          state.streams = r.streams;
+          state.filtered = [];
+          state.selected = 0;
+          renderDirect(r.data, ytId);
+        } catch (e) {
+          if (normBase(cfg.cobalt)) {
+            state.backend = "cobalt";
+            state.base = normBase(cfg.cobalt);
+            state.info = { title: "", uploader: "", duration: 0 };
+            state.streams = [];
+            renderConvert({ title: "", uploader: "", duration: 0 }, ytId);
+            setStatus("YouTube APIs unavailable — using Cobalt conversion instead.", "warn");
+          } else {
+            throw e;
           }
-          return (b.size || 0) - (a.size || 0);
-        });
+        }
+      } else {
+        if (!normBase(cfg.cobalt)) {
+          const e = new Error("NO_COBALT");
+          e.code = "NO_COBALT";
+          throw e;
+        }
+        state.backend = "cobalt";
+        state.base = normBase(cfg.cobalt);
+        state.info = { title: "", uploader: "", duration: 0 };
+        state.streams = [];
+        renderConvert({ title: "", uploader: "", duration: 0 }, ytId);
+      }
 
-        state.videoId    = videoId;
-        state.info       = data;
-        state.formats    = formats;
-        state.selected   = 0;
-        state.source     = cfg.type;
-        state.sourceHost = hostOf(cfg.base);
+      ui.infoCard.classList.remove("hidden");
+      ui.infoCard.scrollIntoView({ behavior: "smooth", block: "start" });
 
-        renderInfo(data, formats);
-        ui.infoCard.classList.remove("hidden");
-        ui.infoCard.scrollIntoView({ behavior: "smooth", block: "start" });
-      })
-      .catch((e) => {
-        console.error(e);
-        showErr(explainFetchError(e, "info"));
-        if (e instanceof TypeError) ui.settings.open = true;
-      })
-      .finally(() => {
-        state.busy = false;
-        ui.fetchBtn.disabled = false;
-        ui.fetchBtn.textContent = "Fetch Video";
-      });
+      /* auto-download request coming from MP3 search */
+      if (state.pendingAudio) {
+        state.pendingAudio = false;
+        setMode("audio");
+        if (state.backend !== "cobalt") {
+          const audio = state.filtered.slice();
+          if (audio.length) {
+            state.selected = 0;
+            syncChips();
+            setTimeout(() => { doDownload(); }, 120);
+          } else {
+            setStatus("No audio‑only stream available — try Cobalt or another format.", "warn");
+          }
+        } else {
+          setTimeout(() => { doDownload(); }, 120);
+        }
+      }
+    } catch (e) {
+      handleFetchError(e);
+    } finally {
+      state.busy = false;
+      ui.fetchBtn.disabled = false;
+      ui.fetchBtn.textContent = "Fetch Video";
+    }
   }
 
-  /* ------------------------------------------------------------------ *
-   *  Render video info
-   * ------------------------------------------------------------------ */
-  function renderInfo(data, formats) {
-    ui.title.textContent = data.title || "Untitled";
+  function handleFetchError(e) {
+    const code = e && e.code;
+
+    if (code === "NO_YOUTUBE_API" || code === "NO_COBALT") {
+      ui.settings.open = true;
+      showErrHtml(
+        (code === "NO_YOUTUBE_API"
+          ? "No YouTube API configured."
+          : "No Cobalt instance configured.") +
+        " Open <strong>API instances &amp; settings</strong> and enter at least one base URL."
+      );
+      return;
+    }
+
+    if (code === "COBALT_NETWORK") {
+      ui.settings.open = true;
+      showErrHtml(networkHint("Cobalt", e.base));
+      return;
+    }
+
+    if (code === "ALL_YOUTUBE_FAILED") {
+      ui.settings.open = true;
+      const rows = (e.failures || []).map((f) =>
+        "<li><code>" + esc(f.base || f.type) + "</code> — " + esc(f.message) + "</li>"
+      ).join("");
+      showErrHtml(
+        "<strong>Every configured YouTube API failed.</strong>" +
+        (rows ? "<ul style='margin:8px 0 0 0;padding-left:18px'>" + rows + "</ul>" : "") +
+        "<br>Check the instance URLs, or add a <strong>Cobalt</strong> instance for automatic fallback."
+      );
+      return;
+    }
+
+    if (looksLikeNetworkError(e)) {
+      ui.settings.open = true;
+      showErrHtml(networkHint("API", ""));
+      return;
+    }
+
+    showErrHtml(esc((e && e.message) || "Could not fetch this link."));
+  }
+
+  /* ================================================================== *
+   * 11. Render — direct streams (Piped / Invidious)
+   * ================================================================== */
+  function renderDirect(data, videoId) {
+    state.backend = state.backend === "invidious" ? "invidious" : "piped";
+
+    const title = data.title || "Untitled";
+    const uploader = data.uploader || data.author || "";
+    const duration = data.duration || data.lengthSeconds || 0;
+
+    ui.title.textContent = title;
 
     const bits = [];
-    const uploader = data.uploader || data.author || "";
     if (uploader) bits.push(uploader);
-    const duration = data.duration || data.lengthSeconds || 0;
     if (duration) bits.push(fmtDur(duration));
-    bits.push(state.source === "piped" ? "Piped" : "Invidious");
-    if (state.sourceHost) bits.push(state.sourceHost);
+    bits.push(state.backend === "piped" ? "Piped" : "Invidious");
+    bits.push(hostOf(state.base));
     ui.meta.textContent = bits.join(" · ");
 
     const thumb =
       data.thumbnailUrl ||
       (data.videoThumbnails && data.videoThumbnails[0] && data.videoThumbnails[0].url) ||
-      (state.videoId ? "https://i.ytimg.com/vi/" + state.videoId + "/hqdefault.jpg" : "");
+      (videoId ? youtubeThumb(videoId) : "");
 
     if (thumb) {
       ui.thumb.src = thumb;
@@ -769,11 +1288,44 @@
       ui.thumb.style.display = "none";
     }
 
+    ui.directFormats.classList.remove("hidden");
+    ui.convertFormats.classList.add("hidden");
+
+    setMode(state.mode, true);
+
+    ui.barWrap.classList.add("hidden");
+    hideFileRow();
+    hidePicker();
+    setStatus("", "");
+    ui.dlBtn.disabled = false;
+    ui.dlBtn.textContent = "Download";
+    ui.dlBtn.classList.remove("green");
+    ui.cancelBtn.classList.add("hidden");
+    state.controller = null;
+
+    if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
+  }
+
+  function renderChips() {
     ui.chips.innerHTML = "";
-    formats.forEach((f, i) => {
+
+    if (!state.filtered.length) {
+      const p = document.createElement("p");
+      p.className = "muted";
+      p.textContent = state.mode === "video"
+        ? "No muxed video stream from this instance. Switch to Audio, or add a Cobalt instance for merged HD."
+        : "No audio‑only stream from this instance. Try another format or instance.";
+      ui.chips.appendChild(p);
+      ui.dlBtn.disabled = true;
+      return;
+    }
+
+    ui.dlBtn.disabled = false;
+
+    state.filtered.forEach((f, i) => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "chip" + (i === 0 ? " active" : "");
+      btn.className = "chip" + (i === state.selected ? " active" : "");
       btn.appendChild(document.createTextNode(f.label));
 
       const small = document.createElement("small");
@@ -784,32 +1336,288 @@
 
       btn.addEventListener("click", () => {
         state.selected = i;
-        Array.prototype.forEach.call(ui.chips.children, (c, j) => {
-          c.classList.toggle("active", i === j);
-        });
+        syncChips();
         ui.dlBtn.textContent = "Download";
       });
 
       ui.chips.appendChild(btn);
     });
+  }
+
+  function syncChips() {
+    Array.prototype.forEach.call(ui.chips.children, (c, j) => {
+      if (c.classList) c.classList.toggle("active", j === state.selected);
+    });
+  }
+
+  /* ================================================================== *
+   * 12. Render — Cobalt conversion options
+   * ================================================================== */
+  function renderConvert(info, videoId) {
+    const title = info.title || "Ready to convert";
+    ui.title.textContent = title;
+
+    const bits = [];
+    if (info.uploader) bits.push(info.uploader);
+    if (info.duration) bits.push(fmtDur(info.duration));
+    bits.push("Cobalt");
+    if (hostOf(state.base)) bits.push(hostOf(state.base));
+    bits.push(state.platform ? state.platform.name : "");
+    ui.meta.textContent = bits.filter(Boolean).join(" · ");
+
+    if (videoId) {
+      ui.thumb.src = youtubeThumb(videoId);
+      ui.thumb.style.display = "";
+    } else {
+      ui.thumb.removeAttribute("src");
+      ui.thumb.style.display = "none";
+    }
+
+    ui.directFormats.classList.add("hidden");
+    ui.convertFormats.classList.remove("hidden");
+
+    fillSelect(ui.vQuality, VIDEO_QUALITIES.map((q) => ({ v: q.v, l: q.l })));
+    fillSelect(ui.aFormat, AUDIO_FORMATS);
+    fillSelect(ui.aBitrate, AUDIO_BITRATES.map((b) => ({ v: b, l: b + " kbps" })));
+
+    setMode(state.mode, true);
 
     ui.barWrap.classList.add("hidden");
     hideFileRow();
-    ui.status.textContent = "";
-    ui.status.className = "status";
+    hidePicker();
+    setStatus("", "");
     ui.dlBtn.disabled = false;
-    ui.dlBtn.textContent = "Download";
+    ui.dlBtn.textContent = "Convert & Download";
+    ui.dlBtn.classList.add("green");
     ui.cancelBtn.classList.add("hidden");
     state.controller = null;
-    if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
   }
 
-  /* ------------------------------------------------------------------ *
-   *  Progress helpers
-   * ------------------------------------------------------------------ */
-  function updateProgress(received, total, startTime) {
-    const elapsed = (Date.now() - startTime) / 1000;
+  function fillSelect(sel, items) {
+    sel.innerHTML = "";
+    items.forEach((it) => {
+      const o = document.createElement("option");
+      o.value = it.v;
+      o.textContent = it.l;
+      sel.appendChild(o);
+    });
+  }
+
+  /* ================================================================== *
+   * 13. Mode switching
+   * ================================================================== */
+  function setMode(mode, force) {
+    const next = mode === "audio" ? "audio" : "video";
+    if (!force && state.mode === next) return;
+    state.mode = next;
+
+    ui.modeBtns.forEach((b) => {
+      b.classList.toggle("active", b.dataset.mode === next);
+    });
+
+    if (state.backend === "cobalt") {
+      ui.videoOpts.classList.toggle("hidden", next !== "video");
+      ui.audioOpts.classList.toggle("hidden", next !== "audio");
+    } else {
+      state.filtered = state.streams.filter((s) => s.kind === next);
+      state.selected = 0;
+      renderChips();
+    }
+  }
+
+  /* ================================================================== *
+   * 14. Download — direct stream
+   * ================================================================== */
+  async function doDownload() {
+    if (state.controller) return;
+
+    if (state.backend === "cobalt") {
+      await convertAndDownload();
+      return;
+    }
+
+    const fmt = state.filtered[state.selected];
+    if (!fmt) {
+      setStatus("Pick a format first.", "warn");
+      return;
+    }
+
+    const filename = safeFilename((state.info && state.info.title) || "video") + "." + fmt.ext;
+    await downloadToFile(fmt.url, filename, fmt.mime);
+  }
+
+  /* ================================================================== *
+   * 15. Download — Cobalt conversion
+   * ================================================================== */
+  async function convertAndDownload() {
+    if (!state.url) return;
+
+    const mode = state.mode;
+    const opts = {
+      videoQuality: ui.vQuality.value || "max",
+      audioFormat: ui.aFormat.value || "mp3",
+      audioBitrate: ui.aBitrate.value || "320",
+    };
+
+    clearErr();
+    hideFileRow();
+    hidePicker();
+
+    ui.dlBtn.disabled = true;
+    ui.dlBtn.textContent = "Converting…";
+    ui.cancelBtn.classList.remove("hidden");
+    ui.barWrap.classList.add("hidden");
+    setStatus("Requesting conversion from Cobalt…", "");
+
+    const ctrl = new AbortController();
+    state.controller = ctrl;
+
+    try {
+      const result = await cobaltConvert(state.url, mode, opts);
+
+      if (result.kind === "picker") {
+        setStatus("The link contains multiple items — pick one to download.", "warn");
+        renderPicker(result);
+        ui.dlBtn.disabled = false;
+        ui.dlBtn.textContent = "Convert & Download";
+        ui.cancelBtn.classList.add("hidden");
+        state.controller = null;
+        return;
+      }
+
+      const fallbackName =
+        safeFilename((state.info && state.info.title) || hostOf(state.url) || "media") +
+        "." + (mode === "audio" ? (opts.audioFormat || "mp3") : "mp4");
+
+      const filename = result.filename ? safeFilename(result.filename) : fallbackName;
+      const mime = mode === "audio" ? "audio/" + (opts.audioFormat || "mpeg") : "video/mp4";
+
+      ui.cancelBtn.classList.add("hidden");
+      state.controller = null;
+
+      await downloadToFile(result.url, filename, mime);
+    } catch (e) {
+      console.error(e);
+      if (e && e.code === "COBALT_NETWORK") {
+        ui.settings.open = true;
+        showErrHtml(networkHint("Cobalt", e.base));
+      } else if (errName(e) === "AbortError") {
+        setStatus("Conversion cancelled.", "warn");
+      } else {
+        setStatus((e && e.message) || "Conversion failed.", "bad");
+      }
+      ui.dlBtn.disabled = false;
+      ui.dlBtn.textContent = "Convert & Download";
+      ui.cancelBtn.classList.add("hidden");
+      state.controller = null;
+    }
+  }
+
+  function renderPicker(result) {
+    hidePicker();
+    ui.pickerRow.classList.remove("hidden");
+
+    result.items.forEach((item, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ghost";
+      b.textContent = "Item " + (i + 1) + (item.type ? " · " + item.type : "");
+      b.addEventListener("click", () => {
+        hidePicker();
+        const name = safeFilename((state.info && state.info.title) || "media") + "-" + (i + 1) + ".mp4";
+        downloadToFile(item.url, name, "video/mp4");
+      });
+      ui.pickerRow.appendChild(b);
+    });
+  }
+
+  /* ================================================================== *
+   * 16. Streaming download with progress
+   * ================================================================== */
+  async function downloadToFile(url, filename, mime) {
+    if (state.controller) return;
+
+    hideFileRow();
+    if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
+
+    ui.barWrap.classList.remove("hidden");
+    ui.bar.style.width = "0%";
+    ui.pct.textContent = "0%";
+    ui.speed.textContent = "";
+    setStatus("Connecting to stream…", "");
+    ui.dlBtn.disabled = true;
+    ui.cancelBtn.classList.remove("hidden");
+
+    state.controller = new AbortController();
+    const signal = state.controller.signal;
+    const t0 = Date.now();
+
+    try {
+      const res = await fetch(url, {
+        signal: signal,
+        credentials: "omit",
+        mode: "cors",
+        referrerPolicy: "no-referrer",
+      });
+      if (!res.ok) throw new Error("Stream server returned HTTP " + res.status);
+
+      const total = Number(res.headers.get("content-length") || 0);
+      const type = res.headers.get("content-type") || mime || "application/octet-stream";
+
+      if (!res.body || !res.body.getReader) {
+        const blob = await res.blob();
+        finishDownload(blob, filename, t0);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const chunks = [];
+      let received = 0;
+      let last = 0;
+
+      for (;;) {
+        const step = await reader.read();
+        if (step.done) break;
+        chunks.push(step.value);
+        received += step.value.length;
+
+        const now = Date.now();
+        if (now - last > 200) {
+          last = now;
+          paintProgress(received, total, t0);
+        }
+      }
+
+      finishDownload(new Blob(chunks, { type: type }), filename, t0);
+    } catch (e) {
+      console.error(e);
+
+      if (errName(e) === "AbortError") {
+        setStatus("Download cancelled.", "warn");
+      } else if (looksLikeNetworkError(e)) {
+        setStatus(
+          "The stream host blocked the browser request (CORS) or the signed URL expired. " +
+          "A direct link is offered below — or use “Open in ytdlnis”.",
+          "bad"
+        );
+        offerDirectLink(url, filename, true);
+      } else {
+        setStatus("Download failed: " + ((e && e.message) || "unknown") + ".", "bad");
+        offerDirectLink(url, filename, false);
+      }
+
+      ui.barWrap.classList.add("hidden");
+      ui.dlBtn.disabled = false;
+      ui.dlBtn.textContent = state.backend === "cobalt" ? "Convert & Download" : "Retry download";
+      ui.cancelBtn.classList.add("hidden");
+      state.controller = null;
+    }
+  }
+
+  function paintProgress(received, total, t0) {
+    const elapsed = (Date.now() - t0) / 1000;
     const rate = elapsed > 0 ? received / elapsed : 0;
+
     if (total > 0) {
       const p = Math.min(100, (received / total) * 100);
       ui.bar.style.width = p + "%";
@@ -823,108 +1631,9 @@
     }
   }
 
-  function hideFileRow() {
-    ui.fileRow.classList.add("hidden");
-    ui.saveLink.href = "#";
-    ui.saveLink.textContent = "Save file again";
-  }
-
-  /* ------------------------------------------------------------------ *
-   *  Download with streaming + progress
-   * ------------------------------------------------------------------ */
-  async function doDownload() {
-    const fmt = state.formats[state.selected];
-    if (!state.info || !fmt) return;
-    if (state.controller) return; // already downloading
-
-    clearErr();
-    hideFileRow();
-    if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
-
-    ui.barWrap.classList.remove("hidden");
-    ui.bar.style.width = "0%";
-    ui.pct.textContent = "0%";
-    ui.speed.textContent = "";
-    ui.status.className = "status";
-    ui.status.textContent = "Connecting to stream…";
-    ui.dlBtn.disabled = true;
-    ui.dlBtn.textContent = "Downloading…";
-    ui.cancelBtn.classList.remove("hidden");
-
-    state.controller = new AbortController();
-    const signal = state.controller.signal;
-    const startTime = Date.now();
-    const filename = sanitizeFilename(state.info.title) + "." + fmt.ext;
-
-    try {
-      const res = await fetch(fmt.url, {
-        method: "GET",
-        signal,
-        credentials: "omit",
-        mode: "cors",
-        referrerPolicy: "no-referrer",
-      });
-      if (!res.ok) throw new Error("Stream server returned HTTP " + res.status);
-
-      const total = Number(res.headers.get("content-length") || fmt.size || 0);
-      const contentType = res.headers.get("content-type") || fmt.mimeType;
-
-      if (!res.body || !res.body.getReader) {
-        const blob = await res.blob();
-        complete(blob, filename, startTime);
-        return;
-      }
-
-      const reader = res.body.getReader();
-      const chunks = [];
-      let received = 0;
-      let lastTick = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        received += value.length;
-        const now = Date.now();
-        if (now - lastTick > 200) {
-          lastTick = now;
-          updateProgress(received, total, startTime);
-        }
-      }
-
-      const blob = new Blob(chunks, { type: contentType });
-      complete(blob, filename, startTime);
-    } catch (e) {
-      if (e && e.name === "AbortError") {
-        ui.status.className = "status warn";
-        ui.status.textContent = "Download cancelled.";
-      } else {
-        console.error(e);
-        const isCors = (e instanceof TypeError) ||
-                       /failed to fetch|networkerror|load failed/i.test((e && e.message) || "");
-
-        ui.status.className = "status bad";
-        ui.status.innerHTML = isCors
-          ? "Download blocked. The stream host refused the browser request " +
-            "(CORS) or the signed URL expired.<br>" +
-            "Try another format, re‑fetch the video, or use " +
-            "<strong>Open in ytdlnis</strong>."
-          : "Download failed: " + escapeHtml((e && e.message) || "unknown") +
-            ".<br>Try another format, re‑fetch the video, or use " +
-            "<strong>Open in ytdlnis</strong>.";
-
-        offerDirectLink(fmt.url, filename, isCors);
-      }
-      ui.barWrap.classList.add("hidden");
-      ui.dlBtn.disabled = false;
-      ui.dlBtn.textContent = "Retry download";
-      ui.cancelBtn.classList.add("hidden");
-      state.controller = null;
-    }
-  }
-
-  function complete(blob, filename, startTime) {
+  function finishDownload(blob, filename, t0) {
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
@@ -934,53 +1643,208 @@
 
     if (state.blobUrl) URL.revokeObjectURL(state.blobUrl);
     state.blobUrl = url;
+
     ui.saveLink.href = url;
     ui.saveLink.setAttribute("download", filename);
-    ui.saveLink.textContent = "Save file again";
+    ui.saveLink.textContent = "Save “" + filename + "” again";
     ui.fileRow.classList.remove("hidden");
 
     ui.bar.style.width = "100%";
     ui.pct.textContent = "100%";
-    const elapsed = (Date.now() - startTime) / 1000;
+    const elapsed = (Date.now() - t0) / 1000;
     const avg = elapsed > 0 ? blob.size / elapsed : 0;
     ui.speed.textContent = fmtBytes(blob.size) + " · avg " + fmtBytes(avg) + "/s";
-    ui.status.className = "status ok";
-    ui.status.textContent = "Download complete — check your browser's downloads folder.";
+
+    setStatus("Download complete — check your browser’s downloads folder.", "ok");
+
     ui.dlBtn.disabled = false;
-    ui.dlBtn.textContent = "Download again";
+    ui.dlBtn.textContent = state.backend === "cobalt" ? "Convert & Download" : "Download again";
     ui.cancelBtn.classList.add("hidden");
     state.controller = null;
   }
 
-  function offerDirectLink(url, filename, isCors) {
-    // Cross-origin `download` is ignored by browsers, so this may just navigate.
-    // It's still a useful last resort when fetch() is CORS-blocked.
+  function offerDirectLink(url, filename, corsBlocked) {
     ui.fileRow.classList.remove("hidden");
     ui.saveLink.href = url;
     ui.saveLink.setAttribute("download", filename);
-    ui.saveLink.textContent = isCors
+    ui.saveLink.textContent = corsBlocked
       ? "Open stream URL directly (may play instead of save)"
       : "Try direct link";
   }
 
-  /* ------------------------------------------------------------------ *
-   *  Share / handoff helpers
-   * ------------------------------------------------------------------ */
-  function currentVideoUrl() {
-    if (state.videoId) return "https://www.youtube.com/watch?v=" + state.videoId;
+  /* ================================================================== *
+   * 17. MP3 search
+   * ================================================================== */
+  async function doSearch() {
+    if (state.busy) return;
+
+    clearSearchErr();
+    const q = ui.q.value.trim();
+    if (!q) { showSearchErr("Type a song or artist name first."); return; }
+
+    const pipedBase = normBase(cfg.piped);
+    const invBase   = normBase(cfg.invidious);
+
+    if (!pipedBase && !invBase) {
+      ui.settings.open = true;
+      showSearchErr(
+        "Search needs a Piped or Invidious instance. Open “API instances & settings” " +
+        "in the Downloader tab and add one."
+      );
+      return;
+    }
+
+    state.busy = true;
+    ui.searchBtn.disabled = true;
+    ui.searchBtn.textContent = "Searching…";
+    ui.searchResultsCard.classList.add("hidden");
+
+    const queries = [];
+    if (pipedBase) queries.push({
+      type: "piped",
+      url: pipedBase + "/search?q=" + encodeURIComponent(q) + "&filter=music_songs",
+    });
+    if (invBase) queries.push({
+      type: "invidious",
+      url: invBase + "/api/v1/search?q=" + encodeURIComponent(q) + "&type=video",
+    });
+
+    const failures = [];
+
+    try {
+      for (const query of queries) {
+        try {
+          const data = await fetchJson(query.url, 14000);
+          const items = query.type === "piped" ? parsePipedSearch(data) : parseInvidiousSearch(data);
+          if (!items.length) throw new Error("No results");
+          renderSearchResults(items);
+          return;
+        } catch (e) {
+          failures.push({
+            base: hostOf(query.url),
+            network: looksLikeNetworkError(e),
+            message: (e && e.message) || String(e),
+          });
+        }
+      }
+
+      showSearchErr(
+        "No results. " +
+        failures.map((f) => f.base + " — " + f.message).join(" · ")
+      );
+    } finally {
+      state.busy = false;
+      ui.searchBtn.disabled = false;
+      ui.searchBtn.textContent = "Search";
+    }
+  }
+
+  function parsePipedSearch(data) {
+    const items = (data && data.items) || [];
+    return items
+      .filter((it) => it && it.type === "stream" && it.url)
+      .map((it) => {
+        const id = extractVideoId(it.url) || "";
+        return {
+          videoId: id,
+          title: it.title || "Untitled",
+          author: it.uploaderName || it.uploader || "",
+          duration: it.duration || 0,
+          thumb: it.thumbnail || (id ? youtubeThumb(id, "mqdefault") : ""),
+        };
+      })
+      .filter((it) => it.videoId);
+  }
+
+  function parseInvidiousSearch(data) {
+    const arr = Array.isArray(data) ? data : [];
+    return arr
+      .filter((it) => it && it.videoId)
+      .map((it) => ({
+        videoId: it.videoId,
+        title: it.title || "Untitled",
+        author: it.author || "",
+        duration: it.lengthSeconds || 0,
+        thumb:
+          (it.videoThumbnails && it.videoThumbnails[0] && it.videoThumbnails[0].url) ||
+          youtubeThumb(it.videoId, "mqdefault"),
+      }));
+  }
+
+  function renderSearchResults(items) {
+    ui.searchList.innerHTML = "";
+    ui.searchResultsCard.classList.remove("hidden");
+
+    const kbps = ui.searchBitrate.value;
+
+    items.forEach((it) => {
+      const row = document.createElement("div");
+      row.className = "item";
+
+      const img = document.createElement("img");
+      img.loading = "lazy";
+      img.referrerPolicy = "no-referrer";
+      img.alt = "";
+      img.src = it.thumb;
+      img.addEventListener("error", () => { img.style.visibility = "hidden"; });
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const b = document.createElement("b");
+      b.textContent = it.title;
+
+      const span = document.createElement("span");
+      span.textContent = [it.author, fmtDur(it.duration)].filter(Boolean).join(" · ");
+
+      meta.appendChild(b);
+      meta.appendChild(span);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ghost";
+      btn.textContent = "MP3";
+      btn.title = "Download as MP3 (~" + kbps + " kbps)";
+      btn.addEventListener("click", () => {
+        state.pendingAudio = true;
+        setTab("download");
+        ui.url.value = "https://www.youtube.com/watch?v=" + it.videoId;
+        updateBadge();
+        doFetch();
+      });
+
+      row.appendChild(img);
+      row.appendChild(meta);
+      row.appendChild(btn);
+      ui.searchList.appendChild(row);
+    });
+  }
+
+  /* ================================================================== *
+   * 18. Sharing / handoff
+   * ================================================================== */
+  function currentUrl() {
+    if (state.url) return state.url;
     return ui.url.value.trim();
   }
 
+  function copyText(text, okMsg) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => setStatus(okMsg, "ok"))
+        .catch(() => setStatus("Couldn’t copy automatically. Copy manually: " + text, "warn"));
+    } else {
+      setStatus("Clipboard unavailable. Copy manually: " + text, "warn");
+    }
+  }
+
   function openInYtdlnis() {
-    const target = currentVideoUrl();
-    if (!target) return;
+    const target = currentUrl();
+    if (!target) { setStatus("Paste a link first.", "warn"); return; }
 
     const isAndroid = /Android/i.test(navigator.userAgent);
     if (!isAndroid) {
-      copyText(
-        target,
-        "ytdlnis is Android-only. The video URL has been copied — paste it into the app."
-      );
+      copyText(target, "ytdlnis is Android-only. The link has been copied — paste it into the app.");
       return;
     }
 
@@ -990,44 +1854,37 @@
       "S.android.intent.extra.TEXT=" + encoded + ";" +
       "package=com.deniscerri.ytdl;end";
 
-    const before = Date.now();
+    const t = Date.now();
     try {
       window.location.href = intent;
     } catch (e) {
-      copyText(target, "Couldn't open ytdlnis — video URL copied instead.");
+      copyText(target, "Couldn’t open ytdlnis — link copied instead.");
       return;
     }
-    // If the browser can't resolve the intent, the page stays visible.
+
     setTimeout(() => {
-      if (!document.hidden && Date.now() - before < 2500) {
-        copyText(
-          target,
-          "ytdlnis doesn't seem to be installed. The video URL has been copied instead."
-        );
+      if (!document.hidden && Date.now() - t < 2500) {
+        copyText(target, "ytdlnis doesn’t seem to be installed. The link has been copied instead.");
       }
     }, 1800);
   }
 
-  function copyText(text, okMessage) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text)
-        .then(() => {
-          ui.status.className = "status ok";
-          ui.status.textContent = okMessage;
-        })
-        .catch(() => {
-          ui.status.className = "status warn";
-          ui.status.textContent = "Couldn't copy automatically. Copy manually: " + text;
-        });
-    } else {
-      ui.status.className = "status warn";
-      ui.status.textContent = "Clipboard unavailable. Copy manually: " + text;
-    }
+  /* ================================================================== *
+   * 19. Tabs
+   * ================================================================== */
+  function setTab(name) {
+    ui.tabs.forEach((t) => {
+      const active = t.dataset.tab === name;
+      t.classList.toggle("active", active);
+      t.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    ui.panelDownload.classList.toggle("hidden", name !== "download");
+    ui.panelSearch.classList.toggle("hidden", name !== "search");
   }
 
-  /* ------------------------------------------------------------------ *
-   *  Deep-link init  (?url=… / ?v=… / #v=…)
-   * ------------------------------------------------------------------ */
+  /* ================================================================== *
+   * 20. Deep links (?url=… / ?v=… / #url=…)
+   * ================================================================== */
   function initFromLocation() {
     let params, hash;
     try { params = new URLSearchParams(location.search); } catch (e) { params = new URLSearchParams(); }
@@ -1042,34 +1899,58 @@
 
     if (raw) {
       ui.url.value = raw;
-      if (normalizeBase(cfg.base)) doFetch();
+      updateBadge();
+      if (normBase(cfg.piped) || normBase(cfg.invidious) || normBase(cfg.cobalt)) doFetch();
       else ui.settings.open = true;
-    } else if (vid && /^[A-Za-z0-9_-]{11}$/.test(vid)) {
+      return;
+    }
+    if (vid && /^[A-Za-z0-9_-]{11}$/.test(vid)) {
       ui.url.value = "https://www.youtube.com/watch?v=" + vid;
-      if (normalizeBase(cfg.base)) doFetch();
+      updateBadge();
+      if (normBase(cfg.piped) || normBase(cfg.invidious) || normBase(cfg.cobalt)) doFetch();
       else ui.settings.open = true;
     }
   }
 
-  /* ------------------------------------------------------------------ *
-   *  Wire up events
-   * ------------------------------------------------------------------ */
+  /* ================================================================== *
+   * 21. Event wiring
+   * ================================================================== */
+  ui.tabs.forEach((t) => {
+    t.addEventListener("click", () => setTab(t.dataset.tab));
+  });
+
   ui.fetchBtn.addEventListener("click", doFetch);
   ui.dlBtn.addEventListener("click", doDownload);
+  ui.searchBtn.addEventListener("click", doSearch);
   ui.ytdlnisBtn.addEventListener("click", openInYtdlnis);
 
   ui.copyBtn.addEventListener("click", () => {
-    const target = currentVideoUrl();
+    const target = currentUrl();
+    if (!target) { setStatus("Nothing to copy yet.", "warn"); return; }
+    copyText(target, "Link copied to clipboard.");
+  });
+
+  ui.openSrcBtn.addEventListener("click", () => {
+    const target = currentUrl();
     if (!target) return;
-    copyText(target, "Video URL copied to clipboard.");
+    window.open(target, "_blank", "noopener,noreferrer");
   });
 
   ui.cancelBtn.addEventListener("click", () => {
     if (state.controller) state.controller.abort();
   });
 
+  ui.modeBtns.forEach((b) => {
+    b.addEventListener("click", () => setMode(b.dataset.mode));
+  });
+
+  ui.url.addEventListener("input", updateBadge);
   ui.url.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); doFetch(); }
+  });
+
+  ui.q.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); doSearch(); }
   });
 
   document.addEventListener("keydown", (e) => {
@@ -1079,45 +1960,82 @@
   ui.pasteBtn.addEventListener("click", () => {
     if (navigator.clipboard && navigator.clipboard.readText) {
       navigator.clipboard.readText()
-        .then((t) => { if (t) { ui.url.value = t.trim(); ui.url.focus(); } })
+        .then((t) => {
+          if (t) {
+            ui.url.value = t.trim();
+            updateBadge();
+            ui.url.focus();
+          }
+        })
         .catch(() => ui.url.focus());
     } else {
       ui.url.focus();
     }
   });
 
+  ui.clearBtn.addEventListener("click", () => {
+    ui.url.value = "";
+    updateBadge();
+    clearErr();
+    ui.infoCard.classList.add("hidden");
+    setStatus("", "");
+    hideFileRow();
+    hidePicker();
+    ui.url.focus();
+  });
+
   ui.thumb.addEventListener("error", () => { ui.thumb.style.display = "none"; });
 
-  ui.apiType.addEventListener("change", () => {
-    cfg.type = ui.apiType.value === "invidious" ? "invidious" : "piped";
+  /* settings */
+  function persistSettings() {
+    cfg.piped     = normBase(ui.setPiped.value);
+    cfg.invidious = normBase(ui.setInvidious.value);
+    cfg.cobalt    = normBase(ui.setCobalt.value);
+    ui.setPiped.value     = cfg.piped;
+    ui.setInvidious.value = cfg.invidious;
+    ui.setCobalt.value    = cfg.cobalt;
     saveCfg();
+  }
+
+  [ui.setPiped, ui.setInvidious, ui.setCobalt].forEach((input) => {
+    input.addEventListener("change", persistSettings);
+    input.addEventListener("blur", () => {
+      const n = normBase(input.value);
+      if (n !== input.value) { input.value = n; persistSettings(); }
+    });
   });
 
-  ui.apiBase.addEventListener("change", () => {
-    cfg.base = normalizeBase(ui.apiBase.value);
-    ui.apiBase.value = cfg.base;
+  ui.resetCfgBtn.addEventListener("click", () => {
+    cfg.piped     = DEFAULT_CFG.piped;
+    cfg.invidious = DEFAULT_CFG.invidious;
+    cfg.cobalt    = DEFAULT_CFG.cobalt;
+    ui.setPiped.value     = cfg.piped;
+    ui.setInvidious.value = cfg.invidious;
+    ui.setCobalt.value    = cfg.cobalt;
     saveCfg();
+    setStatus("Settings reset to defaults.", "ok");
   });
 
-  ui.apiBase.addEventListener("blur", () => {
-    const n = normalizeBase(ui.apiBase.value);
-    if (n !== ui.apiBase.value) {
-      ui.apiBase.value = n;
-      cfg.base = n;
-      saveCfg();
-    }
-  });
-
-  /* ------------------------------------------------------------------ *
-   *  Boot
-   * ------------------------------------------------------------------ */
+  /* ================================================================== *
+   * 22. Boot
+   * ================================================================== */
   loadCfg();
-  syncSettingsUI();
+  ui.setPiped.value     = cfg.piped;
+  ui.setInvidious.value = cfg.invidious;
+  ui.setCobalt.value    = cfg.cobalt;
+
+  ui.vQuality && fillSelect(ui.vQuality, VIDEO_QUALITIES.map((q) => ({ v: q.v, l: q.l })));
+  ui.aFormat  && fillSelect(ui.aFormat, AUDIO_FORMATS);
+  ui.aBitrate && fillSelect(ui.aBitrate, AUDIO_BITRATES.map((b) => ({ v: b, l: b + " kbps" })));
+
+  setTab("download");
+  updateBadge();
   initFromLocation();
 
-  if (!normalizeBase(cfg.base)) {
-    ui.settings.open = true;
-  } else if (!ui.url.value) {
+  if (!ui.url.value) {
+    if (!normBase(cfg.piped) && !normBase(cfg.cobalt)) {
+      ui.settings.open = true;
+    }
     ui.url.focus();
   }
 })();
