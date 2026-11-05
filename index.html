@@ -1461,11 +1461,6 @@
 
   /* ================================================================== *
    * 12. FFmpeg.wasm integration
-   * ------------------------------------------------------------------
-   * Loads @ffmpeg/core once. Bundles libavutil, libavcodec, libavformat,
-   * libavdevice, libavfilter, libswscale, libswresample.
-   *
-   * Uses the single-threaded UMD core so no COOP/COEP headers are needed.
    * ================================================================== */
   const FFMPEG_CORE_VERSION = "0.12.6";
   const FFMPEG_CDN_BASES = [
@@ -1558,10 +1553,7 @@
 
       const ffmpeg = new FFmpeg();
 
-      ffmpeg.on("log", ({ message }) => {
-        // Kept for debugging; do not spam the UI.
-        // console.log("[ffmpeg]", message);
-      });
+      ffmpeg.on("log", () => { /* debug only */ });
 
       ffmpeg.on("progress", ({ progress }) => {
         if (typeof progress === "number" && progress >= 0 && progress <= 1) {
@@ -1632,7 +1624,6 @@
           return ffmpeg;
         } catch (e) {
           lastErr = e;
-          // try next CDN
         }
       }
 
@@ -1857,6 +1848,12 @@
     hideFileRow();
     hidePicker();
 
+    // Capture and reset pending flags up-front so a failed fetch doesn't leave them stale.
+    const wantMp3   = !!state.pendingMp3;
+    const wantAudio = !!state.pendingAudio;
+    state.pendingMp3   = false;
+    state.pendingAudio = false;
+
     const raw = ui.url.value.trim();
     if (!raw) { showErrHtml("Paste a video link first."); return; }
 
@@ -1929,8 +1926,11 @@
       ui.infoCard.classList.remove("hidden");
       ui.infoCard.scrollIntoView({ behavior: "smooth", block: "start" });
 
-      if (state.pendingAudio) {
-        state.pendingAudio = false;
+      // MP3 takes priority over raw-audio download. Previously both ran, and the
+      // raw download locked state.controller, silently killing the MP3 conversion.
+      if (wantMp3) {
+        setTimeout(() => doConvertToMp3(), 250);
+      } else if (wantAudio) {
         setMode("audio");
         if (state.backend !== "cobalt") {
           if (state.filtered.length) {
@@ -1943,11 +1943,6 @@
         } else {
           setTimeout(() => doDownload(), 150);
         }
-      }
-
-      if (state.pendingMp3) {
-        state.pendingMp3 = false;
-        setTimeout(() => doConvertToMp3(), 200);
       }
     } catch (e) {
       handleFetchError(e);
@@ -2046,7 +2041,7 @@
     hideFileRow();
     hidePicker();
     setStatus("", "");
-    ui.dlBtn.disabled = false;
+    // Note: dlBtn.disabled is controlled by renderChips() inside setMode().
     ui.dlBtn.textContent = "Download";
     ui.dlBtn.classList.remove("green");
     ui.cancelBtn.classList.add("hidden");
@@ -2096,7 +2091,7 @@
 
   function syncChips() {
     Array.prototype.forEach.call(ui.chips.children, (c, j) => {
-      if (c.classList) c.classList.toggle("active", j === state.selected);
+      if (c.tagName === "BUTTON") c.classList.toggle("active", j === state.selected);
     });
   }
 
@@ -2440,16 +2435,17 @@
    * 24. MP4 → MP3 conversion via FFmpeg.wasm
    * ================================================================== */
   function getSourceForMp3() {
-    // Piped / Invidious path only — Cobalt is handled separately.
     if (state.backend === "cobalt") return null;
 
-    const current = state.filtered[state.selected];
-    if (current) return current;
-
-    const audio = state.streams.find((s) => s.kind === "audio");
+    // Prefer a dedicated audio-only stream: no video decode, smaller download.
+    const audio = state.streams.find((s) => s.kind === "audio" && s.url);
     if (audio) return audio;
 
-    const video = state.streams.find((s) => s.kind === "video");
+    // Fall back to whatever the user has selected, then any video.
+    const current = state.filtered[state.selected];
+    if (current && current.url) return current;
+
+    const video = state.streams.find((s) => s.kind === "video" && s.url);
     return video || null;
   }
 
@@ -2495,7 +2491,6 @@
     hideFileRow();
     hidePicker();
 
-    // Reset UI
     ui.dlBtn.disabled = true;
     ui.dlBtn.textContent = "Download";
     if (ui.mp3Btn) ui.mp3Btn.disabled = true;
@@ -2506,6 +2501,9 @@
     state.controller = new AbortController();
     const signal = state.controller.signal;
     const t0 = Date.now();
+
+    let inputName = "";
+    let outputName = "output.mp3";
 
     try {
       // 1. Resolve source
@@ -2546,8 +2544,7 @@
       if (!inputExt || inputExt === "bin") {
         inputExt = guessExtFromMime(mime, "bin");
       }
-      const inputName = "input." + inputExt;
-      const outputName = "output.mp3";
+      inputName = "input." + inputExt;
 
       // 5. Write to FFmpeg FS
       setStatus("Preparing FFmpeg input…", "");
@@ -2556,11 +2553,11 @@
       await ffmpeg.writeFile(inputName, inputBuf);
       if (signal.aborted) throw makeAbortError();
 
-      // 6. Run conversion
+      // 6. Run conversion — check exit code (this used to be ignored)
       setStatus("Converting to MP3 (320 kbps)…", "");
       setFFmpegUI("Converting to MP3 with FFmpeg…", 0, true);
 
-      await ffmpeg.exec([
+      const exitCode = await ffmpeg.exec([
         "-i", inputName,
         "-vn",
         "-acodec", "libmp3lame",
@@ -2570,12 +2567,21 @@
         outputName,
       ]);
 
+      if (typeof exitCode === "number" && exitCode !== 0) {
+        throw new Error(
+          "FFmpeg exited with code " + exitCode +
+          " — the source may not contain a decodable audio track."
+        );
+      }
+
       if (signal.aborted) throw makeAbortError();
 
-      // 7. Read output
+      // 7. Read output — readFile returns a Uint8Array view; build the Blob
+      //    from the view itself, not .buffer (which can over-read).
       setFFmpegUI("Reading MP3 output…", 0.99, true);
       const data = await ffmpeg.readFile(outputName);
-      const mp3Blob = new Blob([data.buffer], { type: "audio/mpeg" });
+      const bytes = (typeof data === "string") ? new TextEncoder().encode(data) : data;
+      const mp3Blob = new Blob([bytes], { type: "audio/mpeg" });
 
       // 8. Cleanup FFmpeg FS
       try { await ffmpeg.deleteFile(inputName); } catch (e) { /* ignore */ }
@@ -2596,6 +2602,14 @@
       finishDownload(mp3Blob, baseName + ".mp3", t0);
     } catch (e) {
       console.error(e);
+
+      // Best-effort FS cleanup on failure
+      try {
+        if (ffmpegState.instance) {
+          if (inputName) try { await ffmpegState.instance.deleteFile(inputName); } catch (x) {}
+          try { await ffmpegState.instance.deleteFile(outputName); } catch (x) {}
+        }
+      } catch (x) { /* ignore */ }
 
       if (errName(e) === "AbortError") {
         setStatus("MP3 conversion cancelled.", "warn");
@@ -2740,7 +2754,10 @@
       btn.textContent = "MP3";
       btn.title = "Download as MP3 (~" + kbps + " kbps)";
       btn.addEventListener("click", () => {
-        state.pendingAudio = true;
+        // Only request MP3. Setting pendingAudio here caused a race that made
+        // doFetch download the raw audio stream and silently block the MP3
+        // conversion.
+        state.pendingAudio = false;
         state.pendingMp3 = true;
         setTab("download");
         ui.url.value = "https://www.youtube.com/watch?v=" + it.videoId;
@@ -2874,6 +2891,16 @@
 
   ui.clearBtn.addEventListener("click", () => {
     ui.url.value = "";
+    // Reset all related state so "Copy link" / "Open source" don't use the old URL.
+    state.url = "";
+    state.platform = null;
+    state.info = null;
+    state.streams = [];
+    state.filtered = [];
+    state.selected = 0;
+    state.backend = null;
+    state.base = "";
+    if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
     updateBadge();
     clearErr();
     ui.infoCard.classList.add("hidden");
@@ -2955,7 +2982,6 @@
   updateDetectionUI();
   updateFFmpegSettingsBadge("idle", "Not loaded — will load on first MP3 conversion.");
 
-  /* Kick off instance detection in the background on first load. */
   runDetection(false).catch(() => { /* status shown in UI */ });
 
   initFromLocation();
@@ -2964,103 +2990,37 @@
 })();
 </script>
 <script>
-// Disable right-click
-document.addEventListener('contextmenu', (e) => e.preventDefault());
+/* Consolidated anti-devtools / anti-copy block.
+   - Blocks right-click, F12, Ctrl+Shift+I/J/C, Ctrl+U everywhere.
+   - Allows normal editing (incl. paste) inside form fields, which the old
+     duplicated handlers blocked by accident. */
+(function () {
+  "use strict";
+  function isEditable(t) {
+    if (!t) return false;
+    var tag = (t.tagName || "").toLowerCase();
+    return tag === "input" || tag === "textarea" || tag === "select" || t.isContentEditable;
+  }
 
-function ctrlShiftKey(e, keyCode) {
-  return e.ctrlKey && e.shiftKey && e.keyCode === keyCode.charCodeAt(0);
-}
+  document.addEventListener("contextmenu", function (e) { e.preventDefault(); }, false);
 
-document.onkeydown = (e) => {
-  // Disable F12, Ctrl + Shift + I, Ctrl + Shift + J, Ctrl + U
-  if (
-    event.keyCode === 123 ||
-    ctrlShiftKey(e, 'I') ||
-    ctrlShiftKey(e, 'J') ||
-    ctrlShiftKey(e, 'C') ||
-    (e.ctrlKey && e.keyCode === 'U'.charCodeAt(0))
-  )
-    return false;
-};
-</script>
-<script>
- if (typeof document.onselectstart!="undefined" ) {
-  document.onselectstart=new Function ("return false" );
- }
- else {
-  document.onmousedown=new Function ("return false" );
-  document.onmouseup=new Function ("return true" );
- }
-</script>
-<script>
-   document.onkeydown = function(e) {
-if(event.keyCode == 123) {
-    return false;
-}
-if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)){
-    return false;
-}
-if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)){
-    return false;
-}
-if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)){
-    return false;
-}
-if(e.ctrlKey && e.keyCode == 'C'.charCodeAt(0)){
-    return false;
-}
-if(e.ctrlKey && e.keyCode == 'X'.charCodeAt(0)){
-    return false;
-}
-if(e.ctrlKey && e.keyCode == 'Y'.charCodeAt(0)){
-    return false;
-}
-if(e.ctrlKey && e.keyCode == 'Z'.charCodeAt(0)){
-    return false;
-}
-if(e.ctrlKey && e.keyCode == 'V'.charCodeAt(0)){
-    return false;
-}
-if (e.keyCode == 67 && e.shiftKey && (e.ctrlKey || e.metaKey)){
-    return false;
-}
-if (e.keyCode == 'J'.charCodeAt(0) && e.altKey && (e.ctrlKey || e.metaKey)){
-    return false;
-}
-if (e.keyCode == 'I'.charCodeAt(0) && e.altKey && (e.ctrlKey || e.metaKey)){
-    return false;
-}
-if ((e.keyCode == 'V'.charCodeAt(0) && e.metaKey) || (e.metaKey && e.altKey)){
-    return false;
-}
-if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)){
-    return false;
-}
-if(e.ctrlKey && e.keyCode == 'S'.charCodeAt(0)){
-    return false;
-}
-if(e.ctrlKey && e.keyCode == 'H'.charCodeAt(0)){
-    return false;
-}
-if(e.ctrlKey && e.keyCode == 'A'.charCodeAt(0)){
-    return false;
-}
-if(e.ctrlKey && e.keyCode == 'F'.charCodeAt(0)){
-    return false;
-}
-if(e.ctrlKey && e.keyCode == 'E'.charCodeAt(0)){
-    return false;
-}
-}
-if (document.addEventListener) {
-    document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-    }, false);
-}else{
-    document.attachEvent('oncontextmenu', function() {
-    window.event.returnValue = false;
-    });
-}
+  document.addEventListener("selectstart", function (e) {
+    if (!isEditable(e.target)) e.preventDefault();
+  }, false);
+
+  document.addEventListener("keydown", function (e) {
+    var k = e.keyCode;
+    // Devtools shortcuts
+    if (k === 123) return e.preventDefault();
+    if (e.ctrlKey && e.shiftKey && (k === 73 || k === 74 || k === 67)) return e.preventDefault();
+    if (e.ctrlKey && k === 85) return e.preventDefault();
+    if (e.ctrlKey && k === 83) return e.preventDefault(); // Ctrl+S
+    if (isEditable(e.target)) return; // allow normal typing/pasting in fields
+    if (e.ctrlKey && (k === 67 || k === 88 || k === 86 || k === 65 || k === 70 || k === 72 || k === 69 || k === 89 || k === 90)) {
+      return e.preventDefault();
+    }
+  }, false);
+})();
 </script>
 </body>
 </html>
