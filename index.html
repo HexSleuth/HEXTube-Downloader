@@ -1,2206 +1,2483 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="dark light">
-<meta name="description" content="VidGrab — a privacy-focused, ad-free, tracker-free web downloader for YouTube and 1000+ other sites. Powered by cobalt and yt-dlp.">
-<title>VidGrab — Privacy-first Media Downloader</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⬇️</text></svg>">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0c11">
+<meta name="referrer" content="no-referrer">
+<title>Free Video Downloader — Auto-Detect APIs · MP3 &amp; MP4</title>
 <style>
-/* ============================================================
-   THEME TOKENS
-   ============================================================ */
-:root{
-  --bg:#0a0a0f;
-  --bg-soft:#0f0f17;
-  --card:#15151f;
-  --card-2:#1c1c28;
-  --border:#26263a;
-  --border-soft:#1e1e2c;
-  --text:#ececf4;
-  --muted:#9394a8;
-  --accent:#8b5cf6;
-  --accent-2:#22d3ee;
-  --accent-grad:linear-gradient(135deg,#8b5cf6 0%,#6d4df0 55%,#4f46e5 100%);
-  --ok:#34d399;
-  --err:#fb7185;
-  --warn:#fbbf24;
-  --radius:16px;
-  --radius-sm:11px;
-  --shadow:0 14px 44px rgba(0,0,0,.5);
-}
-[data-theme="light"]{
-  --bg:#f5f6fb;
-  --bg-soft:#ffffff;
-  --card:#ffffff;
-  --card-2:#f1f2f8;
-  --border:#e2e4ee;
-  --border-soft:#eceef6;
-  --text:#14141f;
-  --muted:#5f6179;
-  --shadow:0 14px 34px rgba(20,20,60,.09);
-}
+  :root{
+    color-scheme: dark;
+    --bg:#0a0c11; --card:#141824; --card-2:#10141d; --line:#232a3a;
+    --txt:#e9edf6; --muted:#8b98b0;
+    --accent:#ff2d55; --accent-2:#7c5cff;
+    --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;min-height:100%}
+  html{background:var(--bg)}
+  body{
+    min-height:100dvh;
+    background-color:var(--bg);
+    background-image:
+      radial-gradient(1000px 520px at -10% -10%, rgba(124,92,255,.24), transparent 60%),
+      radial-gradient(820px 420px at 110% 0%, rgba(255,45,85,.18), transparent 55%),
+      radial-gradient(700px 420px at 50% 120%, rgba(34,197,94,.10), transparent 60%);
+    background-attachment:fixed;
+    color:var(--txt);
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .wrap{max-width:680px;margin:0 auto;padding:20px 14px 44px}
 
-/* ============================================================
-   BASE
-   ============================================================ */
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
-  background-color:var(--bg);
-  color:var(--text);
-  line-height:1.55;
-  min-height:100vh;
-  -webkit-font-smoothing:antialiased;
-  background-image:
-    radial-gradient(900px 520px at 12% -12%, rgba(139,92,246,.20), transparent 62%),
-    radial-gradient(760px 460px at 92% -4%, rgba(34,211,238,.13), transparent 62%);
-  background-repeat:no-repeat;
-  background-attachment:fixed;
-  transition:background-color .25s ease,color .25s ease;
-}
-[data-theme="light"] body{
-  background-image:
-    radial-gradient(900px 520px at 12% -12%, rgba(139,92,246,.14), transparent 62%),
-    radial-gradient(760px 460px at 92% -4%, rgba(34,211,238,.12), transparent 62%);
-}
-a{color:var(--accent-2);text-decoration:none}
-a:hover{text-decoration:underline}
-button{font-family:inherit}
-input,select,button{font-size:14px}
-.hidden{display:none !important}
-.muted{color:var(--muted)}
-.wrap{width:100%;max-width:920px;margin:0 auto;padding:0 20px}
+  header{display:flex;align-items:center;gap:12px;margin:6px 0 16px}
+  .logo{
+    width:44px;height:44px;flex:0 0 44px;border-radius:13px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    box-shadow:0 8px 24px rgba(255,45,85,.28);
+  }
+  h1{font-size:19px;margin:0;letter-spacing:-.02em;font-weight:700}
+  .sub{margin:1px 0 0;font-size:12.5px;color:var(--muted)}
 
-/* ============================================================
-   TOP BAR
-   ============================================================ */
-.topbar{
-  position:sticky;top:0;z-index:50;
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
-  background:color-mix(in srgb, var(--bg) 72%, transparent);
-  border-bottom:1px solid var(--border-soft);
-}
-.topbar-inner{display:flex;align-items:center;gap:14px;height:64px}
-.brand{
-  display:flex;align-items:center;gap:10px;
-  font-weight:800;font-size:17px;letter-spacing:-.02em;
-  color:var(--text);cursor:pointer;background:none;border:0;
-}
-.brand:hover{text-decoration:none}
-.brand-mark{
-  width:32px;height:32px;border-radius:10px;
-  display:grid;place-items:center;
-  background:var(--accent-grad);
-  color:#fff;font-size:17px;font-weight:900;
-  box-shadow:0 6px 18px rgba(139,92,246,.4);
-}
-.nav{display:flex;gap:4px;margin-left:auto}
-.nav-btn{
-  background:transparent;border:0;color:var(--muted);
-  padding:8px 14px;border-radius:10px;cursor:pointer;
-  font-weight:600;font-size:14px;transition:.16s;
-}
-.nav-btn:hover{color:var(--text);background:var(--card-2)}
-.nav-btn.active{color:var(--text);background:var(--card-2)}
-.icon-btn{
-  width:38px;height:38px;border-radius:11px;
-  display:grid;place-items:center;cursor:pointer;
-  background:var(--card-2);border:1px solid var(--border);
-  color:var(--text);font-size:16px;transition:.16s;
-}
-.icon-btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .tabs{
+    display:flex;gap:6px;background:#12161f;border:1px solid var(--line);
+    border-radius:14px;padding:5px;margin-bottom:14px;
+  }
+  .tab{
+    flex:1 1 0;padding:11px 8px;border-radius:10px;background:transparent;
+    color:var(--muted);font-weight:700;font-size:14px;transition:.15s;border:none;cursor:pointer;
+    font-family:inherit;
+  }
+  .tab.active{
+    background:linear-gradient(135deg,rgba(124,92,255,.28),rgba(255,45,85,.22));
+    color:#fff;box-shadow:0 0 0 2px rgba(124,92,255,.2) inset;
+  }
 
-/* ============================================================
-   VIEWS
-   ============================================================ */
-main{padding:38px 0 80px}
-.view{display:none;animation:fade .28s ease}
-.view.active{display:block}
-@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .card{
+    background:linear-gradient(180deg,var(--card),var(--card-2));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:14px;
+    box-shadow:0 12px 34px rgba(0,0,0,.35);
+  }
+  .hidden{display:none !important}
 
-/* ============================================================
-   HERO
-   ============================================================ */
-.hero{text-align:center;margin-bottom:30px}
-.hero h1{
-  font-size:clamp(28px,5vw,42px);
-  line-height:1.15;letter-spacing:-.03em;font-weight:800;
-}
-.hero h1 .grad{
-  background:linear-gradient(100deg,#a78bfa,#22d3ee 65%);
-  -webkit-background-clip:text;background-clip:text;
-  -webkit-text-fill-color:transparent;color:transparent;
-}
-.hero p{margin-top:12px;color:var(--muted);font-size:15px;max-width:600px;margin-left:auto;margin-right:auto}
-.badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
-.badge{
-  font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;
-  background:var(--card-2);border:1px solid var(--border);color:var(--muted);
-}
-.badge b{color:var(--text)}
+  .lbl{
+    display:block;font-size:12.5px;font-weight:600;
+    color:var(--muted);letter-spacing:.05em;
+    text-transform:uppercase;margin-bottom:8px;
+  }
+  .lbl2{margin-top:14px}
 
-/* ============================================================
-   CARDS / FORM
-   ============================================================ */
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-}
-.input-card{padding:16px;margin-bottom:18px}
-.input-row{display:flex;gap:10px;align-items:center}
-.input-row input{
-  flex:1;min-width:0;
-  background:var(--card-2);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:14px 16px;
-  color:var(--text);
-  font-size:15px;
-  outline:none;
-  transition:.16s;
-}
-.input-row input::placeholder{color:var(--muted)}
-.input-row input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.18)}
+  .inputRow{display:flex;gap:8px;margin-bottom:10px}
+  input[type=url],input[type=text]{
+    flex:1 1 auto;min-width:0;
+    background:#0b0f17;color:var(--txt);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:13px 14px;font-size:16px;
+    outline:none;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  input::placeholder{color:#5d6982}
+  input:focus{border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(124,92,255,.18)}
 
-.options-row{
-  display:flex;gap:10px;align-items:center;flex-wrap:wrap;
-  margin-top:14px;
-}
-.seg{
-  display:inline-flex;gap:4px;padding:4px;
-  background:var(--card-2);border:1px solid var(--border);
-  border-radius:12px;
-}
-.seg button{
-  background:transparent;border:0;color:var(--muted);
-  padding:8px 16px;border-radius:9px;cursor:pointer;
-  font-weight:600;font-size:13.5px;transition:.16s;
-}
-.seg button:hover{color:var(--text)}
-.seg button.active{
-  background:var(--accent-grad);color:#fff;
-  box-shadow:0 5px 16px rgba(139,92,246,.38);
-}
-.select{
-  background:var(--card-2);
-  border:1px solid var(--border);
-  color:var(--text);
-  border-radius:11px;
-  padding:10px 12px;
-  cursor:pointer;
-  outline:none;
-  transition:.16s;
-}
-.select:focus{border-color:var(--accent)}
-.select:hover{border-color:var(--accent)}
+  select{
+    width:100%;
+    background:#0b0f17;color:var(--txt);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px 14px;font-size:15px;
+    outline:none;appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,#8b98b0 50%),
+                     linear-gradient(135deg,#8b98b0 50%,transparent 50%);
+    background-position:calc(100% - 20px) 50%, calc(100% - 14px) 50%;
+    background-size:6px 6px,6px 6px;
+    background-repeat:no-repeat;
+  }
+  select:focus{border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(124,92,255,.18)}
 
-.primary-btn{
-  background:var(--accent-grad);
-  color:#fff;border:0;
-  padding:13px 26px;border-radius:12px;
-  font-weight:700;font-size:14.5px;
-  cursor:pointer;
-  transition:.18s;
-  box-shadow:0 8px 22px rgba(139,92,246,.34);
-  margin-left:auto;
-}
-.primary-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 28px rgba(139,92,246,.46)}
-.primary-btn:active:not(:disabled){transform:translateY(0)}
-.primary-btn:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
-.primary-btn.small{padding:9px 16px;font-size:13px;border-radius:10px;margin-left:0;box-shadow:0 5px 14px rgba(139,92,246,.3)}
+  button{font-family:inherit;font-size:16px;cursor:pointer;border:none}
+  .primary{
+    width:100%;padding:14px 16px;border-radius:12px;
+    font-weight:700;color:#fff;
+    background:linear-gradient(135deg,var(--accent),#e11d48);
+    box-shadow:0 10px 26px rgba(255,45,85,.28);
+    transition:transform .08s,opacity .15s;
+  }
+  .primary:active{transform:scale(.985)}
+  .primary:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+  .primary.green{
+    background:linear-gradient(135deg,#4ade80,#22c55e);
+    color:#04220f;box-shadow:0 10px 26px rgba(34,197,94,.25);
+  }
+  .ghost{
+    flex:0 0 auto;padding:12px 16px;border-radius:12px;font-weight:600;
+    color:var(--txt);background:#1b2130;border:1px solid var(--line);
+    transition:background .15s;
+  }
+  .ghost:active{background:#232b3d}
+  .ghost.danger{color:#ffd5d5;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35)}
+  .ghost.danger:active{background:rgba(239,68,68,.22)}
+  .ghost.small{padding:9px 12px;font-size:13px}
+  .linkBtn{
+    background:none;border:none;color:var(--muted);font-size:12.5px;
+    text-decoration:underline;padding:0;cursor:pointer;font-family:inherit;
+  }
+  .linkBtn:hover{color:var(--txt)}
 
-.ghost-btn{
-  background:var(--card-2);
-  border:1px solid var(--border);
-  color:var(--text);
-  padding:13px 18px;border-radius:12px;
-  font-weight:600;cursor:pointer;transition:.16s;
-  white-space:nowrap;
-}
-.ghost-btn:hover{border-color:var(--accent);color:var(--text)}
-.ghost-btn.small{padding:9px 14px;font-size:13px;border-radius:10px}
-.ghost-btn.tiny{padding:5px 11px;font-size:12px;border-radius:8px}
+  .platRow{display:flex;align-items:center;gap:10px;margin-bottom:12px;min-height:24px}
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 10px;border-radius:99px;
+    font-size:11.5px;font-weight:700;letter-spacing:.03em;
+    background:#1a2030;border:1px solid var(--line);color:var(--muted);
+    text-transform:uppercase;
+  }
+  .badge.yt{color:#ff9fae;border-color:rgba(255,45,85,.4);background:rgba(255,45,85,.12)}
+  .badge.ok{color:#7ef0a6;border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.12)}
+  .badge.warn{color:#ffd08a;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.12)}
+  .badge.err{color:#ffb3b3;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.12)}
+  .badge.info{color:#b7c3ff;border-color:rgba(124,92,255,.4);background:rgba(124,92,255,.12)}
 
-/* ============================================================
-   STATUS
-   ============================================================ */
-.status{
-  padding:13px 16px;border-radius:12px;margin-bottom:16px;
-  font-size:13.5px;font-weight:600;
-  border:1px solid var(--border);
-  background:var(--card);
-  word-break:break-word;
-}
-.status.info{border-color:rgba(139,92,246,.45);background:rgba(139,92,246,.10);color:#c4b5fd}
-.status.ok{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.10);color:#6ee7b7}
-.status.err{border-color:rgba(251,113,133,.42);background:rgba(251,113,133,.10);color:#fda4af}
-.status.info::before{content:"⏳  "}
-.status.err::before{content:"⚠️  "}
-.status.ok::before{content:"✅  "}
+  .spinner{
+    display:inline-block;width:11px;height:11px;
+    border:2px solid rgba(255,255,255,.25);border-top-color:#fff;
+    border-radius:50%;animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ============================================================
-   RESULTS
-   ============================================================ */
-.results{display:grid;gap:12px;margin-bottom:26px}
-.result-card{
-  display:flex;align-items:center;gap:14px;
-  background:var(--card);border:1px solid var(--border);
-  border-radius:14px;padding:14px 16px;
-  animation:fade .3s ease;
-  transition:.18s;
-}
-.result-card:hover{border-color:rgba(139,92,246,.5);transform:translateY(-1px)}
-.result-icon{
-  width:44px;height:44px;flex:0 0 44px;border-radius:12px;
-  display:grid;place-items:center;font-size:20px;
-  background:var(--card-2);border:1px solid var(--border);
-}
-.result-body{flex:1;min-width:0}
-.result-title{font-weight:700;font-size:14.5px}
-.result-meta{
-  color:var(--muted);font-size:12.5px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  margin-top:2px;
-}
-.result-actions{display:flex;gap:8px;flex:0 0 auto}
+  .btnRow{display:flex;gap:8px;margin-top:16px}
+  .btnRow .primary{flex:1 1 auto}
+  .shareRow{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .shareRow .ghost{flex:1 1 0;font-size:13.5px;padding:11px 8px;min-width:110px}
 
-/* ============================================================
-   HISTORY
-   ============================================================ */
-.history-card{padding:18px}
-.history-card h3{font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px}
-.history{list-style:none;display:grid;gap:6px}
-.history li{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:10px;transition:.15s}
-.history li:hover{background:var(--card-2)}
-.hist-item{
-  background:none;border:0;color:var(--text);
-  font-size:13.5px;text-align:left;cursor:pointer;
-  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-}
-.hist-item:hover{color:var(--accent-2)}
-.hist-date{font-size:11.5px;color:var(--muted);flex:0 0 auto}
+  .err{
+    margin-top:12px;padding:11px 13px;border-radius:11px;font-size:13.5px;
+    color:#ffd5d5;background:rgba(239,68,68,.13);
+    border:1px solid rgba(239,68,68,.4);
+    word-break:break-word;line-height:1.55;
+  }
+  .err code{background:rgba(0,0,0,.35);border-radius:5px;padding:1px 5px;font-size:12px}
+  .err ul{margin:8px 0 0;padding-left:18px}
 
-/* ============================================================
-   MODAL
-   ============================================================ */
-.modal-backdrop{
-  position:fixed;inset:0;z-index:200;
-  background:rgba(0,0,0,.62);
-  backdrop-filter:blur(5px);
-  -webkit-backdrop-filter:blur(5px);
-  display:grid;place-items:center;padding:20px;
-  animation:fade .18s ease;
-}
-.modal-backdrop.turnstile{z-index:300}
-.modal{
-  width:100%;max-width:560px;max-height:88vh;overflow-y:auto;
-  animation:pop .22s cubic-bezier(.2,.9,.3,1.2);
-}
-@keyframes pop{from{opacity:0;transform:scale(.96) translateY(10px)}to{opacity:1;transform:none}}
-.modal-head{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:18px 20px;border-bottom:1px solid var(--border-soft);
-  position:sticky;top:0;background:var(--card);z-index:2;
-  border-radius:var(--radius) var(--radius) 0 0;
-}
-.modal-head h3{font-size:16px}
-.modal-body{padding:20px;display:grid;gap:16px}
-.modal-foot{
-  display:flex;gap:10px;justify-content:space-between;
-  padding:16px 20px;border-top:1px solid var(--border-soft);
-  position:sticky;bottom:0;background:var(--card);
-  border-radius:0 0 var(--radius) var(--radius);
-}
-.field{display:grid;gap:6px}
-.field label{font-size:12.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.field input,.field select{
-  background:var(--card-2);
-  border:1px solid var(--border);
-  color:var(--text);
-  border-radius:10px;
-  padding:11px 13px;
-  outline:none;
-  transition:.16s;
-  width:100%;
-  font-family:inherit;
-}
-.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.16)}
-.field .hint{font-size:11.5px;color:var(--muted);line-height:1.45}
-.divider{height:1px;background:var(--border-soft);margin:2px 0}
-.session-line{font-size:12px;font-weight:600;padding:7px 10px;border-radius:9px;background:var(--card-2);border:1px solid var(--border);color:var(--muted)}
-#turnstileContainer{min-height:65px;display:grid;place-items:center}
+  .media{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px}
+  .media img{
+    width:132px;height:74px;object-fit:cover;border-radius:11px;
+    background:#0b0f17;border:1px solid var(--line);flex:0 0 auto;
+  }
+  .mediaInfo{min-width:0;flex:1 1 auto}
+  .mediaInfo h2{
+    font-size:15px;line-height:1.32;margin:0 0 6px;font-weight:650;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+    overflow:hidden;word-break:break-word;
+  }
+  .muted{color:var(--muted);font-size:13px;margin:0;word-break:break-word}
 
-/* ============================================================
-   DOC / SELF-HOST SECTIONS
-   ============================================================ */
-.doc h2{
-  font-size:23px;letter-spacing:-.02em;margin-bottom:8px;font-weight:800;
-}
-.doc > p{color:var(--muted);margin-bottom:24px;font-size:14.5px}
-.doc-section{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:var(--radius);padding:20px;margin-bottom:18px;
-}
-.doc-section h3{font-size:16.5px;margin-bottom:6px;display:flex;align-items:center;gap:9px}
-.doc-section h3 .dot{
-  width:9px;height:9px;border-radius:50%;background:var(--accent);
-  box-shadow:0 0 10px var(--accent);flex:0 0 auto;
-}
-.doc-section > p{color:var(--muted);font-size:13.5px;margin-bottom:14px}
-.doc-section ul{list-style:none;display:grid;gap:8px;margin:10px 0 4px}
-.doc-section ul li{
-  font-size:13.5px;color:var(--muted);
-  padding-left:22px;position:relative;
-}
-.doc-section ul li::before{
-  content:"▸";position:absolute;left:4px;color:var(--accent-2);font-weight:800;
-}
-.code-block{
-  border:1px solid var(--border);
-  border-radius:12px;overflow:hidden;margin-top:12px;
-  background:var(--card-2);
-}
-.code-head{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:9px 14px;
-  background:rgba(139,92,246,.08);
-  border-bottom:1px solid var(--border);
-  font-size:12px;font-weight:700;color:var(--muted);
-  letter-spacing:.05em;text-transform:uppercase;
-}
-.code-block pre{
-  margin:0;padding:15px 16px;overflow-x:auto;
-  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  font-size:12.5px;line-height:1.68;
-  color:var(--text);
-  tab-size:2;
-}
-.code-block code{white-space:pre}
+  .modeToggle{
+    display:flex;gap:6px;background:#0b0f17;border:1px solid var(--line);
+    border-radius:12px;padding:4px;margin-bottom:14px;
+  }
+  .mode{
+    flex:1;padding:10px;border-radius:9px;background:transparent;
+    color:var(--muted);font-weight:700;font-size:14px;border:none;cursor:pointer;
+    transition:.15s;
+  }
+  .mode.active{background:linear-gradient(135deg,var(--accent-2),#5b3ee0);color:#fff}
 
-/* ============================================================
-   ABOUT GRID
-   ============================================================ */
-.proj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
-.proj{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:14px;padding:18px;transition:.18s;
-}
-.proj:hover{border-color:rgba(139,92,246,.5);transform:translateY(-2px)}
-.proj h4{font-size:15px;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.proj h4 .stars{
-  font-size:11px;font-weight:700;color:#fbbf24;
-  background:rgba(251,191,36,.12);
-  border:1px solid rgba(251,191,36,.3);
-  padding:1px 7px;border-radius:999px;
-}
-.proj p{font-size:13px;color:var(--muted);margin-bottom:10px}
-.proj .tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.proj .tags span{
-  font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;
-  background:var(--card-2);border:1px solid var(--border);color:var(--muted);
-}
-.proj a{font-size:13px;font-weight:700}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    padding:10px 14px;border-radius:11px;
+    font-size:13.5px;font-weight:600;
+    color:var(--txt);background:#1a2030;
+    border:1px solid var(--line);
+    text-align:left;
+    transition:background .15s,border-color .15s,transform .08s;
+  }
+  .chip:active{transform:scale(.97)}
+  .chip.active{
+    background:linear-gradient(135deg,rgba(124,92,255,.30),rgba(255,45,85,.24));
+    border-color:var(--accent-2);color:#fff;
+    box-shadow:0 0 0 2px rgba(124,92,255,.22) inset;
+  }
+  .chip small{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:2px}
+  .chip.active small{color:rgba(255,255,255,.75)}
 
-/* ============================================================
-   TOAST
-   ============================================================ */
-.toast{
-  position:fixed;left:50%;bottom:28px;transform:translate(-50%,140%);
-  background:var(--card-2);
-  border:1px solid var(--border);
-  color:var(--text);
-  padding:13px 22px;border-radius:13px;
-  font-size:13.5px;font-weight:600;
-  box-shadow:var(--shadow);
-  z-index:500;pointer-events:none;
-  opacity:0;transition:transform .32s cubic-bezier(.2,.9,.3,1.2),opacity .32s;
-  max-width:min(90vw,520px);text-align:center;
-}
-.toast.show{transform:translate(-50%,0);opacity:1}
-.toast.ok{border-color:rgba(52,211,153,.5)}
-.toast.err{border-color:rgba(251,113,133,.5)}
+  .barTrack{
+    margin-top:16px;height:10px;border-radius:99px;
+    background:#0b0f17;border:1px solid var(--line);overflow:hidden;
+  }
+  .barFill{
+    height:100%;width:0%;border-radius:99px;
+    background:linear-gradient(90deg,var(--accent-2),var(--accent));
+    transition:width .25s ease;
+  }
+  .barMeta{
+    display:flex;justify-content:space-between;gap:10px;
+    margin-top:7px;font-size:12.5px;color:var(--muted);
+    font-variant-numeric:tabular-nums;
+  }
+  .status{
+    margin-top:10px;font-size:13.5px;color:var(--muted);
+    min-height:18px;word-break:break-word;line-height:1.55;
+  }
+  .status.ok{color:var(--ok);font-weight:600}
+  .status.bad{color:var(--err);font-weight:600}
+  .status.warn{color:var(--warn);font-weight:600}
 
-/* ============================================================
-   FOOTER
-   ============================================================ */
-footer{
-  border-top:1px solid var(--border-soft);
-  padding:26px 0;text-align:center;
-  color:var(--muted);font-size:12.5px;
-}
-footer .heart{color:var(--err)}
+  .save{
+    display:block;text-align:center;text-decoration:none;
+    font-weight:700;color:#04220f;
+    padding:14px 16px;border-radius:12px;margin-top:14px;
+    background:linear-gradient(135deg,#4ade80,#22c55e);
+    box-shadow:0 10px 26px rgba(34,197,94,.25);
+  }
+  .save:active{filter:brightness(.95)}
 
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media(max-width:640px){
-  .topbar-inner{height:58px;gap:8px}
-  .brand span:not(.brand-mark){display:none}
-  .nav-btn{padding:7px 10px;font-size:13px}
-  main{padding:26px 0 60px}
-  .input-row{flex-wrap:wrap}
-  .input-row input{flex:1 1 100%}
-  .input-row .ghost-btn{flex:0 0 auto}
-  .primary-btn{margin-left:0;width:100%}
-  .result-card{flex-wrap:wrap}
-  .result-actions{width:100%;justify-content:flex-end}
-  .modal-foot{flex-direction:column-reverse}
-  .modal-foot button{width:100%}
-}
+  .pickerRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{
+    display:flex;gap:10px;align-items:center;padding:9px;
+    border-radius:12px;background:#141a27;border:1px solid var(--line);
+  }
+  .item img{width:96px;height:54px;border-radius:8px;object-fit:cover;flex:0 0 auto;background:#0b0f17}
+  .item .meta{min-width:0;flex:1 1 auto}
+  .item .meta b{
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;font-size:13.5px;font-weight:650;line-height:1.3;margin-bottom:3px;
+    word-break:break-word;
+  }
+  .item .meta span{font-size:11.5px;color:var(--muted);display:block}
+
+  .note{
+    padding:12px 14px;margin-top:14px;
+    border-radius:11px;font-size:12.5px;
+    color:#b8c5d9;line-height:1.6;
+    background:rgba(124,92,255,.08);
+    border:1px solid rgba(124,92,255,.22);
+  }
+  .note strong{color:#d9e0ee}
+  .note code{background:#0b0f17;border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:11.5px}
+  .note ul{margin:8px 0 0;padding-left:18px}
+  .note li{margin-bottom:4px}
+  .note a{color:#b7c3ff}
+
+  details.adv{
+    margin-top:14px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(255,255,255,.02);overflow:hidden;
+  }
+  details.adv summary{
+    cursor:pointer;padding:12px 14px;font-size:13.5px;font-weight:600;
+    color:var(--muted);list-style:none;user-select:none;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  details.adv summary::-webkit-details-marker{display:none}
+  details.adv summary::before{content:"▸";font-size:12px;transition:transform .15s}
+  details.adv[open] summary::before{content:"▾"}
+  details.adv[open] summary{border-bottom:1px solid var(--line)}
+  .advBody{padding:14px}
+  .advBody .lbl{margin-bottom:6px}
+  .hint{font-size:12px;color:#5d6982;margin:8px 0 0;line-height:1.55}
+  .hint code{background:#0b0f17;border:1px solid var(--line);border-radius:5px;padding:1px 4px}
+  .saved{font-size:11.5px;color:var(--ok);font-weight:600;margin-left:auto;opacity:0;transition:opacity .2s}
+  .saved.show{opacity:1}
+
+  .detectRow{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:10px 12px;border-radius:10px;
+    background:#0b0f17;border:1px solid var(--line);
+    margin-bottom:14px;
+  }
+  .detectRow .text{flex:1 1 auto;font-size:13px;color:var(--muted);min-width:0}
+  .detectRow .text b{color:var(--txt);font-weight:600}
+
+  .instList{
+    display:flex;flex-direction:column;gap:6px;margin-top:10px;
+    max-height:180px;overflow-y:auto;
+  }
+  .instItem{
+    display:flex;align-items:center;gap:8px;
+    padding:7px 10px;border-radius:8px;
+    background:#0b0f17;border:1px solid var(--line);
+    font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    color:var(--muted);
+  }
+  .instItem .dot{
+    width:8px;height:8px;border-radius:50%;flex:0 0 auto;
+    background:var(--err);box-shadow:0 0 0 2px rgba(239,68,68,.15);
+  }
+  .instItem.ok .dot{background:var(--ok);box-shadow:0 0 0 2px rgba(34,197,94,.15)}
+  .instItem .host{
+    flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .instItem .tag{
+    font-size:10px;text-transform:uppercase;letter-spacing:.04em;
+    padding:2px 6px;border-radius:99px;background:#1a2030;color:#8b98b0;
+  }
+
+  .foot{
+    color:#5d6982;font-size:11.5px;text-align:center;
+    margin-top:24px;line-height:1.6;
+  }
+  .foot a{color:#7f8ca5}
+
+  @media (max-width:400px){
+    .media img{width:104px;height:60px}
+    .chip{padding:9px 12px;font-size:13px}
+    .wrap{padding:16px 12px 40px}
+    .shareRow .ghost{font-size:12.5px}
+    .item img{width:80px;height:46px}
+  }
 </style>
 </head>
 <body>
-
-<!-- ============================================================
-     TOP BAR
-     ============================================================ -->
-<header class="topbar">
-  <div class="wrap topbar-inner">
-    <button class="brand" type="button" data-nav="download">
-      <span class="brand-mark">↓</span>
-      <span>VidGrab</span>
-    </button>
-
-    <nav class="nav">
-      <button class="nav-btn active" type="button" data-nav="download">Downloader</button>
-      <button class="nav-btn" type="button" data-nav="selfhost">Self-host</button>
-      <button class="nav-btn" type="button" data-nav="about">About</button>
-    </nav>
-
-    <button class="icon-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings">⚙</button>
-    <button class="icon-btn" id="themeBtn" type="button" title="Toggle theme" aria-label="Toggle theme">🌙</button>
-  </div>
-</header>
-
-<main class="wrap">
-
-  <!-- ==========================================================
-       VIEW: DOWNLOADER
-       ========================================================== -->
-  <section class="view active" id="view-download">
-
-    <div class="hero">
-      <h1>Download anything.<br><span class="grad">No ads. No trackers.</span></h1>
-      <p>Paste a link from YouTube, SoundCloud, TikTok, X/Twitter, Instagram, Reddit, Vimeo, Bilibili and 1000+ more.</p>
-      <div class="badges">
-        <span class="badge"><b>cobalt</b> API</span>
-        <span class="badge"><b>yt-dlp</b> API</span>
-        <span class="badge">No cookies</span>
-        <span class="badge">No tracking</span>
-        <span class="badge">100% client-side</span>
-      </div>
+<div class="wrap">
+  <header>
+    <div class="logo">&#9654;</div>
+    <div>
+      <h1>Free Video Downloader</h1>
+      <p class="sub">Auto-detects working APIs &middot; YouTube &middot; TikTok &middot; Instagram &middot; +more</p>
     </div>
+  </header>
 
-    <form class="card input-card" id="dlForm" autocomplete="off">
-      <div class="input-row">
-        <input id="urlInput" type="url" placeholder="https://www.youtube.com/watch?v=…" spellcheck="false" autocomplete="off">
-        <button class="ghost-btn" type="button" id="pasteBtn">Paste</button>
-        <button class="ghost-btn" type="button" id="clearBtn">Clear</button>
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="download" role="tab" aria-selected="true">Downloader</button>
+    <button class="tab" data-tab="search" role="tab" aria-selected="false">MP3 Search</button>
+  </div>
+
+  <!-- ========================== DOWNLOADER ========================== -->
+  <div id="panel-download" class="panel">
+    <section class="card">
+      <label class="lbl" for="url">Video URL</label>
+      <div class="inputRow">
+        <input id="url" type="url" inputmode="url" autocomplete="off"
+               autocapitalize="off" spellcheck="false"
+               placeholder="Paste a YouTube, TikTok, Instagram… link">
+        <button id="pasteBtn" class="ghost" type="button">Paste</button>
       </div>
 
-      <div class="options-row">
-        <div class="seg" id="modeSeg">
-          <button type="button" data-mode="auto" class="active">Video</button>
-          <button type="button" data-mode="audio">Audio</button>
-          <button type="button" data-mode="mute">Mute</button>
+      <div class="platRow">
+        <span id="platBadge" class="badge">Paste a link</span>
+        <button id="clearBtn" class="linkBtn" type="button">Clear</button>
+      </div>
+
+      <button id="fetchBtn" class="primary" type="button">Fetch Video</button>
+      <div id="err" class="err hidden"></div>
+
+      <details class="adv" id="settingsPanel">
+        <summary>
+          <span>API instances</span>
+          <span id="instanceStatus" class="badge info">Checking…</span>
+          <span id="savedFlag" class="saved">Saved</span>
+        </summary>
+        <div class="advBody">
+          <div class="detectRow">
+            <span id="detectIcon" class="spinner"></span>
+            <span class="text" id="detectText">Initialising detection…</span>
+            <button id="redetectBtn" class="ghost small" type="button">Detect now</button>
+          </div>
+
+          <label class="lbl" for="setPiped">Piped API (YouTube) — optional override</label>
+          <input id="setPiped" type="text" inputmode="url" autocomplete="off"
+                 autocapitalize="off" spellcheck="false"
+                 placeholder="Leave empty to use auto-detected">
+
+          <label class="lbl lbl2" for="setInvidious">Invidious API (YouTube) — optional override</label>
+          <input id="setInvidious" type="text" inputmode="url" autocomplete="off"
+                 autocapitalize="off" spellcheck="false"
+                 placeholder="Leave empty to use auto-detected">
+
+          <label class="lbl lbl2" for="setCobalt">Cobalt API (all platforms) — optional override</label>
+          <input id="setCobalt" type="text" inputmode="url" autocomplete="off"
+                 autocapitalize="off" spellcheck="false"
+                 placeholder="Leave empty to use auto-detected">
+
+          <div class="detectRow" style="margin-top:14px;margin-bottom:10px">
+            <span class="text">Detected working instances</span>
+            <button id="showInstBtn" class="ghost small" type="button">Show / Hide</button>
+          </div>
+          <div id="instList" class="instList hidden"></div>
+
+          <div class="btnRow" style="margin-top:14px">
+            <button id="resetCfgBtn" class="ghost" type="button" style="flex:1">Reset overrides</button>
+          </div>
+
+          <p class="hint">
+            The app tests a short list of public instances on first load and only uses
+            the ones that respond with CORS. Instance URLs are never sent to us —
+            everything happens in your browser.
+          </p>
         </div>
+      </details>
+    </section>
 
-        <select class="select" id="qualitySel" title="Video quality">
-          <option value="max">Best quality</option>
-          <option value="2160">2160p (4K)</option>
-          <option value="1440">1440p</option>
-          <option value="1080" selected>1080p</option>
-          <option value="720">720p</option>
-          <option value="480">480p</option>
-          <option value="360">360p</option>
-        </select>
-
-        <select class="select hidden" id="audioFmtSel" title="Audio format">
-          <option value="mp3" selected>mp3</option>
-          <option value="ogg">ogg (opus)</option>
-          <option value="wav">wav</option>
-          <option value="opus">opus</option>
-        </select>
-
-        <button class="primary-btn" type="submit" id="goBtn">Download</button>
-      </div>
-    </form>
-
-    <div class="status hidden" id="statusEl"></div>
-    <div class="results" id="resultsEl"></div>
-
-    <div class="card history-card">
-      <h3>Recent links</h3>
-      <ul class="history" id="historyList"></ul>
-    </div>
-  </section>
-
-  <!-- ==========================================================
-       VIEW: SELF-HOST
-       ========================================================== -->
-  <section class="view doc" id="view-selfhost">
-    <h2>Self-host it</h2>
-    <p>VidGrab is a static file — but it needs a backend to actually pull media. Pick one of the stacks below. Everything here is copy-paste ready.</p>
-
-    <!-- MeTube -->
-    <div class="doc-section">
-      <h3><span class="dot"></span>1 · MeTube (yt-dlp web UI)</h3>
-      <p>MeTube is a self-hosted web UI for <code>yt-dlp</code>. Paste a link, it downloads to your server — single videos, playlists or whole channels.</p>
-      <ul>
-        <li>Runs in Docker, listens on port <b>8081</b></li>
-        <li>Downloads land in <code>./downloads</code></li>
-        <li>Full <code>yt-dlp</code> option passthrough via <code>YTDL_OPTIONS</code></li>
-      </ul>
-      <div class="code-block">
-        <div class="code-head"><span>docker-compose.yml</span><button class="ghost-btn tiny" type="button" data-copy="metube">Copy</button></div>
-        <pre><code data-snippet="metube"></code></pre>
-      </div>
-    </div>
-
-    <!-- cobalt -->
-    <div class="doc-section">
-      <h3><span class="dot"></span>2 · cobalt API (what this page talks to by default)</h3>
-      <p>cobalt is a privacy-first media downloader. Its API is a single <code>POST /</code> endpoint that returns a tunnel or redirect URL — no ads, no trackers.</p>
-      <ul>
-        <li>Default port <b>9000</b></li>
-        <li>Set <code>API_URL</code> to the public URL of your instance</li>
-        <li>If you enable <b>Turnstile</b>, VidGrab will pop the challenge automatically</li>
-        <li>If you enable an <b>API key</b>, paste it in ⚙ Settings → cobalt → API key</li>
-        <li>If you leave both disabled, VidGrab works with <b>no auth at all</b></li>
-      </ul>
-      <div class="code-block">
-        <div class="code-head"><span>docker-compose.yml</span><button class="ghost-btn tiny" type="button" data-copy="cobalt">Copy</button></div>
-        <pre><code data-snippet="cobalt"></code></pre>
-      </div>
-    </div>
-
-    <!-- PHP yt-dlp backend -->
-    <div class="doc-section">
-      <h3><span class="dot"></span>3 · Minimal PHP + yt-dlp backend</h3>
-      <p>This is the <b>web-youtube-downloader</b> / <b>Jayasakthi-07</b> approach: two PHP files wrapping <code>yt-dlp</code>, served by nginx. VidGrab can talk to it in <b>yt-dlp API</b> mode.</p>
-      <ul>
-        <li><code>api.php</code> — returns <code>{ title, links:[{url,format,itag,…}] }</code></li>
-        <li><code>download.php</code> — streams the media back with a real filename</li>
-        <li>In VidGrab: <b>⚙ Settings → Engine = yt-dlp</b>, API base = <code>https://your-host</code>, proxy = <code>https://your-host/download.php?video_url=</code></li>
-      </ul>
-
-      <div class="code-block">
-        <div class="code-head"><span>public/api.php</span><button class="ghost-btn tiny" type="button" data-copy="phpApi">Copy</button></div>
-        <pre><code data-snippet="phpApi"></code></pre>
+    <!-- result -->
+    <section id="infoCard" class="card hidden">
+      <div class="media">
+        <img id="thumb" alt="" referrerpolicy="no-referrer">
+        <div class="mediaInfo">
+          <h2 id="title">&mdash;</h2>
+          <p id="meta" class="muted"></p>
+        </div>
       </div>
 
-      <div class="code-block">
-        <div class="code-head"><span>public/download.php</span><button class="ghost-btn tiny" type="button" data-copy="phpDownload">Copy</button></div>
-        <pre><code data-snippet="phpDownload"></code></pre>
+      <div class="modeToggle" role="group" aria-label="Format mode">
+        <button class="mode active" data-mode="video" type="button">Video</button>
+        <button class="mode" data-mode="audio" type="button">Audio</button>
       </div>
 
-      <div class="code-block">
-        <div class="code-head"><span>nginx.conf</span><button class="ghost-btn tiny" type="button" data-copy="nginx">Copy</button></div>
-        <pre><code data-snippet="nginx"></code></pre>
+      <!-- direct streams (Piped / Invidious) -->
+      <div id="directFormats">
+        <div class="lbl">Available streams</div>
+        <div id="chips" class="chips"></div>
       </div>
 
-      <div class="code-block">
-        <div class="code-head"><span>docker-compose.yml</span><button class="ghost-btn tiny" type="button" data-copy="phpStack">Copy</button></div>
-        <pre><code data-snippet="phpStack"></code></pre>
+      <!-- server-side conversion (Cobalt) -->
+      <div id="convertFormats" class="hidden">
+        <div id="videoOpts">
+          <label class="lbl" for="vQuality">Video quality</label>
+          <select id="vQuality"></select>
+          <p class="hint">Output container follows the source (MP4 / H.264 preferred).</p>
+        </div>
+        <div id="audioOpts" class="hidden">
+          <label class="lbl" for="aFormat">Audio format</label>
+          <select id="aFormat"></select>
+          <label class="lbl lbl2" for="aBitrate">Bitrate</label>
+          <select id="aBitrate"></select>
+        </div>
       </div>
 
-      <div class="code-block">
-        <div class="code-head"><span>Dockerfile (php + yt-dlp)</span><button class="ghost-btn tiny" type="button" data-copy="phpDockerfile">Copy</button></div>
-        <pre><code data-snippet="phpDockerfile"></code></pre>
-      </div>
-    </div>
-
-    <!-- GitHub Pages -->
-    <div class="doc-section">
-      <h3><span class="dot"></span>4 · Deploy this page on GitHub Pages</h3>
-      <p>This file is 100% static — no build step, no dependencies, no CDN.</p>
-      <ul>
-        <li>Save it as <code>index.html</code> in your repo root</li>
-        <li>Repo → Settings → Pages → Source: <b>Deploy from a branch</b> → <code>main</code> / <code>/root</code></li>
-        <li>Open <code>https://&lt;user&gt;.github.io/&lt;repo&gt;/</code></li>
-        <li>If the public cobalt instance is blocked, self-host cobalt and set your own URL in ⚙ Settings</li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- ==========================================================
-       VIEW: ABOUT
-       ========================================================== -->
-  <section class="view doc" id="view-about">
-    <h2>About</h2>
-    <p>VidGrab is a single-file front-end that unifies the best open-source downloader projects into one privacy-respecting interface.</p>
-
-    <div class="proj-grid">
-      <div class="proj">
-        <h4>cobalt <span class="stars">★ 45k+</span></h4>
-        <p>A modern, privacy-focused downloader API. No ads, no trackers, no proprietary clients — just a clean <code>POST /</code> endpoint.</p>
-        <div class="tags"><span>TypeScript</span><span>API</span><span>Privacy</span></div>
-        <a href="https://github.com/imputnet/cobalt" target="_blank" rel="noopener noreferrer">github.com/imputnet/cobalt →</a>
+      <div class="btnRow">
+        <button id="dlBtn" class="primary" type="button">Download</button>
+        <button id="cancelBtn" class="ghost danger hidden" type="button">Cancel</button>
       </div>
 
-      <div class="proj">
-        <h4>MeTube</h4>
-        <p>Self-hosted web UI for <code>yt-dlp</code>. Paste links, download single videos, playlists or entire channels straight to your server.</p>
-        <div class="tags"><span>Python</span><span>Docker</span><span>yt-dlp</span></div>
-        <a href="https://github.com/alexta69/metube" target="_blank" rel="noopener noreferrer">github.com/alexta69/metube →</a>
+      <div class="shareRow">
+        <button id="ytdlnisBtn" class="ghost" type="button">Open in ytdlnis</button>
+        <button id="copyBtn" class="ghost" type="button">Copy link</button>
+        <button id="openSrcBtn" class="ghost" type="button">Open source</button>
       </div>
 
-      <div class="proj">
-        <h4>peter279k/web-youtube-downloader</h4>
-        <p>A lightweight PHP + nginx service that shells out to <code>yt-dlp</code> and streams the result back through a download proxy.</p>
-        <div class="tags"><span>PHP</span><span>nginx</span><span>yt-dlp</span></div>
-        <a href="https://github.com/peter279k/web-youtube-downloader" target="_blank" rel="noopener noreferrer">github.com/peter279k/… →</a>
+      <div id="pickerRow" class="pickerRow hidden"></div>
+
+      <div id="barWrap" class="hidden">
+        <div class="barTrack"><div id="bar" class="barFill"></div></div>
+        <div class="barMeta">
+          <span id="pct">0%</span>
+          <span id="speed"></span>
+        </div>
       </div>
 
-      <div class="proj">
-        <h4>Jayasakthi-07/YouTube-Downloader</h4>
-        <p>A straightforward web tool that grabs video and audio in a range of formats and resolutions via a small JSON API.</p>
-        <div class="tags"><span>PHP</span><span>JSON API</span><span>Simple</span></div>
-        <a href="https://github.com/Jayasakthi-07/YouTube-Downloader" target="_blank" rel="noopener noreferrer">github.com/Jayasakthi-07/… →</a>
+      <div id="status" class="status"></div>
+      <div id="fileRow" class="hidden">
+        <a id="saveLink" class="save" href="#" download>Save file again</a>
       </div>
-    </div>
-
-    <div class="doc-section" style="margin-top:22px">
-      <h3><span class="dot"></span>How VidGrab handles cobalt auth</h3>
-      <ul>
-        <li>cobalt v10+ requires a short-lived <b>JWT session token</b> for its official instance, issued after a Cloudflare <b>Turnstile</b> challenge.</li>
-        <li>On first download VidGrab calls <code>GET /session</code>, detects whether auth is needed, runs the challenge if present, then <code>POST /session</code> to obtain the JWT.</li>
-        <li>The JWT is cached in <code>localStorage</code> and attached as <code>Authorization: Bearer …</code>. Expired or rejected tokens are refreshed automatically and the request is retried once.</li>
-        <li>Instances that use <b>API keys</b> instead are supported via <code>Authorization: Api-Key …</code>. You can also paste a bearer token manually.</li>
-        <li>Instances with no auth (typical self-hosted setup) work without any token.</li>
-        <li>Turnstile sitekeys are usually <b>domain-restricted</b>: the official instance's challenge will not succeed when this page is hosted on GitHub Pages. Self-host cobalt, or use the yt-dlp engine.</li>
-      </ul>
-    </div>
-
-    <div class="doc-section">
-      <h3><span class="dot"></span>Legal</h3>
-      <p style="margin:0">Download only content you own or that is explicitly licensed for reuse. Respect the terms of service of the platforms you use and the copyright laws of your jurisdiction. The authors of this page take no responsibility for misuse.</p>
-    </div>
-  </section>
-
-</main>
-
-<footer>
-  <div class="wrap">
-    Built with <span class="heart">♥</span> on top of <b>cobalt</b>, <b>yt-dlp</b> &amp; MeTube — single file, no dependencies, no trackers.
+    </section>
   </div>
-</footer>
 
-<!-- ============================================================
-     TURNSTILE MODAL
-     ============================================================ -->
-<div class="modal-backdrop turnstile hidden" id="turnstileModal">
-  <div class="modal card" style="max-width:480px">
-    <div class="modal-head">
-      <h3>🔐 Verify to continue</h3>
-      <button class="icon-btn" type="button" id="closeTurnstile" aria-label="Close">✕</button>
-    </div>
-    <div class="modal-body">
-      <p class="muted" style="font-size:13.5px;margin-bottom:0">
-        This cobalt instance requires a Cloudflare Turnstile challenge before it will issue a session token.
-        Solve it below to continue. The token is cached locally and refreshed automatically.
+  <!-- ========================== MP3 SEARCH ========================== -->
+  <div id="panel-search" class="panel hidden">
+    <section class="card">
+      <label class="lbl" for="q">Search music</label>
+      <div class="inputRow">
+        <input id="q" type="text" autocomplete="off" autocapitalize="off"
+               spellcheck="false" placeholder="Song, artist, album…">
+        <button id="searchBtn" class="ghost" type="button">Search</button>
+      </div>
+
+      <label class="lbl lbl2" for="searchBitrate">Preferred MP3 bitrate</label>
+      <select id="searchBitrate">
+        <option value="320">320 kbps (best)</option>
+        <option value="256">256 kbps</option>
+        <option value="192">192 kbps</option>
+        <option value="128" selected>128 kbps</option>
+        <option value="64">64 kbps (smallest)</option>
+      </select>
+
+      <div id="searchErr" class="err hidden"></div>
+
+      <p class="hint">
+        Search uses the same auto-detected YouTube APIs. Pick a result to load it into
+        the downloader with audio mode preselected.
       </p>
-      <div id="turnstileContainer"></div>
-      <div class="hint" id="turnstileHint"></div>
-    </div>
+    </section>
+
+    <section id="searchResultsCard" class="card hidden">
+      <div class="lbl">Results</div>
+      <div id="searchList" class="list"></div>
+    </section>
   </div>
-</div>
 
-<!-- ============================================================
-     SETTINGS MODAL
-     ============================================================ -->
-<div class="modal-backdrop hidden" id="settingsModal">
-  <div class="modal card">
-    <div class="modal-head">
-      <h3>⚙ Settings</h3>
-      <button class="icon-btn" type="button" id="closeSettings" aria-label="Close">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="field">
-        <label for="setEngine">Engine</label>
-        <select id="setEngine">
-          <option value="cobalt">cobalt API — POST /</option>
-          <option value="ytdlp">yt-dlp JSON API — GET /video/</option>
-        </select>
-        <div class="hint">cobalt gives tunnel/redirect links (needs a JWT or API key on official instances). yt-dlp mode expects a JSON endpoint returning <code>{ links: [{ url, format, itag }] }</code>.</div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div id="cobaltFields">
-        <div class="field">
-          <label for="setApiBase">cobalt instance URL</label>
-          <input id="setApiBase" type="url" list="instancePresets" placeholder="https://api.cobalt.tools" spellcheck="false">
-          <datalist id="instancePresets">
-            <option value="https://api.cobalt.tools">Official instance (Turnstile)</option>
-            <option value="https://cobalt-api.kwiatekmiki.com">Community instance</option>
-            <option value="http://localhost:9000">Local docker (port 9000)</option>
-          </datalist>
-          <div class="hint">Public instances are rate-limited and their Turnstile sitekeys are usually domain-restricted. Self-host cobalt for a reliable setup.</div>
-        </div>
-
-        <div class="field" style="margin-top:16px">
-          <label for="setApiKey">API key (optional)</label>
-          <input id="setApiKey" type="password" placeholder="sent as: Authorization: Api-Key …" spellcheck="false">
-          <div class="hint">For instances running with <code>API_KEY_URL</code>. Leave empty if not used.</div>
-        </div>
-
-        <div class="field" style="margin-top:16px">
-          <label for="setBearerToken">Bearer token (optional, advanced)</label>
-          <input id="setBearerToken" type="password" placeholder="paste a JWT obtained from /session" spellcheck="false">
-          <div class="hint">Overrides the automatic Turnstile flow. Expired tokens are ignored.</div>
-        </div>
-
-        <div class="field" style="margin-top:16px">
-          <label>Session state</label>
-          <div class="session-line" id="sessionStatus">No session yet.</div>
-          <button class="ghost-btn small" type="button" id="refreshSessionBtn" style="margin-top:8px;width:100%">
-            Test / refresh session
-          </button>
-        </div>
-
-        <div class="field" style="margin-top:16px">
-          <label for="setFilenameStyle">Filename style</label>
-          <select id="setFilenameStyle">
-            <option value="pretty">pretty</option>
-            <option value="basic">basic</option>
-            <option value="nerdy">nerdy</option>
-          </select>
-        </div>
-
-        <div class="field" style="margin-top:16px">
-          <label for="setCodec">YouTube codec</label>
-          <select id="setCodec">
-            <option value="h264">h264 — max compatibility</option>
-            <option value="vp9">vp9</option>
-            <option value="av1">av1</option>
-          </select>
-        </div>
-      </div>
-
-      <div id="ytdlpFields" class="hidden">
-        <div class="field">
-          <label for="setYtdlpBase">yt-dlp API base URL</label>
-          <input id="setYtdlpBase" type="url" placeholder="https://your-server.example" spellcheck="false">
-          <div class="hint">VidGrab will call <code>BASE/video/?video_url=&lt;encoded&gt;</code>.</div>
-        </div>
-
-        <div class="field" style="margin-top:16px">
-          <label for="setProxy">Download proxy (optional)</label>
-          <input id="setProxy" type="url" placeholder="https://your-server.example/download.php?video_url=" spellcheck="false">
-          <div class="hint">If set, download buttons point at <code>PROXY + encodeURIComponent(mediaUrl)</code>. Leave empty for direct links.</div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <button class="ghost-btn" type="button" id="clearHistoryBtn" style="width:100%">Clear recent links</button>
-    </div>
-
-    <div class="modal-foot">
-      <button class="ghost-btn" type="button" id="resetSettings">Reset defaults</button>
-      <button class="primary-btn" type="button" id="saveSettings">Save</button>
-    </div>
+  <!-- ========================== INFO ========================== -->
+  <div class="note">
+    <strong>What changed in this build</strong>
+    <ul>
+      <li><strong>Cobalt 404 fixed</strong> — the old <code>/api/json</code> endpoint is gone; only <code>POST /</code> on the base URL is used, matching current Cobalt v10.</li>
+      <li><strong>Auto-detect</strong> — working Piped, Invidious and Cobalt instances are discovered on first load and refreshed on demand.</li>
+      <li><strong>Multi-instance failover</strong> — each download tries the detected list in order; your manual override always goes first.</li>
+    </ul>
+    <strong style="display:block;margin-top:10px">Limits</strong>
+    Direct YouTube streams top out around 128–160 kbps audio and 360p/720p muxed video.
+    For merged 1080p+/4K or exotic containers (AVI, FLV, WMV, 3GP, M4V) use
+    <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a>
+    with ffmpeg, or the ytdlnis app on Android.
   </div>
-</div>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <p class="foot">
+    Interface inspired by <a href="https://limbuilder.github.io/yt-converter/" target="_blank" rel="noopener noreferrer">limbuilder.github.io/yt-converter</a>
+    &middot; Engine modelled on <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a><br>
+    Download only content you own or are legally allowed to download.<br>
+    Respect each platform's Terms of Service and local copyright law.
+  </p>
+</div>
 
 <script>
 (function () {
-  'use strict';
+  "use strict";
 
-  /* ==========================================================
-     CONSTANTS
-     ========================================================== */
-  var LS_SETTINGS = 'vidgrab.settings.v1';
-  var LS_HISTORY  = 'vidgrab.history.v1';
-  var LS_THEME    = 'vidgrab.theme.v1';
-  var COBALT_SESSION_KEY = 'vidgrab.cobalt.session.v1';
+  /* ================================================================== *
+   * 0. Tiny helpers
+   * ================================================================== */
+  const $   = (id) => document.getElementById(id);
+  const $all = (sel) => Array.prototype.slice.call(document.querySelectorAll(sel));
 
-  var DEFAULT_SETTINGS = {
-    engine: 'cobalt',
-    apiBase: 'https://api.cobalt.tools',
-    apiKey: '',
-    bearerToken: '',
-    filenameStyle: 'pretty',
-    videoCodec: 'h264',
-    ytdlpBase: '',
-    downloadProxy: '',
-    mode: 'auto',
-    videoQuality: '1080',
-    audioFormat: 'mp3'
-  };
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
 
-  /* ==========================================================
-     SNIPPETS (rendered into the Self-host view)
-     ========================================================== */
-  var SNIPPETS = {
+  const clamp01 = (n) => Math.max(0, Math.min(1, n));
 
-    metube:
-'services:\n' +
-'  metube:\n' +
-'    image: ghcr.io/alexta69/metube\n' +
-'    container_name: metube\n' +
-'    restart: unless-stopped\n' +
-'    ports:\n' +
-'      - "8081:8081"\n' +
-'    volumes:\n' +
-'      - ./downloads:/downloads\n' +
-'    environment:\n' +
-'      # Pass any yt-dlp option as JSON:\n' +
-'      YTDL_OPTIONS: \'{"format":"bestvideo*+bestaudio/best","noplaylist":false}\'\n' +
-'      # OUTPUT_TEMPLATE: \'%(title)s.%(ext)s\'\n' +
-'      # DELETE_FILE_AFTER_DOWNLOAD: "false"\n',
-
-    cobalt:
-'services:\n' +
-'  cobalt:\n' +
-'    image: ghcr.io/imputnet/cobalt:10\n' +
-'    container_name: cobalt\n' +
-'    restart: unless-stopped\n' +
-'    read_only: true\n' +
-'    init: true\n' +
-'    ports:\n' +
-'      - "9000:9000"\n' +
-'    environment:\n' +
-'      # Public URL of this instance (must match how you reach it, trailing slash):\n' +
-'      API_URL: "http://localhost:9000/"\n' +
-'      # Allow any origin (needed when this page is served from another host):\n' +
-'      CORS_WILDCARD: "1"\n' +
-'      # Or restrict to your front-end:\n' +
-'      # CORS_URL: "https://your-frontend.example"\n' +
-'      #\n' +
-'      # OPTIONAL — Cloudflare Turnstile. If enabled, VidGrab pops\n' +
-'      # the challenge automatically before calling POST /.\n' +
-'      # TURNSTILE_SITEKEY: "0x4AAAAAAA..."\n' +
-'      # TURNSTILE_SECRET: "0x4AAAAAAA..."\n' +
-'      #\n' +
-'      # OPTIONAL — API-key auth. Clients send "Authorization: Api-Key <key>".\n' +
-'      # API_KEY_URL: "https://your-auth.example/check"\n' +
-'    volumes:\n' +
-'      - ./cobalt-data:/data\n' +
-'\n' +
-'# Quick test after it boots:\n' +
-'#   curl -s http://localhost:9000/session | jq\n' +
-'#   curl -s -X POST http://localhost:9000/ \\\n' +
-'#     -H "Accept: application/json" -H "Content-Type: application/json" \\\n' +
-'#     -d \'{"url":"https://youtu.be/dQw4w9WgXcQ","videoQuality":"1080"}\' | jq\n',
-
-    phpApi:
-'<?php\n' +
-'/**\n' +
-' * api.php — minimal yt-dlp JSON API\n' +
-' * GET /api.php?video_url=https://www.youtube.com/watch?v=...\n' +
-' * Response: { "title": "...", "links": [ { "url": "...", "format": "...", "itag": "..." } ] }\n' +
-' */\n' +
-'declare(strict_types=1);\n' +
-'\n' +
-'header(\'Content-Type: application/json; charset=utf-8\');\n' +
-'header(\'Access-Control-Allow-Origin: *\');\n' +
-'header(\'Access-Control-Allow-Headers: Content-Type\');\n' +
-'header(\'Access-Control-Allow-Methods: GET, OPTIONS\');\n' +
-'\n' +
-'if (($_SERVER[\'REQUEST_METHOD\'] ?? \'GET\') === \'OPTIONS\') {\n' +
-'    http_response_code(204);\n' +
-'    exit;\n' +
-'}\n' +
-'\n' +
-'$url = $_GET[\'video_url\'] ?? $_GET[\'url\'] ?? null;\n' +
-'\n' +
-'if (!$url || !filter_var($url, FILTER_VALIDATE_URL)) {\n' +
-'    http_response_code(400);\n' +
-'    echo json_encode([\'error\' => \'Missing or invalid video_url parameter\']);\n' +
-'    exit;\n' +
-'}\n' +
-'\n' +
-'$ytDlp = \'/usr/local/bin/yt-dlp\';\n' +
-'\n' +
-'$cmd = escapeshellcmd($ytDlp)\n' +
-'     . \' --dump-single-json --no-warnings --no-playlist --no-check-certificates \'\n' +
-'     . escapeshellarg($url)\n' +
-'     . \' 2>&1\';\n' +
-'\n' +
-'$output = shell_exec($cmd);\n' +
-'$data   = json_decode((string) $output, true);\n' +
-'\n' +
-'if (!is_array($data) || empty($data[\'formats\'])) {\n' +
-'    http_response_code(502);\n' +
-'    echo json_encode([\n' +
-'        \'error\' => \'yt-dlp returned no formats\',\n' +
-'        \'raw\'   => substr((string) $output, 0, 800),\n' +
-'    ]);\n' +
-'    exit;\n' +
-'}\n' +
-'\n' +
-'$links = [];\n' +
-'\n' +
-'foreach ($data[\'formats\'] as $f) {\n' +
-'    if (empty($f[\'url\'])) {\n' +
-'        continue;\n' +
-'    }\n' +
-'    $links[] = [\n' +
-'        \'format\'   => ($f[\'format_note\'] ?? $f[\'format_id\'] ?? \'?\') . \' / \' . ($f[\'ext\'] ?? \'mp4\'),\n' +
-'        \'itag\'     => (string) ($f[\'format_id\'] ?? \'\'),\n' +
-'        \'ext\'      => $f[\'ext\'] ?? \'\',\n' +
-'        \'height\'   => $f[\'height\'] ?? null,\n' +
-'        \'vcodec\'   => $f[\'vcodec\'] ?? null,\n' +
-'        \'acodec\'   => $f[\'acodec\'] ?? null,\n' +
-'        \'filesize\' => $f[\'filesize\'] ?? $f[\'filesize_approx\'] ?? null,\n' +
-'        \'url\'      => $f[\'url\'],\n' +
-'    ];\n' +
-'}\n' +
-'\n' +
-'echo json_encode([\n' +
-'    \'title\' => $data[\'title\'] ?? \'\',\n' +
-'    \'links\' => $links,\n' +
-'], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);\n',
-
-    phpDownload:
-'<?php\n' +
-'/**\n' +
-' * download.php — streams remote media with a real filename\n' +
-' * GET /download.php?video_url=https://...&filename=video.mp4\n' +
-' */\n' +
-'declare(strict_types=1);\n' +
-'\n' +
-'$target = $_GET[\'video_url\'] ?? \'\';\n' +
-'\n' +
-'if (!filter_var($target, FILTER_VALIDATE_URL)) {\n' +
-'    http_response_code(400);\n' +
-'    exit(\'Bad video_url\');\n' +
-'}\n' +
-'\n' +
-'$scheme = strtolower((string) parse_url($target, PHP_URL_SCHEME));\n' +
-'if (!in_array($scheme, [\'http\', \'https\'], true)) {\n' +
-'    http_response_code(400);\n' +
-'    exit(\'Bad scheme\');\n' +
-'}\n' +
-'\n' +
-'$name = $_GET[\'filename\'] ?? \'video.mp4\';\n' +
-'$name = preg_replace(\'/[^A-Za-z0-9._-]/\', \'_\', basename($name));\n' +
-'if ($name === \'\' || $name === null) {\n' +
-'    $name = \'video.mp4\';\n' +
-'}\n' +
-'\n' +
-'$fp = @fopen($target, \'rb\');\n' +
-'if (!$fp) {\n' +
-'    http_response_code(502);\n' +
-'    exit(\'Cannot open remote stream\');\n' +
-'}\n' +
-'\n' +
-'// Kill PHP output buffering so we can stream big files.\n' +
-'while (ob_get_level() > 0) {\n' +
-'    ob_end_clean();\n' +
-'}\n' +
-'\n' +
-'header(\'Content-Type: application/octet-stream\');\n' +
-'header(\'Content-Disposition: attachment; filename="\' . $name . \'"\');\n' +
-'header(\'Content-Transfer-Encoding: binary\');\n' +
-'header(\'Cache-Control: no-store\');\n' +
-'header(\'X-Accel-Buffering: no\');\n' +
-'\n' +
-'while (!feof($fp)) {\n' +
-'    echo fread($fp, 1024 * 64);\n' +
-'    flush();\n' +
-'    if (connection_aborted()) {\n' +
-'        break;\n' +
-'    }\n' +
-'}\n' +
-'\n' +
-'fclose($fp);\n' +
-'exit;\n',
-
-    nginx:
-'server {\n' +
-'    listen 80;\n' +
-'    server_name _;\n' +
-'\n' +
-'    root /var/www/html;\n' +
-'    index index.html;\n' +
-'\n' +
-'    client_max_body_size 8m;\n' +
-'\n' +
-'    location / {\n' +
-'        try_files $uri $uri/ =404;\n' +
-'        add_header Access-Control-Allow-Origin *;\n' +
-'    }\n' +
-'\n' +
-'    location ~ \\.php$ {\n' +
-'        include fastcgi_params;\n' +
-'        fastcgi_pass php:9000;\n' +
-'        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n' +
-'        fastcgi_read_timeout 300s;\n' +
-'        fastcgi_buffering off;\n' +
-'    }\n' +
-'}\n',
-
-    phpStack:
-'services:\n' +
-'  web:\n' +
-'    image: nginx:alpine\n' +
-'    container_name: vidgrab-web\n' +
-'    restart: unless-stopped\n' +
-'    ports:\n' +
-'      - "8080:80"\n' +
-'    volumes:\n' +
-'      - ./public:/var/www/html:ro\n' +
-'      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro\n' +
-'    depends_on:\n' +
-'      - php\n' +
-'\n' +
-'  php:\n' +
-'    build: .\n' +
-'    container_name: vidgrab-php\n' +
-'    restart: unless-stopped\n' +
-'    volumes:\n' +
-'      - ./public:/var/www/html\n',
-
-    phpDockerfile:
-'FROM php:8.3-fpm-alpine\n' +
-'\n' +
-'RUN apk add --no-cache python3 py3-pip ffmpeg ca-certificates \\\n' +
-'    && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \\\n' +
-'         -o /usr/local/bin/yt-dlp \\\n' +
-'    && chmod a+rx /usr/local/bin/yt-dlp \\\n' +
-'    && yt-dlp --version\n' +
-'\n' +
-'EXPOSE 9000\n'
-  };
-
-  /* ==========================================================
-     TINY DOM HELPERS
-     ========================================================== */
-  function $(sel, root) { return (root || document).querySelector(sel); }
-  function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
-  function el(tag, cls) {
-    var e = document.createElement(tag);
-    if (cls) { e.className = cls; }
-    return e;
+  function fmtDur(sec) {
+    const s = Math.round(Number(sec) || 0);
+    if (!s) return "";
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const x = s % 60;
+    const p = (n) => (n < 10 ? "0" + n : "" + n);
+    return h > 0 ? h + ":" + p(m) + ":" + p(x) : m + ":" + p(x);
   }
 
-  /* ==========================================================
-     ELEMENT CACHE
-     ========================================================== */
-  var urlInput     = $('#urlInput');
-  var dlForm       = $('#dlForm');
-  var goBtn        = $('#goBtn');
-  var pasteBtn     = $('#pasteBtn');
-  var clearBtn     = $('#clearBtn');
-  var modeSeg      = $('#modeSeg');
-  var qualitySel   = $('#qualitySel');
-  var audioFmtSel  = $('#audioFmtSel');
-  var statusEl     = $('#statusEl');
-  var resultsEl    = $('#resultsEl');
-  var historyList  = $('#historyList');
-  var themeBtn     = $('#themeBtn');
-  var settingsBtn  = $('#settingsBtn');
-  var settingsModal= $('#settingsModal');
-  var toastEl      = $('#toast');
+  function fmtBytes(n) {
+    n = Number(n);
+    if (!n || !isFinite(n) || n < 0) return "";
+    const u = ["B", "KB", "MB", "GB"];
+    let i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return (Math.round(n * 10) / 10) + " " + u[i];
+  }
 
-  /* ==========================================================
-     SETTINGS STORAGE
-     ========================================================== */
-  var settings = loadSettings();
+  function parseSize(v) {
+    if (v == null || v === "") return 0;
+    if (typeof v === "number") return isFinite(v) ? v : 0;
+    const s = String(v).trim();
+    if (/^\d+$/.test(s)) return Number(s);
+    const m = s.match(/([\d.]+)\s*(B|KB|KiB|MB|MiB|GB|GiB)/i);
+    if (!m) return 0;
+    const n = parseFloat(m[1]);
+    const unit = m[2].toLowerCase();
+    const mult = unit[0] === "g" ? 1e9 : unit[0] === "m" ? 1e6 : unit[0] === "k" ? 1e3 : 1;
+    return Math.round(n * mult);
+  }
 
-  function loadSettings() {
-    var out = {};
-    var key;
-    for (key in DEFAULT_SETTINGS) {
-      if (Object.prototype.hasOwnProperty.call(DEFAULT_SETTINGS, key)) {
-        out[key] = DEFAULT_SETTINGS[key];
+  function safeFilename(name) {
+    return String(name || "video")
+      .replace(/[<>:"\/\\|?*\x00-\x1f]/g, "_")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 120) || "video";
+  }
+
+  function normBase(b) {
+    let s = String(b || "").trim();
+    if (!s) return "";
+    if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+    return s.replace(/\/+$/, "");
+  }
+
+  function hostOf(u) {
+    try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; }
+  }
+
+  function errName(e) { return (e && e.name) || ""; }
+
+  function looksLikeNetworkError(e) {
+    const msg = String((e && e.message) || e || "");
+    return (e instanceof TypeError) ||
+           /failed to fetch|networkerror|load failed|network request failed/i.test(msg) ||
+           errName(e) === "NetworkError";
+  }
+
+  function withTimeout(promise, ms, message) {
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(() => {
+        const e = new Error(message || "Timed out after " + ms + " ms");
+        e.name = "TimeoutError";
+        reject(e);
+      }, ms);
+      promise.then(
+        (v) => { clearTimeout(t); resolve(v); },
+        (e) => { clearTimeout(t); reject(e); }
+      );
+    });
+  }
+
+  /* ================================================================== *
+   * 1. Instance lists
+   * ------------------------------------------------------------------
+   * These are just CANDIDATES. On first load (and whenever you press
+   * "Detect now") each one is pinged and only CORS-friendly, responsive
+   * instances end up in the working set used for downloads.
+   *
+   * The old /api/json Cobalt endpoint is intentionally NOT tried — it
+   * returns 404 on every current Cobalt v10 instance.
+   * ================================================================== */
+  const INSTANCES = {
+    piped: [
+      "https://pipedapi.kavin.rocks",
+      "https://pipedapi.adminforge.de",
+      "https://api.piped.projectsegfau.lt",
+      "https://pipedapi.drgns.space",
+      "https://pipedapi.ducks.party",
+      "https://pipedapi.darkness.services",
+      "https://pipedapi.leptons.xyz",
+      "https://pipedapi.nosebs.ru",
+      "https://pipedapi.reallyaweso.me",
+      "https://pipedapi.r4fo.com",
+      "https://piped-api.lunar.icu",
+      "https://pipedapi.orangenet.cc",
+    ],
+    invidious: [
+      "https://inv.nadeko.net",
+      "https://invidious.nerdvpn.de",
+      "https://invidious.f5.si",
+      "https://yewtu.be",
+      "https://inv.tux.pizza",
+      "https://invidious.privacyredirect.com",
+      "https://invidious.materialio.us",
+      "https://iv.ggtyler.dev",
+      "https://invidious.jing.rocks",
+      "https://invidious.moomoo.me",
+      "https://invidious.reallyaweso.me",
+      "https://yt.artemislena.eu",
+    ],
+    cobalt: [
+      "https://api.cobalt.tools",
+      "https://co.eepy.today",
+      "https://cobalt-api.kwiatekmiki.com",
+      "https://cobalt-backend.canine.tools",
+      "https://cobalt.255x.ru",
+      "https://api.cobalt.best",
+      "https://cobalt-api.meowing.de",
+      "https://cobalt.aeong.dev",
+      "https://cobalt-api.ayo.tf",
+      "https://capi.3kh0.net",
+    ],
+  };
+
+  const TEST_VIDEO_ID = "dQw4w9WgXcQ";
+
+  /* ================================================================== *
+   * 2. Config (manual overrides) — separate from detection cache
+   * ================================================================== */
+  const CFG_KEY = "ytc:cfg:v3";
+  const DETECT_KEY = "ytc:detect:v3";
+  const DETECT_TTL = 60 * 60 * 1000;   // 1 h
+
+  const cfg = { piped: "", invidious: "", cobalt: "" };
+
+  function loadCfg() {
+    try {
+      const raw = localStorage.getItem(CFG_KEY);
+      if (!raw) return;
+      const o = JSON.parse(raw);
+      if (!o || typeof o !== "object") return;
+      ["piped", "invidious", "cobalt"].forEach((k) => {
+        if (typeof o[k] === "string") cfg[k] = o[k];
+      });
+    } catch (e) { /* ignore */ }
+  }
+  function saveCfg() {
+    try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) { /* ignore */ }
+    flashSaved();
+  }
+  let savedTimer = null;
+  function flashSaved() {
+    const el = $("savedFlag");
+    if (!el) return;
+    el.classList.add("show");
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(() => el.classList.remove("show"), 1400);
+  }
+
+  /* ================================================================== *
+   * 3. Detection cache
+   * ================================================================== */
+  const detection = {
+    piped: [],
+    invidious: [],
+    cobalt: [],
+    ts: 0,
+    running: false,
+    lastError: "",
+  };
+
+  function loadDetectionCache() {
+    try {
+      const raw = localStorage.getItem(DETECT_KEY);
+      if (!raw) return;
+      const o = JSON.parse(raw);
+      if (!o || typeof o !== "object") return;
+      detection.piped     = Array.isArray(o.piped)     ? o.piped.filter((x) => typeof x === "string")     : [];
+      detection.invidious = Array.isArray(o.invidious) ? o.invidious.filter((x) => typeof x === "string") : [];
+      detection.cobalt    = Array.isArray(o.cobalt)    ? o.cobalt.filter((x) => typeof x === "string")    : [];
+      detection.ts        = Number(o.ts) || 0;
+    } catch (e) { /* ignore */ }
+  }
+  function saveDetectionCache() {
+    try {
+      localStorage.setItem(DETECT_KEY, JSON.stringify({
+        piped: detection.piped,
+        invidious: detection.invidious,
+        cobalt: detection.cobalt,
+        ts: detection.ts,
+      }));
+    } catch (e) { /* ignore */ }
+  }
+
+  function cacheFresh() {
+    return detection.ts > 0 && (Date.now() - detection.ts) < DETECT_TTL;
+  }
+
+  /* ================================================================== *
+   * 4. Instance probing
+   * ================================================================== */
+  async function probe(type, base) {
+    const timeoutMs = 8000;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+
+    try {
+      if (type === "piped") {
+        const res = await fetch(base + "/streams/" + TEST_VIDEO_ID, {
+          signal: ctrl.signal,
+          mode: "cors",
+          credentials: "omit",
+          referrerPolicy: "no-referrer",
+          headers: { Accept: "application/json" },
+        });
+        if (!res.ok) return { ok: false, reason: "HTTP " + res.status };
+        const data = await res.json();
+        return { ok: !!(data && (data.title || data.videoStreams)), reason: "no title/streams" };
+      }
+
+      if (type === "invidious") {
+        const res = await fetch(base + "/api/v1/videos/" + TEST_VIDEO_ID + "?local=true", {
+          signal: ctrl.signal,
+          mode: "cors",
+          credentials: "omit",
+          referrerPolicy: "no-referrer",
+          headers: { Accept: "application/json" },
+        });
+        if (!res.ok) return { ok: false, reason: "HTTP " + res.status };
+        const data = await res.json();
+        return { ok: !!(data && (data.title || data.formatStreams)), reason: "no title/formats" };
+      }
+
+      /* cobalt: POST to the base URL only. /api/json is gone (404). */
+      const res = await fetch(base, {
+        method: "POST",
+        signal: ctrl.signal,
+        mode: "cors",
+        credentials: "omit",
+        referrerPolicy: "no-referrer",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ url: "https://example.com/probe.txt" }),
+      });
+
+      /* Any structured response (200 / 400 / 422 / 429) means the server is
+         alive and speaking CORS. 401 / 403 mean auth is required (unusable).
+         404 / 405 / 501 mean the endpoint doesn't exist. */
+      if (res.status === 200 || res.status === 400 || res.status === 422 || res.status === 429) {
+        return { ok: true, reason: "HTTP " + res.status };
+      }
+      return { ok: false, reason: "HTTP " + res.status };
+    } catch (e) {
+      if (errName(e) === "AbortError") return { ok: false, reason: "timeout" };
+      if (looksLikeNetworkError(e)) return { ok: false, reason: "CORS / network" };
+      return { ok: false, reason: (e && e.message) || "error" };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function probeBatch(type, bases, batchSize) {
+    const ok = [];
+    const size = batchSize || 4;
+    for (let i = 0; i < bases.length; i += size) {
+      const slice = bases.slice(i, i + size);
+      const results = await Promise.all(slice.map((b) => probe(type, b).then((r) => ({ base: b, ...r }))));
+      results.forEach((r) => { if (r.ok) ok.push(r.base); });
+      if (i + size < bases.length) {
+        await new Promise((r) => setTimeout(r, 250));
       }
     }
-    try {
-      var raw = localStorage.getItem(LS_SETTINGS);
-      if (raw) {
-        var parsed = JSON.parse(raw);
-        for (key in parsed) {
-          if (Object.prototype.hasOwnProperty.call(out, key) && parsed[key] !== null && parsed[key] !== undefined) {
-            out[key] = parsed[key];
-          }
-        }
+    return ok;
+  }
+
+  /* ================================================================== *
+   * 5. Detection orchestrator
+   * ================================================================== */
+  let detectPromise = null;
+
+  async function runDetection(force) {
+    if (detection.running && detectPromise) return detectPromise;
+    if (!force && cacheFresh() &&
+        (detection.piped.length || detection.invidious.length || detection.cobalt.length)) {
+      updateDetectionUI();
+      return detection;
+    }
+
+    detection.running = true;
+    detection.lastError = "";
+    updateDetectionUI();
+
+    detectPromise = (async () => {
+      const [piped, invidious, cobalt] = await Promise.all([
+        probeBatch("piped", INSTANCES.piped, 4),
+        probeBatch("invidious", INSTANCES.invidious, 4),
+        probeBatch("cobalt", INSTANCES.cobalt, 4),
+      ]);
+
+      detection.piped = piped;
+      detection.invidious = invidious;
+      detection.cobalt = cobalt;
+      detection.ts = Date.now();
+      saveDetectionCache();
+
+      if (!piped.length && !invidious.length && !cobalt.length) {
+        detection.lastError = "No working instances were found. Try again later or add a manual override.";
       }
-    } catch (e) { /* corrupted storage — ignore */ }
+      detection.running = false;
+      updateDetectionUI();
+      renderInstanceList();
+      return detection;
+    })();
+
+    try {
+      await detectPromise;
+    } finally {
+      detectPromise = null;
+      if (detection.running) {
+        detection.running = false;
+        updateDetectionUI();
+      }
+    }
+    return detection;
+  }
+
+  /* ================================================================== *
+   * 6. UI — detection status
+   * ================================================================== */
+  function updateDetectionUI() {
+    const badge = $("instanceStatus");
+    const icon  = $("detectIcon");
+    const text  = $("detectText");
+    const btn   = $("redetectBtn");
+
+    if (detection.running) {
+      badge.className = "badge warn";
+      badge.innerHTML = '<span class="spinner"></span> Detecting…';
+      if (icon) icon.style.display = "";
+      if (text) text.textContent = "Testing public instances — this runs once and is cached for 1 hour.";
+      if (btn) btn.disabled = true;
+      return;
+    }
+
+    if (btn) btn.disabled = false;
+
+    const total = detection.piped.length + detection.invidious.length + detection.cobalt.length;
+    const anyManual = normBase(cfg.piped) || normBase(cfg.invidious) || normBase(cfg.cobalt);
+
+    if (detection.lastError && !total) {
+      badge.className = "badge err";
+      badge.textContent = "No APIs";
+      if (icon) icon.style.display = "none";
+      if (text) text.textContent = detection.lastError;
+      return;
+    }
+
+    if (anyManual) {
+      badge.className = "badge info";
+      badge.textContent = "Manual override";
+    } else if (total) {
+      badge.className = "badge ok";
+      badge.textContent = total + " working";
+    } else {
+      badge.className = "badge info";
+      badge.textContent = "Not detected";
+    }
+
+    if (icon) icon.style.display = "none";
+
+    if (text) {
+      const parts = [];
+      if (detection.piped.length)     parts.push(detection.piped.length + " Piped");
+      if (detection.invidious.length) parts.push(detection.invidious.length + " Invidious");
+      if (detection.cobalt.length)    parts.push(detection.cobalt.length + " Cobalt");
+      if (parts.length) {
+        const age = detection.ts ? Math.round((Date.now() - detection.ts) / 60000) : 0;
+        text.textContent = "Detected: " + parts.join(" · ") +
+          (age ? "  ·  cached " + age + " min ago" : "");
+      } else if (!anyManual) {
+        text.textContent = "No instances detected yet — press Detect now.";
+      } else {
+        text.textContent = "Using manual overrides.";
+      }
+    }
+  }
+
+  function renderInstanceList() {
+    const box = $("instList");
+    if (!box || box.classList.contains("hidden")) return;
+    box.innerHTML = "";
+
+    const groups = [
+      { key: "piped",     label: "Piped" },
+      { key: "invidious", label: "Invidious" },
+      { key: "cobalt",    label: "Cobalt" },
+    ];
+
+    let any = false;
+    groups.forEach(({ key, label }) => {
+      (detection[key] || []).forEach((base) => {
+        any = true;
+        const row = document.createElement("div");
+        row.className = "instItem ok";
+        const dot = document.createElement("span"); dot.className = "dot";
+        const host = document.createElement("span"); host.className = "host"; host.textContent = base;
+        const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = label;
+        row.appendChild(dot); row.appendChild(host); row.appendChild(tag);
+        box.appendChild(row);
+      });
+    });
+
+    if (!any) {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.style.margin = "4px 0 0";
+      p.textContent = "Nothing detected yet. Press Detect now.";
+      box.appendChild(p);
+    }
+  }
+
+  /* ================================================================== *
+   * 7. Instance resolution
+   * ================================================================== */
+  function manualFor(kind) { return normBase(cfg[kind]); }
+
+  function instancesFor(kind) {
+    const manual = manualFor(kind);
+    const detected = detection[kind] || [];
+    const out = [];
+    if (manual) out.push(manual);
+    detected.forEach((b) => { if (!out.includes(b)) out.push(b); });
     return out;
   }
 
-  function saveSettings() {
-    try { localStorage.setItem(LS_SETTINGS, JSON.stringify(settings)); }
-    catch (e) { toast('Could not save settings (storage blocked)', 'err'); }
+  async function ensureDetection() {
+    if (detection.running) {
+      await detectPromise;
+      return;
+    }
+    const has = detection.piped.length || detection.invidious.length || detection.cobalt.length;
+    if (has && cacheFresh()) return;
+    if (!has || !cacheFresh()) {
+      await runDetection(false);
+    }
   }
 
-  /* ==========================================================
-     HISTORY STORAGE
-     ========================================================== */
-  function loadHistory() {
-    try {
-      var raw = localStorage.getItem(LS_HISTORY);
-      if (!raw) { return []; }
-      var arr = JSON.parse(raw);
-      return Array.isArray(arr) ? arr : [];
-    } catch (e) { return []; }
+  /* ================================================================== *
+   * 8. Platform detection
+   * ================================================================== */
+  const PLATFORMS = [
+    { id: "youtube",     name: "YouTube",     re: /(?:^|\/\/)(?:www\.|m\.|music\.)?(?:youtube\.com|youtu\.be)\//i },
+    { id: "facebook",    name: "Facebook",    re: /(?:^|\/\/)(?:www\.|m\.|web\.)?(?:facebook\.com|fb\.watch)\//i },
+    { id: "tiktok",      name: "TikTok",      re: /(?:^|\/\/)(?:www\.)?tiktok\.com\//i },
+    { id: "instagram",   name: "Instagram",   re: /(?:^|\/\/)(?:www\.)?instagram\.com\//i },
+    { id: "dailymotion", name: "Dailymotion", re: /(?:^|\/\/)(?:www\.)?(?:dailymotion\.com|dai\.ly)\//i },
+    { id: "youku",       name: "Youku",       re: /(?:^|\/\/)(?:v\.)?youku\.com\//i },
+    { id: "twitter",     name: "X / Twitter", re: /(?:^|\/\/)(?:www\.)?(?:twitter\.com|x\.com)\//i },
+    { id: "vimeo",       name: "Vimeo",       re: /(?:^|\/\/)(?:www\.)?vimeo\.com\//i },
+    { id: "reddit",      name: "Reddit",      re: /(?:^|\/\/)(?:www\.)?reddit\.com\//i },
+    { id: "soundcloud",  name: "SoundCloud",  re: /(?:^|\/\/)(?:www\.)?soundcloud\.com\//i },
+    { id: "bilibili",    name: "Bilibili",    re: /(?:^|\/\/)(?:www\.)?(?:bilibili\.com|b23\.tv)\//i },
+  ];
+
+  function detectPlatform(u) {
+    const s = String(u || "");
+    for (const p of PLATFORMS) {
+      if (p.re.test(s)) return { id: p.id, name: p.name };
+    }
+    return { id: "other", name: hostOf(s) || "Link" };
   }
 
-  function saveHistory(list) {
-    try { localStorage.setItem(LS_HISTORY, JSON.stringify(list)); } catch (e) { /* ignore */ }
+  const VIDEO_ID_RE =
+    /(?:youtu\.be\/|youtube\.com\/(?:watch\?[^#]*\bv=|embed\/|v\/|shorts\/|live\/|.*[?&]v=))([A-Za-z0-9_-]{11})/;
+
+  function extractVideoId(u) {
+    const raw = String(u || "").trim();
+    if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
+    const m = raw.match(VIDEO_ID_RE);
+    return m ? m[1] : null;
   }
 
-  /* ==========================================================
-     TOAST
-     ========================================================== */
-  var toastTimer = null;
-  function toast(msg, type) {
-    toastEl.textContent = msg;
-    toastEl.className = 'toast show ' + (type || '');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () {
-      toastEl.className = 'toast';
-    }, 3600);
+  function youtubeThumb(id, q) {
+    return "https://i.ytimg.com/vi/" + id + "/" + (q || "hqdefault") + ".jpg";
   }
 
-  /* ==========================================================
-     CLIPBOARD
-     ========================================================== */
-  function copyText(text) {
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).then(function () {
-        toast('Copied to clipboard', 'ok');
-      }).catch(function () {
-        legacyCopy(text);
+  /* ================================================================== *
+   * 9. HTTP helpers
+   * ================================================================== */
+  function fetchJson(url, timeoutMs) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs || 12000);
+    return fetch(url, {
+      signal: ctrl.signal,
+      credentials: "omit",
+      mode: "cors",
+      referrerPolicy: "no-referrer",
+      headers: { Accept: "application/json" },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("HTTP " + res.status + (res.statusText ? " " + res.statusText : ""));
+        return res.json();
+      })
+      .finally(() => clearTimeout(timer));
+  }
+
+  function networkHint(service, base) {
+    return (
+      "<strong>Failed to fetch.</strong> The browser could not reach " +
+      (base ? "<code>" + esc(base) + "</code>" : "a " + service + " instance") + "." +
+      "<br>• The instance may be offline, rate‑limited, or blocking your region." +
+      "<br>• It must send <code>Access-Control-Allow-Origin</code> (CORS), or the browser discards the response." +
+      "<br>• An <code>http://</code> URL on this <code>https://</code> page is blocked as mixed content." +
+      "<br><br>Press <strong>Detect now</strong> in API instances, or set a manual override."
+    );
+  }
+
+  /* ================================================================== *
+   * 10. YouTube resolvers
+   * ================================================================== */
+  function pickQualityLabel(q) {
+    if (!q) return "";
+    const s = String(q).toLowerCase();
+    const ladder = ["4320", "2160", "1440", "1080", "720", "480", "360", "240", "144"];
+    for (const n of ladder) if (s.indexOf(n) >= 0) return n + "p";
+    if (s === "highres") return "Highres";
+    return String(q);
+  }
+
+  function parsePiped(data) {
+    const out = [];
+    const seen = new Set();
+
+    (data.videoStreams || []).forEach((s) => {
+      if (s.videoOnly) return;
+      const url = s.proxyUrl || s.url;
+      if (!url) return;
+      const key = "v:" + (s.itag || s.quality);
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({
+        kind: "video",
+        label: pickQualityLabel(s.quality) + " · MP4",
+        sublabel: (s.codec || "H.264") + (s.fps ? " · " + s.fps + "fps" : ""),
+        mime: s.mimeType || "video/mp4",
+        ext: "mp4",
+        url: url,
+        size: parseSize(s.contentLength || s.size),
       });
-    } else {
-      legacyCopy(text);
-    }
-  }
-
-  function legacyCopy(text) {
-    var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.setAttribute('readonly', '');
-    ta.style.position = 'fixed';
-    ta.style.top = '-1000px';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    try {
-      document.execCommand('copy');
-      toast('Copied to clipboard', 'ok');
-    } catch (e) {
-      toast('Copy failed — select the text manually', 'err');
-    }
-    document.body.removeChild(ta);
-  }
-
-  /* ==========================================================
-     THEME
-     ========================================================== */
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    themeBtn.textContent = theme === 'dark' ? '🌙' : '☀️';
-    try { localStorage.setItem(LS_THEME, theme); } catch (e) { /* ignore */ }
-  }
-
-  function initTheme() {
-    var stored = null;
-    try { stored = localStorage.getItem(LS_THEME); } catch (e) { /* ignore */ }
-    if (stored === 'dark' || stored === 'light') {
-      applyTheme(stored);
-    } else {
-      var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-      applyTheme(prefersLight ? 'light' : 'dark');
-    }
-  }
-
-  themeBtn.addEventListener('click', function () {
-    var current = document.documentElement.getAttribute('data-theme');
-    applyTheme(current === 'dark' ? 'light' : 'dark');
-  });
-
-  /* ==========================================================
-     NAVIGATION
-     ========================================================== */
-  function showView(name) {
-    $$('.view').forEach(function (v) { v.classList.remove('active'); });
-    var target = document.getElementById('view-' + name);
-    if (target) { target.classList.add('active'); }
-
-    $$('.nav-btn').forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-nav') === name);
     });
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  $$('[data-nav]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      showView(btn.getAttribute('data-nav'));
+    (data.audioStreams || []).forEach((s) => {
+      const url = s.proxyUrl || s.url;
+      if (!url) return;
+      const key = "a:" + (s.itag || s.quality);
+      if (seen.has(key)) return;
+      seen.add(key);
+      const isM4a = (s.mimeType || "").indexOf("mp4") >= 0;
+      out.push({
+        kind: "audio",
+        label: "Audio " + (s.quality || ""),
+        sublabel: isM4a ? "M4A" : "Opus / WebM",
+        mime: isM4a ? "audio/mp4" : "audio/webm",
+        ext: isM4a ? "m4a" : "webm",
+        url: url,
+        size: parseSize(s.contentLength || s.size),
+      });
     });
-  });
 
-  /* ==========================================================
-     MODE SEGMENT
-     ========================================================== */
-  function setMode(mode, persist) {
-    settings.mode = mode;
-    $$('#modeSeg button').forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-mode') === mode);
+    return out;
+  }
+
+  function parseInvidious(data) {
+    const out = [];
+    const seen = new Set();
+
+    (data.formatStreams || []).forEach((s) => {
+      if (!s.url) return;
+      const key = "v:" + (s.itag || s.qualityLabel);
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({
+        kind: "video",
+        label: pickQualityLabel(s.qualityLabel) + " · MP4",
+        sublabel: s.resolution || "Video",
+        mime: "video/mp4",
+        ext: "mp4",
+        url: s.url,
+        size: parseSize(s.clen || s.contentLength || s.size),
+      });
     });
-    if (mode === 'audio') {
-      qualitySel.classList.add('hidden');
-      audioFmtSel.classList.remove('hidden');
-    } else {
-      audioFmtSel.classList.add('hidden');
-      qualitySel.classList.remove('hidden');
-    }
-    if (persist) { saveSettings(); }
-  }
 
-  $$('#modeSeg button').forEach(function (b) {
-    b.addEventListener('click', function () {
-      setMode(b.getAttribute('data-mode'), true);
+    (data.adaptiveFormats || []).forEach((s) => {
+      const type = String(s.type || "");
+      if (type.indexOf("audio/") !== 0 || !s.url) return;
+      const key = "a:" + (s.itag || type);
+      if (seen.has(key)) return;
+      seen.add(key);
+      const isM4a = type.indexOf("mp4") >= 0;
+      const bps = s.bitrate ? parseInt(s.bitrate, 10) : 0;
+      out.push({
+        kind: "audio",
+        label: "Audio " + (bps ? Math.round(bps / 1000) + " kbps" : ""),
+        sublabel: isM4a ? "M4A" : "Opus / WebM",
+        mime: isM4a ? "audio/mp4" : "audio/webm",
+        ext: isM4a ? "m4a" : "webm",
+        url: s.url,
+        size: parseSize(s.clen || s.contentLength || s.size),
+      });
     });
-  });
 
-  qualitySel.addEventListener('change', function () {
-    settings.videoQuality = qualitySel.value;
-    saveSettings();
-  });
-
-  audioFmtSel.addEventListener('change', function () {
-    settings.audioFormat = audioFmtSel.value;
-    saveSettings();
-  });
-
-  /* ==========================================================
-     STATUS BAR
-     ========================================================== */
-  function showStatus(msg, type) {
-    statusEl.textContent = msg;
-    statusEl.className = 'status ' + (type || 'info');
+    return out;
   }
 
-  function hideStatus() {
-    statusEl.className = 'status hidden';
-    statusEl.textContent = '';
-  }
-
-  function setBusy(busy) {
-    goBtn.disabled = busy;
-    goBtn.textContent = busy ? 'Working…' : 'Download';
-  }
-
-  /* ==========================================================
-     FILENAME GUESSING
-     ========================================================== */
-  function guessName(url) {
-    var name = 'media';
-    try {
-      var u = new URL(url);
-
-      if (/(^|\.)youtube\.com$/.test(u.hostname)) {
-        var v = u.searchParams.get('v');
-        if (v) { name = 'youtube_' + v; }
-      } else if (/(^|\.)youtu\.be$/.test(u.hostname)) {
-        var id = u.pathname.replace(/^\//, '').split('/')[0];
-        if (id) { name = 'youtube_' + id; }
-      } else {
-        var parts = u.pathname.split('/').filter(Boolean);
-        if (parts.length) {
-          name = decodeURIComponent(parts[parts.length - 1]);
-        } else {
-          name = u.hostname.replace(/^www\./, '');
-        }
+  function sortStreams(list) {
+    const order = {
+      "4320p": 9, "2160p": 8, "1440p": 7, "1080p": 6,
+      "720p": 5, "480p": 4, "360p": 3, "240p": 2, "144p": 1,
+    };
+    return list.slice().sort((a, b) => {
+      if (a.kind !== b.kind) return a.kind === "video" ? -1 : 1;
+      if (a.kind === "video") {
+        const qa = order[String(a.label).split(" ")[0]] || 0;
+        const qb = order[String(b.label).split(" ")[0]] || 0;
+        return qb - qa;
       }
-    } catch (e) { /* not a URL — keep default */ }
-    return name.replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80) || 'media';
+      return (b.size || 0) - (a.size || 0);
+    });
   }
 
-  /* ==========================================================
-     COBALT AUTH  (JWT session / Turnstile / API key)
-     ========================================================== */
+  async function resolveYouTube(videoId) {
+    await ensureDetection();
 
-  var turnstileLoader = null;
+    const order = [];
+    const manualPiped = manualFor("piped");
+    const manualInv   = manualFor("invidious");
 
-  function loadTurnstile() {
-    if (window.turnstile) { return Promise.resolve(window.turnstile); }
-    if (turnstileLoader) { return turnstileLoader; }
+    if (manualPiped) order.push({ type: "piped",     base: manualPiped });
+    if (manualInv)   order.push({ type: "invidious", base: manualInv });
 
-    turnstileLoader = new Promise(function (resolve, reject) {
-      var s = document.createElement('script');
-      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-      s.async = true;
-      s.defer = true;
-      s.onload = function () {
-        if (window.turnstile) { resolve(window.turnstile); }
-        else { reject(new Error('Turnstile script loaded but window.turnstile is missing.')); }
-      };
-      s.onerror = function () {
-        reject(new Error('Could not load the Turnstile script. An ad-blocker, DNS filter, or network policy may be blocking challenges.cloudflare.com.'));
-      };
-      document.head.appendChild(s);
+    detection.piped.forEach((b) => {
+      if (!order.some((o) => o.base === b)) order.push({ type: "piped", base: b });
+    });
+    detection.invidious.forEach((b) => {
+      if (!order.some((o) => o.base === b)) order.push({ type: "invidious", base: b });
     });
 
-    return turnstileLoader;
-  }
-
-  function loadCobaltSession() {
-    try {
-      var raw = localStorage.getItem(COBALT_SESSION_KEY);
-      if (!raw) { return { token: null, exp: 0, base: null }; }
-      var s = JSON.parse(raw);
-      if (!s || typeof s !== 'object') { return { token: null, exp: 0, base: null }; }
-      return { token: s.token || null, exp: Number(s.exp) || 0, base: s.base || null };
-    } catch (e) {
-      return { token: null, exp: 0, base: null };
+    if (!order.length) {
+      const e = new Error("NO_YOUTUBE_API");
+      e.code = "NO_YOUTUBE_API";
+      throw e;
     }
+
+    const failures = [];
+
+    for (const target of order) {
+      try {
+        const url = target.type === "piped"
+          ? target.base + "/streams/" + videoId
+          : target.base + "/api/v1/videos/" + videoId + "?local=true";
+
+        const data = await fetchJson(url, 12000);
+        if (!data || typeof data !== "object") throw new Error("Unexpected response");
+        if (data.error) throw new Error(String(data.error));
+
+        const streams = sortStreams(
+          target.type === "piped" ? parsePiped(data) : parseInvidious(data)
+        );
+        if (!streams.length) throw new Error("No downloadable streams returned");
+
+        return { backend: target.type, base: target.base, data, streams };
+      } catch (e) {
+        failures.push({
+          type: target.type,
+          base: target.base,
+          network: looksLikeNetworkError(e),
+          message: (e && e.message) || String(e),
+        });
+      }
+    }
+
+    const err = new Error("ALL_YOUTUBE_FAILED");
+    err.code = "ALL_YOUTUBE_FAILED";
+    err.failures = failures;
+    throw err;
   }
 
-  function saveCobaltSession(s) {
-    try { localStorage.setItem(COBALT_SESSION_KEY, JSON.stringify(s)); } catch (e) { /* ignore */ }
+  /* ================================================================== *
+   * 11. Cobalt — fixed endpoint
+   * ================================================================== */
+  const COBALT_ERRORS = {
+    "error.api.link.invalid":              "That link is not valid for this Cobalt instance.",
+    "error.api.link.unsupported":          "This service is not supported by the Cobalt instance.",
+    "error.api.link.too_long":             "The link is too long for this instance.",
+    "error.api.content.video.unavailable": "The video is unavailable — private, removed or region‑locked.",
+    "error.api.content.video.live":        "Live streams cannot be converted.",
+    "error.api.content.video.age":         "The video is age‑restricted and cannot be fetched.",
+    "error.api.content.post.unavailable":  "The post is unavailable or private.",
+    "error.api.content.short.doesnt_exist": "That short does not exist.",
+    "error.api.fetch.empty":               "The instance could not fetch any media for that link.",
+    "error.api.fetch.critical":            "The source site returned a critical error.",
+    "error.api.fetch.rate":                "The instance is rate‑limited. Wait a moment and retry.",
+    "error.api.rate_exceeded":             "Rate limit reached on this instance. Retry later.",
+    "error.api.auth.jwt.missing":          "This Cobalt instance requires an API key. Use another instance.",
+    "error.api.auth.jwt.invalid":          "This Cobalt instance rejected the request (invalid API key).",
+    "error.api.turnstile.missing":         "This instance requires a Turnstile token. Use another instance.",
+  };
+
+  function cobaltErrorText(code) {
+    if (!code) return "The Cobalt instance returned an unknown error.";
+    return COBALT_ERRORS[code] || ("Cobalt error: " + code);
   }
 
-  function clearCobaltSession() {
-    try { localStorage.removeItem(COBALT_SESSION_KEY); } catch (e) { /* ignore */ }
+  function cobaltBodyFor(mode, opts) {
+    const body = {
+      url: opts.url,
+      downloadMode: mode === "audio" ? "audio" : "auto",
+      filenameStyle: "basic",
+      disableMetadata: false,
+    };
+    if (mode === "audio") {
+      body.audioFormat  = opts.audioFormat || "mp3";
+      body.audioBitrate = String(opts.audioBitrate || "320");
+    } else {
+      body.videoQuality = opts.videoQuality || "max";
+      body.youtubeVideoCodec = "h264";
+    }
+    return body;
   }
 
-  function decodeJwtExp(token) {
+  async function tryCobaltAt(base, mode, opts) {
+    /* IMPORTANT: only POST to the base URL. Cobalt v10 has no /api/json —
+       posting there returns 404 on every current instance. */
+    const body = cobaltBodyFor(mode, opts);
+
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 45000);
+
     try {
-      var parts = String(token).split('.');
-      if (parts.length !== 3) { return 0; }
-      var payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-      while (payload.length % 4) { payload += '='; }
-      var json = JSON.parse(atob(payload));
-      if (json && typeof json.exp === 'number') { return json.exp * 1000; }
-    } catch (e) { /* not a JWT */ }
-    return 0;
-  }
-
-  function runTurnstile(sitekey) {
-    return loadTurnstile().then(function (ts) {
-      return new Promise(function (resolve, reject) {
-        var modal     = $('#turnstileModal');
-        var container = $('#turnstileContainer');
-        var hint      = $('#turnstileHint');
-        var closeBtn  = $('#closeTurnstile');
-
-        container.innerHTML = '';
-        hint.textContent = 'Loading challenge…';
-        modal.classList.remove('hidden');
-
-        var widgetId = null;
-        var settled  = false;
-
-        function cleanup() {
-          if (settled) { return; }
-          settled = true;
-          try {
-            if (widgetId !== null && window.turnstile) {
-              window.turnstile.remove(widgetId);
-            }
-          } catch (e) { /* ignore */ }
-          modal.classList.add('hidden');
-          container.innerHTML = '';
-          hint.textContent = '';
-          closeBtn.removeEventListener('click', onClose);
-        }
-
-        function onClose() {
-          cleanup();
-          reject(new Error('Verification cancelled.'));
-        }
-
-        closeBtn.addEventListener('click', onClose);
-
-        try {
-          widgetId = ts.render(container, {
-            sitekey: sitekey,
-            theme: document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark',
-            callback: function (token) {
-              if (settled) { return; }
-              hint.textContent = '';
-              cleanup();
-              resolve(token);
-            },
-            'error-callback': function (code) {
-              hint.textContent =
-                'Turnstile error: ' + (code || 'unknown') +
-                '. If this keeps failing, the sitekey may be restricted to a different domain. ' +
-                'Self-host cobalt, or switch engine to yt-dlp.';
-            },
-            'expired-callback': function () {
-              hint.textContent = 'Challenge expired. Close and retry.';
-            }
-          });
-          hint.textContent = '';
-        } catch (e) {
-          cleanup();
-          reject(new Error('Could not render Turnstile widget: ' + (e && e.message ? e.message : e)));
-        }
+      const res = await fetch(base, {
+        method: "POST",
+        signal: ctrl.signal,
+        mode: "cors",
+        credentials: "omit",
+        referrerPolicy: "no-referrer",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(body),
       });
-    });
-  }
 
-  function fetchSessionToken(baseUrl) {
-    var sessionUrl = baseUrl + '/session?t=' + Date.now();
+      let data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
 
-    return fetch(sessionUrl, {
-      method: 'GET',
-      cache: 'no-store',
-      credentials: 'omit',
-      headers: { 'Accept': 'application/json' }
-    }).then(function (res) {
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("This Cobalt instance requires authentication — pick another instance.");
+      }
       if (res.status === 404) {
-        // Instance without /session endpoint — assume no auth.
-        return null;
+        throw new Error("Endpoint not found (404) — this instance is not a Cobalt v10 server.");
+      }
+      if (res.status === 405 || res.status === 501) {
+        throw new Error("This instance does not expose the POST API (HTTP " + res.status + ").");
+      }
+      if (res.status === 429) {
+        throw new Error("Rate‑limited by this Cobalt instance. Try again later or pick another.");
       }
       if (!res.ok) {
-        return res.text().then(function (text) {
-          throw new Error('GET /session failed (HTTP ' + res.status + '): ' + String(text).slice(0, 200));
-        });
+        const code = data && data.error && (data.error.code || data.error);
+        if (typeof code === "string") throw new Error(cobaltErrorText(code));
+        throw new Error("HTTP " + res.status);
       }
-      return res.json().catch(function () {
-        throw new Error('GET /session returned non-JSON. The instance may be misconfigured.');
-      });
-    }).then(function (session) {
-      if (!session) { return {}; }
+      if (!data || typeof data !== "object") throw new Error("Empty response from Cobalt.");
 
-      var sitekey = session.turnstileSitekey ||
-                    (session.turnstile && session.turnstile.sitekey) || null;
-
-      if (!sitekey) {
-        if (session.apiKey && !settings.apiKey) {
-          throw new Error('This cobalt instance requires an API key. Add one in ⚙ Settings → cobalt → API key.');
-        }
-        return {};
+      if (data.status === "error") {
+        const code = (data.error && (data.error.code || data.error)) || "unknown";
+        throw new Error(cobaltErrorText(typeof code === "string" ? code : "unknown"));
       }
 
-      return runTurnstile(sitekey).then(function (token) {
-        return fetch(baseUrl + '/session', {
-          method: 'POST',
-          credentials: 'omit',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ turnstile: token })
-        });
-      }).then(function (res) {
-        return res.text().then(function (text) {
-          var data;
-          try { data = JSON.parse(text); }
-          catch (e) {
-            throw new Error('POST /session returned non-JSON (HTTP ' + res.status + ').');
-          }
-          if (!data || data.status !== 'OK' || !data.token) {
-            var code = (data && data.error && data.error.code) ? data.error.code : ('HTTP ' + res.status);
-            throw new Error('Could not obtain session token: ' + code);
-          }
-          var exp = decodeJwtExp(data.token) || (Date.now() + 4 * 60 * 1000);
-          saveCobaltSession({ token: data.token, exp: exp, base: baseUrl });
-          toast('cobalt session obtained', 'ok');
-          return { 'Authorization': 'Bearer ' + data.token };
-        });
-      });
-    });
-  }
-
-  function getCobaltAuth(baseUrl, override) {
-    override = override || {};
-    var apiKey = (override.apiKey !== undefined) ? override.apiKey : settings.apiKey;
-    var bearer = (override.bearerToken !== undefined) ? override.bearerToken : settings.bearerToken;
-
-    if (apiKey) {
-      return Promise.resolve({ 'Authorization': 'Api-Key ' + apiKey });
-    }
-
-    if (bearer) {
-      var bexp = decodeJwtExp(bearer) || 0;
-      if (!bexp || (bexp - 30000) > Date.now()) {
-        return Promise.resolve({ 'Authorization': 'Bearer ' + bearer });
+      if (data.status === "redirect" || data.status === "tunnel") {
+        if (!data.url) throw new Error("Cobalt returned no download URL.");
+        return { kind: "single", url: data.url, filename: data.filename || "" };
       }
-    }
 
-    var cached = loadCobaltSession();
-    var now = Date.now();
-    if (cached.token && cached.base === baseUrl && cached.exp && (cached.exp - 30000) > now) {
-      return Promise.resolve({ 'Authorization': 'Bearer ' + cached.token });
-    }
-
-    return fetchSessionToken(baseUrl);
-  }
-
-  /* ==========================================================
-     COBALT PAYLOAD / RESPONSE PARSING
-     ========================================================== */
-  function buildCobaltPayload(url) {
-    var payload = { url: url };
-
-    if (settings.mode === 'audio') {
-      payload.downloadMode = 'audio';
-      payload.audioFormat = settings.audioFormat || 'mp3';
-    } else if (settings.mode === 'mute') {
-      payload.downloadMode = 'mute';
-      payload.videoQuality = settings.videoQuality || '1080';
-    } else {
-      payload.downloadMode = 'auto';
-      payload.videoQuality = settings.videoQuality || '1080';
-    }
-
-    payload.filenameStyle = settings.filenameStyle || 'pretty';
-
-    if (settings.videoCodec && /youtu\.?be/i.test(url)) {
-      payload.youtubeVideoCodec = settings.videoCodec;
-    }
-
-    return payload;
-  }
-
-  function parseCobaltResponse(data, sourceUrl) {
-    var status = data && data.status;
-    var baseName = guessName(sourceUrl);
-    var items = [];
-
-    if (status === 'tunnel' || status === 'redirect' || status === 'local-processing') {
-      if (!data.url) {
-        throw new Error('Instance reported "' + status + '" but returned no URL.');
-      }
-      items.push({
-        kind: 'file',
-        url: data.url,
-        filename: data.filename || baseName,
-        tunnel: status === 'tunnel' || status === 'local-processing',
-        label: status === 'redirect' ? 'Direct media file' : 'Media file (tunnelled)'
-      });
-      return items;
-    }
-
-    if (status === 'picker') {
-      var picker = data.picker || [];
-      picker.forEach(function (p, i) {
-        var isPhoto = (p.type === 'photo' || p.type === 'gif');
-        items.push({
-          kind: isPhoto ? 'image' : 'video',
+      if (data.status === "picker") {
+        const items = (data.picker || []).map((p) => ({
           url: p.url,
-          filename: baseName + '_' + (i + 1) + (isPhoto ? '.jpg' : '.mp4'),
-          tunnel: false,
-          label: isPhoto ? ('Image / GIF #' + (i + 1)) : ('Video #' + (i + 1))
-        });
-      });
-      if (data.audio) {
-        items.push({
-          kind: 'audio',
-          url: data.audio,
-          filename: baseName + '.' + (settings.audioFormat || 'mp3'),
-          tunnel: false,
-          label: 'Audio track'
-        });
+          thumb: p.thumb || "",
+          type: p.type || "video",
+        })).filter((p) => p.url);
+        if (!items.length) throw new Error("Cobalt returned an empty picker.");
+        return { kind: "picker", items };
       }
-      if (!items.length) {
-        throw new Error('The picker response contained no downloadable items.');
-      }
-      return items;
-    }
 
-    if (status === 'error' || status === 'rate_limit' || status === 'picker_disabled') {
-      var code = (data.error && data.error.code) ? data.error.code : status;
-      throw new Error('cobalt: ' + code);
-    }
-
-    throw new Error('Unexpected response from instance: ' + JSON.stringify(data).slice(0, 240));
-  }
-
-  /* ==========================================================
-     COBALT ENGINE  (with automatic auth retry)
-     ========================================================== */
-  function runCobalt(url) {
-    var base = String(settings.apiBase || '').replace(/\/+$/, '');
-
-    if (!base) {
-      return Promise.reject(new Error('No cobalt instance configured. Open ⚙ Settings and set an instance URL.'));
-    }
-
-    var payload = buildCobaltPayload(url);
-
-    function attempt(isRetry) {
-      return getCobaltAuth(base).then(function (authHeaders) {
-        var headers = {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        };
-        Object.keys(authHeaders || {}).forEach(function (k) {
-          headers[k] = authHeaders[k];
-        });
-
-        return fetch(base + '/', {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify(payload),
-          mode: 'cors',
-          credentials: 'omit'
-        });
-      }).then(function (res) {
-        return res.text().then(function (raw) {
-          var data;
-          try { data = JSON.parse(raw); }
-          catch (e) {
-            throw new Error(
-              'The instance returned a non-JSON response (HTTP ' + res.status + '). ' +
-              'This usually means it needs an interactive browser session, is rate-limited, ' +
-              'or is down. Try another instance or self-host cobalt.'
-            );
-          }
-
-          var code = data && data.error && data.error.code;
-
-          // --- JWT / session errors → clear cache and retry once ---
-          if (code === 'error.api.auth.jwt.missing' ||
-              code === 'error.api.auth.jwt.invalid' ||
-              code === 'error.api.auth.jwt.expired') {
-            clearCobaltSession();
-            if (!isRetry) { return attempt(true); }
-            throw new Error(
-              'cobalt rejected the session token (' + code + ') even after refreshing. ' +
-              'The instance may refuse to issue sessions to this origin (Turnstile sitekey is ' +
-              'usually domain-restricted). Self-host cobalt, or switch engine to yt-dlp.'
-            );
-          }
-
-          // --- API key errors ---
-          if (code === 'error.api.auth.key.missing' || code === 'error.api.auth.key.invalid') {
-            throw new Error('This cobalt instance requires an API key. Add one in ⚙ Settings → cobalt → API key.');
-          }
-
-          // --- Rate limits ---
-          if (code === 'error.api.rate_exceeded') {
-            throw new Error('Rate limit exceeded on this cobalt instance. Wait a bit, or self-host cobalt.');
-          }
-
-          if (!res.ok && !data.status) {
-            throw new Error('cobalt error: ' + (code || ('HTTP ' + res.status)));
-          }
-
-          return data;
-        });
-      });
-    }
-
-    return attempt(false).then(function (data) {
-      return parseCobaltResponse(data, url);
-    }).catch(function (err) {
-      if (err && err.name === 'TypeError') {
+      if (data.status === "local-processing") {
         throw new Error(
-          'Could not reach ' + base + '. The instance may be down, blocking cross-origin ' +
-          'requests (CORS), or offline. Self-host cobalt and set your own URL in ⚙ Settings.'
+          "This Cobalt instance wants to process the file locally, which is not supported here. " +
+          "Use another instance or the ytdlnis app."
         );
       }
-      throw err;
-    });
+
+      throw new Error("Unexpected Cobalt status: " + String(data.status));
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
-  /* ==========================================================
-     YT-DLP ENGINE
-     ========================================================== */
-  function runYtdlp(url) {
-    var base = String(settings.ytdlpBase || '').replace(/\/+$/, '');
+  async function cobaltConvert(mode, opts) {
+    await ensureDetection();
 
-    if (!base) {
-      return Promise.reject(new Error('No yt-dlp API endpoint configured. Open ⚙ Settings → Engine = yt-dlp.'));
+    const order = [];
+    const manual = manualFor("cobalt");
+    if (manual) order.push(manual);
+    detection.cobalt.forEach((b) => { if (!order.includes(b)) order.push(b); });
+
+    if (!order.length) {
+      const e = new Error("NO_COBALT");
+      e.code = "NO_COBALT";
+      throw e;
     }
 
-    var endpoint = base + '/video/?video_url=' + encodeURIComponent(url);
+    const failures = [];
 
-    return fetch(endpoint, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      mode: 'cors',
-      credentials: 'omit'
-    }).then(function (res) {
-      return res.text().then(function (raw) {
-        var data;
-        try { data = JSON.parse(raw); }
-        catch (e) {
-          throw new Error('yt-dlp API returned non-JSON (HTTP ' + res.status + '). Check your endpoint.');
-        }
-
-        if (!res.ok && !data.error) {
-          throw new Error('yt-dlp API HTTP ' + res.status);
-        }
-
-        if (data.error) {
-          throw new Error('yt-dlp: ' + data.error);
-        }
-
-        var links = data.links || [];
-        if (!links.length) {
-          throw new Error('The yt-dlp API returned no links.');
-        }
-
-        var proxy = settings.downloadProxy || '';
-        var title = data.title
-          ? String(data.title).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 60)
-          : guessName(url);
-
-        return links.map(function (l, i) {
-          var mediaUrl = l.url;
-          var format   = l.format || ('format ' + (i + 1));
-          var itag     = l.itag ? ('itag ' + l.itag) : '';
-          var ext      = l.ext || 'mp4';
-          var isAudio  = /audio|m4a|mp3|opus|webm-audio/i.test(format) && !l.height;
-
-          return {
-            kind: isAudio ? 'audio' : 'file',
-            url: mediaUrl,
-            downloadUrl: proxy ? (proxy + encodeURIComponent(mediaUrl)) : mediaUrl,
-            filename: title + '_' + (l.itag || (i + 1)) + '.' + ext,
-            tunnel: false,
-            label: format + (itag ? (' · ' + itag) : '')
-          };
+    for (const base of order) {
+      try {
+        return await tryCobaltAt(base, mode, opts);
+      } catch (e) {
+        failures.push({
+          base,
+          network: looksLikeNetworkError(e),
+          message: (e && e.message) || String(e),
         });
-      });
-    }).catch(function (err) {
-      if (err && err.name === 'TypeError') {
-        throw new Error(
-          'Could not reach ' + base + '. Check the URL, CORS headers on your server, and that it is online.'
-        );
       }
-      throw err;
-    });
+    }
+
+    const err = new Error("ALL_COBALT_FAILED");
+    err.code = "ALL_COBALT_FAILED";
+    err.failures = failures;
+    throw err;
   }
 
-  /* ==========================================================
-     RENDERING RESULTS
-     ========================================================== */
-  function renderResults(items, sourceUrl) {
-    resultsEl.innerHTML = '';
+  /* ================================================================== *
+   * 12. DOM
+   * ================================================================== */
+  const ui = {
+    tabs:              $all(".tab"),
+    panelDownload:     $("panel-download"),
+    panelSearch:       $("panel-search"),
 
-    if (!items || !items.length) {
-      showStatus('Nothing was returned for that link.', 'err');
+    url:               $("url"),
+    pasteBtn:          $("pasteBtn"),
+    clearBtn:          $("clearBtn"),
+    platBadge:         $("platBadge"),
+    fetchBtn:          $("fetchBtn"),
+    err:               $("err"),
+
+    settings:          $("settingsPanel"),
+    setPiped:          $("setPiped"),
+    setInvidious:      $("setInvidious"),
+    setCobalt:         $("setCobalt"),
+    resetCfgBtn:       $("resetCfgBtn"),
+    redetectBtn:       $("redetectBtn"),
+    showInstBtn:       $("showInstBtn"),
+    instList:          $("instList"),
+
+    infoCard:          $("infoCard"),
+    thumb:             $("thumb"),
+    title:             $("title"),
+    meta:              $("meta"),
+    modeBtns:          $all(".mode"),
+
+    directFormats:     $("directFormats"),
+    chips:             $("chips"),
+
+    convertFormats:    $("convertFormats"),
+    videoOpts:         $("videoOpts"),
+    audioOpts:         $("audioOpts"),
+    vQuality:          $("vQuality"),
+    aFormat:           $("aFormat"),
+    aBitrate:          $("aBitrate"),
+
+    dlBtn:             $("dlBtn"),
+    cancelBtn:         $("cancelBtn"),
+    ytdlnisBtn:        $("ytdlnisBtn"),
+    copyBtn:           $("copyBtn"),
+    openSrcBtn:        $("openSrcBtn"),
+    pickerRow:         $("pickerRow"),
+
+    barWrap:           $("barWrap"),
+    bar:               $("bar"),
+    pct:               $("pct"),
+    speed:             $("speed"),
+    status:            $("status"),
+    fileRow:           $("fileRow"),
+    saveLink:          $("saveLink"),
+
+    q:                 $("q"),
+    searchBtn:         $("searchBtn"),
+    searchBitrate:     $("searchBitrate"),
+    searchErr:         $("searchErr"),
+    searchResultsCard: $("searchResultsCard"),
+    searchList:        $("searchList"),
+  };
+
+  /* ================================================================== *
+   * 13. State
+   * ================================================================== */
+  const state = {
+    url: "", platform: null,
+    backend: null, base: "",
+    info: null, streams: [], filtered: [], selected: 0,
+    mode: "video", busy: false,
+    controller: null, blobUrl: null,
+    pendingAudio: false,
+  };
+
+  const VIDEO_QUALITIES = [
+    { v: "max",  l: "Best available (up to 4K)" },
+    { v: "2160", l: "2160p — 4K" },
+    { v: "1440", l: "1440p — 2K" },
+    { v: "1080", l: "1080p — Full HD" },
+    { v: "720",  l: "720p — HD" },
+    { v: "480",  l: "480p" },
+    { v: "360",  l: "360p" },
+  ];
+  const AUDIO_FORMATS  = [
+    { v: "mp3",  l: "MP3" },
+    { v: "opus", l: "Opus" },
+    { v: "ogg",  l: "OGG" },
+    { v: "wav",  l: "WAV" },
+  ];
+  const AUDIO_BITRATES = ["320", "256", "192", "128", "64"];
+
+  /* ================================================================== *
+   * 14. Status / error UI
+   * ================================================================== */
+  function setStatus(text, cls) {
+    ui.status.textContent = text || "";
+    ui.status.className = "status" + (cls ? " " + cls : "");
+  }
+  function showErrHtml(html) {
+    ui.err.innerHTML = html;
+    ui.err.classList.remove("hidden");
+  }
+  function clearErr() {
+    ui.err.textContent = "";
+    ui.err.classList.add("hidden");
+  }
+  function showSearchErr(text) {
+    ui.searchErr.textContent = text;
+    ui.searchErr.classList.remove("hidden");
+  }
+  function clearSearchErr() {
+    ui.searchErr.textContent = "";
+    ui.searchErr.classList.add("hidden");
+  }
+
+  function hideFileRow() {
+    ui.fileRow.classList.add("hidden");
+    ui.saveLink.href = "#";
+    ui.saveLink.textContent = "Save file again";
+  }
+  function hidePicker() {
+    ui.pickerRow.innerHTML = "";
+    ui.pickerRow.classList.add("hidden");
+  }
+
+  function updateBadge() {
+    const raw = ui.url.value.trim();
+    if (!raw) {
+      ui.platBadge.className = "badge";
+      ui.platBadge.textContent = "Paste a link";
+      return;
+    }
+    const plat = detectPlatform(raw);
+    ui.platBadge.textContent = plat.name;
+    ui.platBadge.className = "badge " + (plat.id === "youtube" ? "yt" : "ok");
+  }
+
+  /* ================================================================== *
+   * 15. Fetch flow
+   * ================================================================== */
+  async function doFetch() {
+    if (state.busy) return;
+
+    clearErr();
+    hideFileRow();
+    hidePicker();
+
+    const raw = ui.url.value.trim();
+    if (!raw) { showErrHtml("Paste a video link first."); return; }
+
+    let parsed;
+    try { parsed = new URL(raw); } catch (e) {
+      showErrHtml("That doesn’t look like a valid URL. Include <code>https://</code>.");
+      return;
+    }
+    if (!/^https?:$/.test(parsed.protocol)) {
+      showErrHtml("Only <code>http</code> and <code>https</code> links are supported.");
       return;
     }
 
-    var frag = document.createDocumentFragment();
-    items.forEach(function (item, i) {
-      frag.appendChild(buildResultCard(item, i, sourceUrl));
-    });
-    resultsEl.appendChild(frag);
+    const platform = detectPlatform(raw);
+    state.platform = platform;
+    state.url = raw;
+
+    const ytId = platform.id === "youtube" ? extractVideoId(raw) : null;
+    if (platform.id === "youtube" && !ytId) {
+      showErrHtml("Could not find a YouTube video ID in that URL.");
+      return;
+    }
+
+    state.busy = true;
+    ui.fetchBtn.disabled = true;
+    ui.fetchBtn.textContent = "Fetching…";
+    ui.infoCard.classList.add("hidden");
+
+    try {
+      await ensureDetection();
+
+      const hasYT  = platform.id === "youtube" &&
+                     (instancesFor("piped").length || instancesFor("invidious").length);
+      const hasCob = instancesFor("cobalt").length > 0;
+
+      if (hasYT) {
+        try {
+          const r = await resolveYouTube(ytId);
+          state.backend = r.backend;
+          state.base    = r.base;
+          state.info    = r.data;
+          state.streams = r.streams;
+          state.filtered = [];
+          state.selected = 0;
+          renderDirect(r.data, ytId);
+        } catch (e) {
+          if (hasCob) {
+            state.backend = "cobalt";
+            state.base    = manualFor("cobalt") || detection.cobalt[0] || "";
+            state.info    = { title: "", uploader: "", duration: 0 };
+            state.streams = [];
+            renderConvert({ title: "", uploader: "", duration: 0 }, ytId);
+            setStatus("YouTube APIs unavailable — using Cobalt conversion.", "warn");
+          } else {
+            throw e;
+          }
+        }
+      } else if (hasCob) {
+        state.backend = "cobalt";
+        state.base    = manualFor("cobalt") || detection.cobalt[0] || "";
+        state.info    = { title: "", uploader: "", duration: 0 };
+        state.streams = [];
+        renderConvert({ title: "", uploader: "", duration: 0 }, ytId);
+      } else {
+        const e = new Error("NO_APIS");
+        e.code = "NO_APIS";
+        throw e;
+      }
+
+      ui.infoCard.classList.remove("hidden");
+      ui.infoCard.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      if (state.pendingAudio) {
+        state.pendingAudio = false;
+        setMode("audio");
+        if (state.backend !== "cobalt") {
+          if (state.filtered.length) {
+            state.selected = 0;
+            syncChips();
+            setTimeout(() => doDownload(), 150);
+          } else {
+            setStatus("No audio‑only stream on this instance. Try Cobalt or another format.", "warn");
+          }
+        } else {
+          setTimeout(() => doDownload(), 150);
+        }
+      }
+    } catch (e) {
+      handleFetchError(e);
+    } finally {
+      state.busy = false;
+      ui.fetchBtn.disabled = false;
+      ui.fetchBtn.textContent = "Fetch Video";
+    }
   }
 
-  function buildResultCard(item, index, sourceUrl) {
-    var card = el('div', 'result-card');
+  function handleFetchError(e) {
+    const code = e && e.code;
 
-    var icon = el('div', 'result-icon');
-    if (item.kind === 'audio') {
-      icon.textContent = '🎵';
-    } else if (item.kind === 'image') {
-      icon.textContent = '🖼️';
+    if (code === "NO_APIS" || code === "NO_YOUTUBE_API" || code === "NO_COBALT") {
+      ui.settings.open = true;
+      showErrHtml(
+        "No working API instances available for this link.<br>" +
+        "Press <strong>Detect now</strong> in API instances, or add a manual override."
+      );
+      return;
+    }
+
+    if (code === "ALL_YOUTUBE_FAILED") {
+      ui.settings.open = true;
+      const rows = (e.failures || []).map((f) =>
+        "<li><code>" + esc(f.base || f.type) + "</code> — " + esc(f.message) + "</li>"
+      ).join("");
+      showErrHtml(
+        "<strong>Every configured YouTube API failed.</strong>" +
+        (rows ? "<ul>" + rows + "</ul>" : "") +
+        "<br>Try pressing <strong>Detect now</strong>, add a manual override, or use the ytdlnis app."
+      );
+      return;
+    }
+
+    if (code === "ALL_COBALT_FAILED") {
+      ui.settings.open = true;
+      const rows = (e.failures || []).map((f) =>
+        "<li><code>" + esc(f.base) + "</code> — " + esc(f.message) + "</li>"
+      ).join("");
+      showErrHtml(
+        "<strong>Every Cobalt instance failed.</strong>" +
+        (rows ? "<ul>" + rows + "</ul>" : "") +
+        "<br>Press <strong>Detect now</strong> to refresh the instance list."
+      );
+      return;
+    }
+
+    if (looksLikeNetworkError(e)) {
+      ui.settings.open = true;
+      showErrHtml(networkHint("API", ""));
+      return;
+    }
+
+    showErrHtml(esc((e && e.message) || "Could not fetch this link."));
+  }
+
+  /* ================================================================== *
+   * 16. Render — direct streams
+   * ================================================================== */
+  function renderDirect(data, videoId) {
+    state.backend = state.backend === "invidious" ? "invidious" : "piped";
+
+    const title    = data.title || "Untitled";
+    const uploader = data.uploader || data.author || "";
+    const duration = data.duration || data.lengthSeconds || 0;
+
+    ui.title.textContent = title;
+
+    const bits = [];
+    if (uploader) bits.push(uploader);
+    if (duration) bits.push(fmtDur(duration));
+    bits.push(state.backend === "piped" ? "Piped" : "Invidious");
+    bits.push(hostOf(state.base));
+    ui.meta.textContent = bits.filter(Boolean).join(" · ");
+
+    const thumb =
+      data.thumbnailUrl ||
+      (data.videoThumbnails && data.videoThumbnails[0] && data.videoThumbnails[0].url) ||
+      (videoId ? youtubeThumb(videoId) : "");
+
+    if (thumb) {
+      ui.thumb.src = thumb;
+      ui.thumb.style.display = "";
     } else {
-      icon.textContent = '🎬';
+      ui.thumb.removeAttribute("src");
+      ui.thumb.style.display = "none";
     }
 
-    var body = el('div', 'result-body');
+    ui.directFormats.classList.remove("hidden");
+    ui.convertFormats.classList.add("hidden");
 
-    var title = el('div', 'result-title');
-    title.textContent = item.label || ('Result #' + (index + 1));
+    setMode(state.mode, true);
 
-    var meta = el('div', 'result-meta');
-    meta.textContent = item.filename || item.url;
-    meta.title = item.filename || item.url;
+    ui.barWrap.classList.add("hidden");
+    hideFileRow();
+    hidePicker();
+    setStatus("", "");
+    ui.dlBtn.disabled = false;
+    ui.dlBtn.textContent = "Download";
+    ui.dlBtn.classList.remove("green");
+    ui.cancelBtn.classList.add("hidden");
+    state.controller = null;
 
-    body.appendChild(title);
-    body.appendChild(meta);
-
-    var actions = el('div', 'result-actions');
-
-    var copyBtn = el('button', 'ghost-btn small');
-    copyBtn.type = 'button';
-    copyBtn.textContent = 'Copy link';
-    copyBtn.addEventListener('click', function () {
-      copyText(item.downloadUrl || item.url);
-    });
-
-    var dlBtn = el('button', 'primary-btn small');
-    dlBtn.type = 'button';
-    dlBtn.textContent = 'Download';
-    dlBtn.addEventListener('click', function () {
-      triggerDownload(item, sourceUrl);
-    });
-
-    actions.appendChild(copyBtn);
-    actions.appendChild(dlBtn);
-
-    card.appendChild(icon);
-    card.appendChild(body);
-    card.appendChild(actions);
-
-    return card;
+    if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
   }
 
-  function triggerDownload(item, sourceUrl) {
-    var href = item.downloadUrl || item.url;
-    var a = document.createElement('a');
+  function renderChips() {
+    ui.chips.innerHTML = "";
 
-    a.href = href;
-    a.rel = 'noopener noreferrer';
-    a.target = '_blank';
-
-    if (item.filename) {
-      a.setAttribute('download', item.filename);
+    if (!state.filtered.length) {
+      const p = document.createElement("p");
+      p.className = "muted";
+      p.textContent = state.mode === "video"
+        ? "No muxed video stream from this instance. Switch to Audio, or use Cobalt for merged HD."
+        : "No audio‑only stream from this instance. Try another format or instance.";
+      ui.chips.appendChild(p);
+      ui.dlBtn.disabled = true;
+      return;
     }
 
+    ui.dlBtn.disabled = false;
+
+    state.filtered.forEach((f, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chip" + (i === state.selected ? " active" : "");
+      btn.appendChild(document.createTextNode(f.label));
+
+      const small = document.createElement("small");
+      let sub = f.sublabel || "";
+      if (f.size) sub += (sub ? " · " : "") + fmtBytes(f.size);
+      small.textContent = sub;
+      btn.appendChild(small);
+
+      btn.addEventListener("click", () => {
+        state.selected = i;
+        syncChips();
+        ui.dlBtn.textContent = "Download";
+      });
+
+      ui.chips.appendChild(btn);
+    });
+  }
+
+  function syncChips() {
+    Array.prototype.forEach.call(ui.chips.children, (c, j) => {
+      if (c.classList) c.classList.toggle("active", j === state.selected);
+    });
+  }
+
+  /* ================================================================== *
+   * 17. Render — Cobalt conversion options
+   * ================================================================== */
+  function renderConvert(info, videoId) {
+    ui.title.textContent = info.title || "Ready to convert";
+
+    const bits = [];
+    if (info.uploader) bits.push(info.uploader);
+    if (info.duration) bits.push(fmtDur(info.duration));
+    bits.push("Cobalt");
+    const host = hostOf(state.base);
+    if (host) bits.push(host);
+    if (state.platform) bits.push(state.platform.name);
+    ui.meta.textContent = bits.filter(Boolean).join(" · ");
+
+    if (videoId) {
+      ui.thumb.src = youtubeThumb(videoId);
+      ui.thumb.style.display = "";
+    } else {
+      ui.thumb.removeAttribute("src");
+      ui.thumb.style.display = "none";
+    }
+
+    ui.directFormats.classList.add("hidden");
+    ui.convertFormats.classList.remove("hidden");
+
+    fillSelect(ui.vQuality, VIDEO_QUALITIES);
+    fillSelect(ui.aFormat, AUDIO_FORMATS);
+    fillSelect(ui.aBitrate, AUDIO_BITRATES.map((b) => ({ v: b, l: b + " kbps" })));
+
+    setMode(state.mode, true);
+
+    ui.barWrap.classList.add("hidden");
+    hideFileRow();
+    hidePicker();
+    setStatus("", "");
+    ui.dlBtn.disabled = false;
+    ui.dlBtn.textContent = "Convert & Download";
+    ui.dlBtn.classList.add("green");
+    ui.cancelBtn.classList.add("hidden");
+    state.controller = null;
+  }
+
+  function fillSelect(sel, items) {
+    sel.innerHTML = "";
+    items.forEach((it) => {
+      const o = document.createElement("option");
+      o.value = it.v;
+      o.textContent = it.l;
+      sel.appendChild(o);
+    });
+  }
+
+  /* ================================================================== *
+   * 18. Mode switching
+   * ================================================================== */
+  function setMode(mode, force) {
+    const next = mode === "audio" ? "audio" : "video";
+    if (!force && state.mode === next) return;
+    state.mode = next;
+
+    ui.modeBtns.forEach((b) => {
+      b.classList.toggle("active", b.dataset.mode === next);
+    });
+
+    if (state.backend === "cobalt") {
+      ui.videoOpts.classList.toggle("hidden", next !== "video");
+      ui.audioOpts.classList.toggle("hidden", next !== "audio");
+    } else {
+      state.filtered = state.streams.filter((s) => s.kind === next);
+      state.selected = 0;
+      renderChips();
+    }
+  }
+
+  /* ================================================================== *
+   * 19. Download — direct stream
+   * ================================================================== */
+  async function doDownload() {
+    if (state.controller) return;
+
+    if (state.backend === "cobalt") {
+      await convertAndDownload();
+      return;
+    }
+
+    const fmt = state.filtered[state.selected];
+    if (!fmt) { setStatus("Pick a format first.", "warn"); return; }
+
+    const filename = safeFilename((state.info && state.info.title) || "video") + "." + fmt.ext;
+    await downloadToFile(fmt.url, filename, fmt.mime);
+  }
+
+  /* ================================================================== *
+   * 20. Download — Cobalt
+   * ================================================================== */
+  async function convertAndDownload() {
+    if (!state.url) return;
+
+    const mode = state.mode;
+    const opts = {
+      url: state.url,
+      videoQuality: ui.vQuality.value || "max",
+      audioFormat:  ui.aFormat.value  || "mp3",
+      audioBitrate: ui.aBitrate.value || "320",
+    };
+
+    clearErr();
+    hideFileRow();
+    hidePicker();
+
+    ui.dlBtn.disabled = true;
+    ui.dlBtn.textContent = "Converting…";
+    ui.cancelBtn.classList.remove("hidden");
+    ui.barWrap.classList.add("hidden");
+    setStatus("Requesting conversion from Cobalt…", "");
+
+    const ctrl = new AbortController();
+    state.controller = ctrl;
+
+    try {
+      const result = await cobaltConvert(mode, opts);
+
+      if (result.kind === "picker") {
+        setStatus("The link contains multiple items — pick one to download.", "warn");
+        renderPicker(result);
+        ui.dlBtn.disabled = false;
+        ui.dlBtn.textContent = "Convert & Download";
+        ui.cancelBtn.classList.add("hidden");
+        state.controller = null;
+        return;
+      }
+
+      const fallbackName =
+        safeFilename((state.info && state.info.title) || hostOf(state.url) || "media") +
+        "." + (mode === "audio" ? (opts.audioFormat || "mp3") : "mp4");
+
+      const filename = result.filename ? safeFilename(result.filename) : fallbackName;
+      const mime = mode === "audio" ? ("audio/" + (opts.audioFormat || "mpeg")) : "video/mp4";
+
+      ui.cancelBtn.classList.add("hidden");
+      state.controller = null;
+
+      await downloadToFile(result.url, filename, mime);
+    } catch (e) {
+      console.error(e);
+
+      if (e && e.code === "ALL_COBALT_FAILED") {
+        ui.settings.open = true;
+        const rows = (e.failures || []).map((f) =>
+          "<li><code>" + esc(f.base) + "</code> — " + esc(f.message) + "</li>"
+        ).join("");
+        showErrHtml(
+          "<strong>All Cobalt instances failed.</strong>" +
+          (rows ? "<ul>" + rows + "</ul>" : "") +
+          "<br>Press <strong>Detect now</strong> in API instances, or use the ytdlnis app."
+        );
+      } else if (errName(e) === "AbortError") {
+        setStatus("Conversion cancelled.", "warn");
+      } else {
+        setStatus((e && e.message) || "Conversion failed.", "bad");
+      }
+
+      ui.dlBtn.disabled = false;
+      ui.dlBtn.textContent = "Convert & Download";
+      ui.cancelBtn.classList.add("hidden");
+      state.controller = null;
+    }
+  }
+
+  function renderPicker(result) {
+    hidePicker();
+    ui.pickerRow.classList.remove("hidden");
+
+    result.items.forEach((item, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ghost";
+      b.textContent = "Item " + (i + 1) + (item.type ? " · " + item.type : "");
+      b.addEventListener("click", () => {
+        hidePicker();
+        const name = safeFilename((state.info && state.info.title) || "media") + "-" + (i + 1) + ".mp4";
+        downloadToFile(item.url, name, "video/mp4");
+      });
+      ui.pickerRow.appendChild(b);
+    });
+  }
+
+  /* ================================================================== *
+   * 21. Streaming download with progress
+   * ================================================================== */
+  async function downloadToFile(url, filename, mime) {
+    if (state.controller) return;
+
+    hideFileRow();
+    if (state.blobUrl) { URL.revokeObjectURL(state.blobUrl); state.blobUrl = null; }
+
+    ui.barWrap.classList.remove("hidden");
+    ui.bar.style.width = "0%";
+    ui.pct.textContent = "0%";
+    ui.speed.textContent = "";
+    setStatus("Connecting to stream…", "");
+    ui.dlBtn.disabled = true;
+    ui.cancelBtn.classList.remove("hidden");
+
+    state.controller = new AbortController();
+    const signal = state.controller.signal;
+    const t0 = Date.now();
+
+    try {
+      const res = await fetch(url, {
+        signal,
+        credentials: "omit",
+        mode: "cors",
+        referrerPolicy: "no-referrer",
+      });
+      if (!res.ok) throw new Error("Stream server returned HTTP " + res.status);
+
+      const total = Number(res.headers.get("content-length") || 0);
+      const type  = res.headers.get("content-type") || mime || "application/octet-stream";
+
+      if (!res.body || !res.body.getReader) {
+        const blob = await res.blob();
+        finishDownload(blob, filename, t0);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const chunks = [];
+      let received = 0;
+      let last = 0;
+
+      for (;;) {
+        const step = await reader.read();
+        if (step.done) break;
+        chunks.push(step.value);
+        received += step.value.length;
+
+        const now = Date.now();
+        if (now - last > 200) {
+          last = now;
+          paintProgress(received, total, t0);
+        }
+      }
+
+      finishDownload(new Blob(chunks, { type }), filename, t0);
+    } catch (e) {
+      console.error(e);
+
+      if (errName(e) === "AbortError") {
+        setStatus("Download cancelled.", "warn");
+      } else if (looksLikeNetworkError(e)) {
+        setStatus(
+          "The stream host blocked the browser (CORS) or the signed URL expired. " +
+          "A direct link is offered below — or use “Open in ytdlnis”.",
+          "bad"
+        );
+        offerDirectLink(url, filename, true);
+      } else {
+        setStatus("Download failed: " + ((e && e.message) || "unknown") + ".", "bad");
+        offerDirectLink(url, filename, false);
+      }
+
+      ui.barWrap.classList.add("hidden");
+      ui.dlBtn.disabled = false;
+      ui.dlBtn.textContent = state.backend === "cobalt" ? "Convert & Download" : "Retry download";
+      ui.cancelBtn.classList.add("hidden");
+      state.controller = null;
+    }
+  }
+
+  function paintProgress(received, total, t0) {
+    const elapsed = (Date.now() - t0) / 1000;
+    const rate = elapsed > 0 ? received / elapsed : 0;
+
+    if (total > 0) {
+      const p = Math.min(100, (received / total) * 100);
+      ui.bar.style.width = p + "%";
+      ui.pct.textContent = p.toFixed(1) + "%";
+      ui.speed.textContent =
+        fmtBytes(received) + " / " + fmtBytes(total) + " · " + fmtBytes(rate) + "/s";
+    } else {
+      ui.bar.style.width = "100%";
+      ui.pct.textContent = fmtBytes(received);
+      ui.speed.textContent = fmtBytes(rate) + "/s";
+    }
+  }
+
+  function finishDownload(blob, filename, t0) {
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+    a.remove();
 
-    toast('Download started — check your browser downloads.', 'ok');
-    addHistory(sourceUrl || urlInput.value.trim());
+    if (state.blobUrl) URL.revokeObjectURL(state.blobUrl);
+    state.blobUrl = url;
+
+    ui.saveLink.href = url;
+    ui.saveLink.setAttribute("download", filename);
+    ui.saveLink.textContent = "Save “" + filename + "” again";
+    ui.fileRow.classList.remove("hidden");
+
+    ui.bar.style.width = "100%";
+    ui.pct.textContent = "100%";
+    const elapsed = (Date.now() - t0) / 1000;
+    const avg = elapsed > 0 ? blob.size / elapsed : 0;
+    ui.speed.textContent = fmtBytes(blob.size) + " · avg " + fmtBytes(avg) + "/s";
+
+    setStatus("Download complete — check your browser’s downloads folder.", "ok");
+
+    ui.dlBtn.disabled = false;
+    ui.dlBtn.textContent = state.backend === "cobalt" ? "Convert & Download" : "Download again";
+    ui.cancelBtn.classList.add("hidden");
+    state.controller = null;
   }
 
-  /* ==========================================================
-     HISTORY
-     ========================================================== */
-  function addHistory(url) {
-    if (!url) { return; }
-    var list = loadHistory().filter(function (h) { return h.url !== url; });
-    list.unshift({ url: url, ts: Date.now() });
-    saveHistory(list.slice(0, 15));
-    renderHistory();
+  function offerDirectLink(url, filename, corsBlocked) {
+    ui.fileRow.classList.remove("hidden");
+    ui.saveLink.href = url;
+    ui.saveLink.setAttribute("download", filename);
+    ui.saveLink.textContent = corsBlocked
+      ? "Open stream URL directly (may play instead of save)"
+      : "Try direct link";
   }
 
-  function renderHistory() {
-    var list = loadHistory();
-    historyList.innerHTML = '';
+  /* ================================================================== *
+   * 22. MP3 search
+   * ================================================================== */
+  async function doSearch() {
+    if (state.busy) return;
 
-    if (!list.length) {
-      var empty = el('li', 'muted');
-      empty.textContent = 'No links yet — paste one above to get started.';
-      historyList.appendChild(empty);
+    clearSearchErr();
+    const q = ui.q.value.trim();
+    if (!q) { showSearchErr("Type a song or artist name first."); return; }
+
+    await ensureDetection();
+
+    const order = [];
+    instancesFor("piped").forEach((b) => order.push({ type: "piped", base: b }));
+    instancesFor("invidious").forEach((b) => order.push({ type: "invidious", base: b }));
+
+    if (!order.length) {
+      ui.settings.open = true;
+      showSearchErr(
+        "No YouTube API detected. Press “Detect now” in API instances, or add a manual override."
+      );
       return;
     }
 
-    list.forEach(function (h) {
-      var li = el('li');
+    state.busy = true;
+    ui.searchBtn.disabled = true;
+    ui.searchBtn.textContent = "Searching…";
+    ui.searchResultsCard.classList.add("hidden");
 
-      var btn = el('button', 'hist-item');
-      btn.type = 'button';
-      btn.textContent = h.url;
-      btn.title = h.url;
-      btn.addEventListener('click', function () {
-        urlInput.value = h.url;
-        urlInput.focus();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
+    const failures = [];
 
-      var date = el('span', 'hist-date');
-      try {
-        date.textContent = new Date(h.ts).toLocaleString();
-      } catch (e) {
-        date.textContent = '';
-      }
+    try {
+      for (const t of order) {
+        try {
+          const url = t.type === "piped"
+            ? t.base + "/search?q=" + encodeURIComponent(q) + "&filter=music_songs"
+            : t.base + "/api/v1/search?q=" + encodeURIComponent(q) + "&type=video";
 
-      li.appendChild(btn);
-      li.appendChild(date);
-      historyList.appendChild(li);
-    });
-  }
-
-  /* ==========================================================
-     FORM SUBMIT
-     ========================================================== */
-  dlForm.addEventListener('submit', function (e) {
-    e.preventDefault();
-
-    var url = urlInput.value.trim();
-
-    if (!url) {
-      toast('Paste a link first', 'err');
-      urlInput.focus();
-      return;
-    }
-
-    if (!/^https?:\/\/\S+$/i.test(url)) {
-      toast('That does not look like a valid http(s) link', 'err');
-      urlInput.focus();
-      return;
-    }
-
-    setBusy(true);
-    resultsEl.innerHTML = '';
-    showStatus(
-      'Contacting the ' + (settings.engine === 'cobalt' ? 'cobalt' : 'yt-dlp') + ' backend…',
-      'info'
-    );
-
-    var runner = (settings.engine === 'ytdlp') ? runYtdlp : runCobalt;
-
-    runner(url).then(function (items) {
-      hideStatus();
-      renderResults(items, url);
-      addHistory(url);
-      toast('Found ' + items.length + ' download option' + (items.length === 1 ? '' : 's'), 'ok');
-    }).catch(function (err) {
-      var msg = (err && err.message) ? err.message : String(err);
-      showStatus(msg, 'err');
-    }).then(function () {
-      setBusy(false);
-    });
-  });
-
-  /* ==========================================================
-     INPUT BUTTONS
-     ========================================================== */
-  pasteBtn.addEventListener('click', function () {
-    if (!navigator.clipboard || !navigator.clipboard.readText) {
-      toast('Clipboard API unavailable — press Ctrl+V in the field', 'err');
-      urlInput.focus();
-      return;
-    }
-    navigator.clipboard.readText().then(function (text) {
-      if (text && text.trim()) {
-        urlInput.value = text.trim();
-        urlInput.focus();
-        toast('Pasted from clipboard', 'ok');
-      } else {
-        toast('Clipboard is empty', 'err');
-      }
-    }).catch(function () {
-      toast('Clipboard permission denied — paste manually with Ctrl+V', 'err');
-      urlInput.focus();
-    });
-  });
-
-  clearBtn.addEventListener('click', function () {
-    urlInput.value = '';
-    resultsEl.innerHTML = '';
-    hideStatus();
-    urlInput.focus();
-  });
-
-  /* ==========================================================
-     SETTINGS MODAL
-     ========================================================== */
-  function updateSessionStatus(baseUrl) {
-    var line = $('#sessionStatus');
-    if (!line) { return; }
-
-    var cached = loadCobaltSession();
-    var now = Date.now();
-
-    line.style.color = '';
-
-    if (cached.token && cached.base === baseUrl && cached.exp > now) {
-      line.textContent = 'Active session — valid until ' + new Date(cached.exp).toLocaleTimeString();
-      line.style.color = 'var(--ok)';
-      return;
-    }
-
-    if (settings.apiKey) {
-      line.textContent = 'Using API key auth.';
-      line.style.color = 'var(--ok)';
-      return;
-    }
-
-    if (settings.bearerToken) {
-      line.textContent = 'Using manually pasted bearer token.';
-      line.style.color = 'var(--ok)';
-      return;
-    }
-
-    line.textContent = 'No session yet — will be requested on first download.';
-  }
-
-  function openSettings() {
-    $('#setEngine').value        = settings.engine;
-    $('#setApiBase').value       = settings.apiBase || '';
-    $('#setApiKey').value        = settings.apiKey || '';
-    $('#setBearerToken').value   = settings.bearerToken || '';
-    $('#setFilenameStyle').value = settings.filenameStyle || 'pretty';
-    $('#setCodec').value         = settings.videoCodec || 'h264';
-    $('#setYtdlpBase').value     = settings.ytdlpBase || '';
-    $('#setProxy').value         = settings.downloadProxy || '';
-
-    toggleEngineFields(settings.engine);
-    updateSessionStatus((settings.apiBase || '').replace(/\/+$/, ''));
-
-    settingsModal.classList.remove('hidden');
-  }
-
-  function closeSettings() {
-    settingsModal.classList.add('hidden');
-  }
-
-  function toggleEngineFields(engine) {
-    if (engine === 'ytdlp') {
-      $('#cobaltFields').classList.add('hidden');
-      $('#ytdlpFields').classList.remove('hidden');
-    } else {
-      $('#ytdlpFields').classList.add('hidden');
-      $('#cobaltFields').classList.remove('hidden');
-    }
-  }
-
-  settingsBtn.addEventListener('click', openSettings);
-  $('#closeSettings').addEventListener('click', closeSettings);
-
-  settingsModal.addEventListener('click', function (e) {
-    if (e.target === settingsModal) { closeSettings(); }
-  });
-
-  $('#setEngine').addEventListener('change', function () {
-    toggleEngineFields(this.value);
-  });
-
-  $('#setApiBase').addEventListener('input', function () {
-    updateSessionStatus(this.value.trim().replace(/\/+$/, ''));
-  });
-
-  $('#setApiKey').addEventListener('input', function () {
-    updateSessionStatus($('#setApiBase').value.trim().replace(/\/+$/, ''));
-  });
-
-  $('#setBearerToken').addEventListener('input', function () {
-    updateSessionStatus($('#setApiBase').value.trim().replace(/\/+$/, ''));
-  });
-
-  $('#refreshSessionBtn').addEventListener('click', function () {
-    var base = $('#setApiBase').value.trim().replace(/\/+$/, '');
-    if (!base) {
-      toast('Enter a cobalt instance URL first', 'err');
-      return;
-    }
-
-    clearCobaltSession();
-    updateSessionStatus(base);
-
-    var overrideKey    = $('#setApiKey').value.trim();
-    var overrideBearer = ''; // ignore manual bearer for the explicit refresh
-
-    toast('Opening session flow…', 'info');
-
-    getCobaltAuth(base, { apiKey: overrideKey, bearerToken: overrideBearer })
-      .then(function (headers) {
-        var kind = headers && headers.Authorization
-          ? headers.Authorization.split(' ')[0]
-          : 'none';
-        toast('Session OK (auth: ' + kind + ').', 'ok');
-        updateSessionStatus(base);
-      })
-      .catch(function (err) {
-        toast('Session failed: ' + (err && err.message ? err.message : err), 'err');
-        updateSessionStatus(base);
-      });
-  });
-
-  $('#saveSettings').addEventListener('click', function () {
-    var prevBase = settings.apiBase;
-    var prevKey  = settings.apiKey;
-
-    settings.engine        = $('#setEngine').value;
-    settings.apiBase       = $('#setApiBase').value.trim();
-    settings.apiKey        = $('#setApiKey').value.trim();
-    settings.bearerToken   = $('#setBearerToken').value.trim();
-    settings.filenameStyle = $('#setFilenameStyle').value;
-    settings.videoCodec    = $('#setCodec').value;
-    settings.ytdlpBase     = $('#setYtdlpBase').value.trim();
-    settings.downloadProxy = $('#setProxy').value.trim();
-
-    // If auth-relevant settings changed, drop the cached JWT.
-    if (prevBase !== settings.apiBase || prevKey !== settings.apiKey) {
-      clearCobaltSession();
-    }
-
-    saveSettings();
-    closeSettings();
-    toast('Settings saved', 'ok');
-  });
-
-  $('#resetSettings').addEventListener('click', function () {
-    var key;
-    for (key in DEFAULT_SETTINGS) {
-      if (Object.prototype.hasOwnProperty.call(DEFAULT_SETTINGS, key)) {
-        settings[key] = DEFAULT_SETTINGS[key];
-      }
-    }
-    clearCobaltSession();
-    saveSettings();
-    openSettings();
-    setMode(settings.mode, false);
-    qualitySel.value = settings.videoQuality;
-    audioFmtSel.value = settings.audioFormat;
-    toast('Settings reset to defaults', 'ok');
-  });
-
-  $('#clearHistoryBtn').addEventListener('click', function () {
-    saveHistory([]);
-    renderHistory();
-    toast('Recent links cleared', 'ok');
-  });
-
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && !settingsModal.classList.contains('hidden')) {
-      closeSettings();
-    }
-    // Ctrl/Cmd + K → focus the URL field
-    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
-      e.preventDefault();
-      showView('download');
-      urlInput.focus();
-      urlInput.select();
-    }
-  });
-
-  /* ==========================================================
-     CODE SNIPPETS RENDERING
-     ========================================================== */
-  function renderSnippets() {
-    $$('[data-snippet]').forEach(function (node) {
-      var key = node.getAttribute('data-snippet');
-      if (SNIPPETS[key]) {
-        node.textContent = SNIPPETS[key];
-      }
-    });
-
-    $$('[data-copy]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var key = btn.getAttribute('data-copy');
-        if (SNIPPETS[key]) {
-          copyText(SNIPPETS[key]);
+          const data = await fetchJson(url, 12000);
+          const items = t.type === "piped" ? parsePipedSearch(data) : parseInvidiousSearch(data);
+          if (!items.length) throw new Error("No results");
+          renderSearchResults(items);
+          return;
+        } catch (e) {
+          failures.push({ base: t.base, message: (e && e.message) || String(e) });
         }
+      }
+
+      showSearchErr(
+        "No results. " + failures.map((f) => f.base + " — " + f.message).join(" · ")
+      );
+    } finally {
+      state.busy = false;
+      ui.searchBtn.disabled = false;
+      ui.searchBtn.textContent = "Search";
+    }
+  }
+
+  function parsePipedSearch(data) {
+    const items = (data && data.items) || [];
+    return items
+      .filter((it) => it && it.type === "stream" && it.url)
+      .map((it) => {
+        const id = extractVideoId(it.url) || "";
+        return {
+          videoId: id,
+          title:   it.title || "Untitled",
+          author:  it.uploaderName || it.uploader || "",
+          duration: it.duration || 0,
+          thumb:   it.thumbnail || (id ? youtubeThumb(id, "mqdefault") : ""),
+        };
+      })
+      .filter((it) => it.videoId);
+  }
+
+  function parseInvidiousSearch(data) {
+    const arr = Array.isArray(data) ? data : [];
+    return arr
+      .filter((it) => it && it.videoId)
+      .map((it) => ({
+        videoId: it.videoId,
+        title:   it.title || "Untitled",
+        author:  it.author || "",
+        duration: it.lengthSeconds || 0,
+        thumb: (it.videoThumbnails && it.videoThumbnails[0] && it.videoThumbnails[0].url) ||
+               youtubeThumb(it.videoId, "mqdefault"),
+      }));
+  }
+
+  function renderSearchResults(items) {
+    ui.searchList.innerHTML = "";
+    ui.searchResultsCard.classList.remove("hidden");
+
+    const kbps = ui.searchBitrate.value;
+
+    items.forEach((it) => {
+      const row = document.createElement("div");
+      row.className = "item";
+
+      const img = document.createElement("img");
+      img.loading = "lazy";
+      img.referrerPolicy = "no-referrer";
+      img.alt = "";
+      img.src = it.thumb;
+      img.addEventListener("error", () => { img.style.visibility = "hidden"; });
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const b = document.createElement("b");
+      b.textContent = it.title;
+
+      const span = document.createElement("span");
+      span.textContent = [it.author, fmtDur(it.duration)].filter(Boolean).join(" · ");
+
+      meta.appendChild(b);
+      meta.appendChild(span);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ghost";
+      btn.textContent = "MP3";
+      btn.title = "Download as MP3 (~" + kbps + " kbps)";
+      btn.addEventListener("click", () => {
+        state.pendingAudio = true;
+        setTab("download");
+        ui.url.value = "https://www.youtube.com/watch?v=" + it.videoId;
+        updateBadge();
+        doFetch();
       });
+
+      row.appendChild(img);
+      row.appendChild(meta);
+      row.appendChild(btn);
+      ui.searchList.appendChild(row);
     });
   }
 
-  /* ==========================================================
-     BOOT
-     ========================================================== */
-  function boot() {
-    initTheme();
-
-    // Restore persisted UI state
-    setMode(settings.mode || 'auto', false);
-    qualitySel.value = settings.videoQuality || '1080';
-    audioFmtSel.value = settings.audioFormat || 'mp3';
-
-    renderHistory();
-    renderSnippets();
-
-    urlInput.focus();
+  /* ================================================================== *
+   * 23. Sharing / handoff
+   * ================================================================== */
+  function currentUrl() {
+    if (state.url) return state.url;
+    return ui.url.value.trim();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
+  function copyText(text, okMsg) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => setStatus(okMsg, "ok"))
+        .catch(() => setStatus("Couldn’t copy automatically. Copy manually: " + text, "warn"));
+    } else {
+      setStatus("Clipboard unavailable. Copy manually: " + text, "warn");
+    }
   }
 
+  function openInYtdlnis() {
+    const target = currentUrl();
+    if (!target) { setStatus("Paste a link first.", "warn"); return; }
+
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    if (!isAndroid) {
+      copyText(target, "ytdlnis is Android-only. The link has been copied — paste it into the app.");
+      return;
+    }
+
+    const encoded = encodeURIComponent(target);
+    const intent =
+      "intent:#Intent;action=android.intent.action.SEND;type=text/plain;" +
+      "S.android.intent.extra.TEXT=" + encoded + ";" +
+      "package=com.deniscerri.ytdl;end";
+
+    const t = Date.now();
+    try {
+      window.location.href = intent;
+    } catch (e) {
+      copyText(target, "Couldn’t open ytdlnis — link copied instead.");
+      return;
+    }
+
+    setTimeout(() => {
+      if (!document.hidden && Date.now() - t < 2500) {
+        copyText(target, "ytdlnis doesn’t seem to be installed. The link has been copied instead.");
+      }
+    }, 1800);
+  }
+
+  /* ================================================================== *
+   * 24. Tabs
+   * ================================================================== */
+  function setTab(name) {
+    ui.tabs.forEach((t) => {
+      const active = t.dataset.tab === name;
+      t.classList.toggle("active", active);
+      t.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    ui.panelDownload.classList.toggle("hidden", name !== "download");
+    ui.panelSearch.classList.toggle("hidden", name !== "search");
+  }
+
+  /* ================================================================== *
+   * 25. Deep links
+   * ================================================================== */
+  function initFromLocation() {
+    let params, hash;
+    try { params = new URLSearchParams(location.search); } catch (e) { params = new URLSearchParams(); }
+    try { hash = new URLSearchParams(location.hash.replace(/^#/, "")); } catch (e) { hash = new URLSearchParams(); }
+
+    const raw =
+      params.get("url") || hash.get("url") ||
+      params.get("u")   || hash.get("u")   || "";
+    const vid =
+      params.get("v")   || hash.get("v")   ||
+      params.get("id")  || hash.get("id")  || "";
+
+    if (raw) {
+      ui.url.value = raw;
+      updateBadge();
+      doFetch();
+      return;
+    }
+    if (vid && /^[A-Za-z0-9_-]{11}$/.test(vid)) {
+      ui.url.value = "https://www.youtube.com/watch?v=" + vid;
+      updateBadge();
+      doFetch();
+    }
+  }
+
+  /* ================================================================== *
+   * 26. Event wiring
+   * ================================================================== */
+  ui.tabs.forEach((t) => t.addEventListener("click", () => setTab(t.dataset.tab)));
+
+  ui.fetchBtn.addEventListener("click", doFetch);
+  ui.dlBtn.addEventListener("click", doDownload);
+  ui.searchBtn.addEventListener("click", doSearch);
+  ui.ytdlnisBtn.addEventListener("click", openInYtdlnis);
+
+  ui.copyBtn.addEventListener("click", () => {
+    const target = currentUrl();
+    if (!target) { setStatus("Nothing to copy yet.", "warn"); return; }
+    copyText(target, "Link copied to clipboard.");
+  });
+
+  ui.openSrcBtn.addEventListener("click", () => {
+    const target = currentUrl();
+    if (!target) return;
+    window.open(target, "_blank", "noopener,noreferrer");
+  });
+
+  ui.cancelBtn.addEventListener("click", () => {
+    if (state.controller) state.controller.abort();
+  });
+
+  ui.modeBtns.forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+  ui.url.addEventListener("input", updateBadge);
+  ui.url.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); doFetch(); }
+  });
+
+  ui.q.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); doSearch(); }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state.controller) state.controller.abort();
+  });
+
+  ui.pasteBtn.addEventListener("click", () => {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText()
+        .then((t) => {
+          if (t) {
+            ui.url.value = t.trim();
+            updateBadge();
+            ui.url.focus();
+          }
+        })
+        .catch(() => ui.url.focus());
+    } else {
+      ui.url.focus();
+    }
+  });
+
+  ui.clearBtn.addEventListener("click", () => {
+    ui.url.value = "";
+    updateBadge();
+    clearErr();
+    ui.infoCard.classList.add("hidden");
+    setStatus("", "");
+    hideFileRow();
+    hidePicker();
+    ui.url.focus();
+  });
+
+  ui.thumb.addEventListener("error", () => { ui.thumb.style.display = "none"; });
+
+  /* settings */
+  function persistSettings() {
+    cfg.piped     = normBase(ui.setPiped.value);
+    cfg.invidious = normBase(ui.setInvidious.value);
+    cfg.cobalt    = normBase(ui.setCobalt.value);
+    ui.setPiped.value     = cfg.piped;
+    ui.setInvidious.value = cfg.invidious;
+    ui.setCobalt.value    = cfg.cobalt;
+    saveCfg();
+    updateDetectionUI();
+  }
+
+  [ui.setPiped, ui.setInvidious, ui.setCobalt].forEach((input) => {
+    input.addEventListener("change", persistSettings);
+    input.addEventListener("blur", () => {
+      const n = normBase(input.value);
+      if (n !== input.value) { input.value = n; persistSettings(); }
+    });
+  });
+
+  ui.resetCfgBtn.addEventListener("click", () => {
+    cfg.piped = cfg.invidious = cfg.cobalt = "";
+    ui.setPiped.value = ui.setInvidious.value = ui.setCobalt.value = "";
+    saveCfg();
+    updateDetectionUI();
+    setStatus("Manual overrides cleared. Using auto-detected instances.", "ok");
+  });
+
+  ui.redetectBtn.addEventListener("click", async () => {
+    detection.ts = 0;
+    saveDetectionCache();
+    await runDetection(true);
+  });
+
+  ui.showInstBtn.addEventListener("click", () => {
+    const box = ui.instList;
+    if (!box) return;
+    const hidden = box.classList.toggle("hidden");
+    if (!hidden) renderInstanceList();
+  });
+
+  /* ================================================================== *
+   * 27. Boot
+   * ================================================================== */
+  loadCfg();
+  loadDetectionCache();
+
+  ui.setPiped.value     = cfg.piped;
+  ui.setInvidious.value = cfg.invidious;
+  ui.setCobalt.value    = cfg.cobalt;
+
+  fillSelect(ui.vQuality, VIDEO_QUALITIES);
+  fillSelect(ui.aFormat, AUDIO_FORMATS);
+  fillSelect(ui.aBitrate, AUDIO_BITRATES.map((b) => ({ v: b, l: b + " kbps" })));
+
+  setTab("download");
+  updateBadge();
+  updateDetectionUI();
+
+  /* Kick off detection in the background on first load. */
+  runDetection(false).catch(() => { /* status shown in UI */ });
+
+  initFromLocation();
+
+  if (!ui.url.value) ui.url.focus();
 })();
 </script>
 </body>
