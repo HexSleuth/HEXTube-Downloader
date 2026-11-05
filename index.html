@@ -60,7 +60,7 @@
     color:var(--muted);letter-spacing:.05em;
     text-transform:uppercase;margin-bottom:8px;
   }
-  .lbl2{margin-top:18px}
+  .lbl2{margin-top:14px}
 
   .inputRow{display:flex;gap:8px;margin-bottom:12px}
   input[type=url],input[type=text]{
@@ -77,6 +77,21 @@
     border-color:var(--accent-2);
     box-shadow:0 0 0 3px rgba(124,92,255,.18);
   }
+
+  select{
+    width:100%;
+    background:#0b0f17;color:var(--txt);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:13px 14px;font-size:16px;
+    outline:none;appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,#8b98b0 50%),
+                     linear-gradient(135deg,#8b98b0 50%,transparent 50%);
+    background-position:calc(100% - 20px) 50%, calc(100% - 14px) 50%;
+    background-size:6px 6px,6px 6px;
+    background-repeat:no-repeat;
+  }
+  select:focus{border-color:var(--accent-2);box-shadow:0 0 0 3px rgba(124,92,255,.18)}
 
   button{font-family:inherit;font-size:16px;cursor:pointer;border:none}
   .primary{
@@ -96,6 +111,7 @@
   .ghost:active{background:#232b3d}
   .ghost.danger{color:#ffd5d5;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35)}
   .ghost.danger:active{background:rgba(239,68,68,.22)}
+  .ghost.small{padding:10px 14px;font-size:14px}
 
   .btnRow{display:flex;gap:8px;margin-top:18px}
   .btnRow .primary{flex:1 1 auto}
@@ -106,8 +122,9 @@
     margin-top:12px;padding:11px 13px;border-radius:11px;font-size:14px;
     color:#ffd5d5;background:rgba(239,68,68,.13);
     border:1px solid rgba(239,68,68,.4);
-    word-break:break-word;
+    word-break:break-word;line-height:1.5;
   }
+  .err a{color:#ffd5d5;font-weight:700}
 
   .media{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
   .media img{
@@ -160,7 +177,7 @@
   }
   .status{
     margin-top:10px;font-size:13.5px;color:var(--muted);
-    min-height:18px;word-break:break-word;
+    min-height:18px;word-break:break-word;line-height:1.5;
   }
   .status.ok{color:var(--ok);font-weight:600}
   .status.bad{color:var(--err);font-weight:600}
@@ -183,6 +200,7 @@
     border:1px solid rgba(124,92,255,.22);
   }
   .note strong{color:#d9e0ee}
+  .note code{background:#0b0f17;border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:11.5px}
 
   details.adv{
     margin-top:14px;border-radius:12px;border:1px solid var(--line);
@@ -191,14 +209,17 @@
   details.adv summary{
     cursor:pointer;padding:12px 14px;font-size:13.5px;font-weight:600;
     color:var(--muted);list-style:none;user-select:none;
+    display:flex;align-items:center;gap:8px;
   }
   details.adv summary::-webkit-details-marker{display:none}
-  details.adv summary::before{content:"▸ ";transition:transform .15s}
-  details.adv[open] summary::before{content:"▾ "}
+  details.adv summary::before{content:"▸";transition:transform .15s;font-size:12px}
+  details.adv[open] summary::before{content:"▾"}
   details.adv[open] summary{border-bottom:1px solid var(--line)}
   .advBody{padding:14px}
   .advBody .lbl{margin-bottom:6px}
-  .advBody input{width:100%}
+  .hint{font-size:12px;color:#5d6982;margin:6px 0 0;line-height:1.5}
+  .saved{font-size:11.5px;color:var(--ok);font-weight:600;margin-left:auto;opacity:0;transition:opacity .2s}
+  .saved.show{opacity:1}
 
   .foot{
     color:#5d6982;font-size:11.5px;text-align:center;
@@ -223,6 +244,7 @@
     </div>
   </header>
 
+  <!-- ============================ INPUT CARD ============================ -->
   <section class="card">
     <label class="lbl" for="url">YouTube URL</label>
     <div class="inputRow">
@@ -234,20 +256,39 @@
     <button id="fetchBtn" class="primary" type="button">Fetch Video</button>
     <div id="err" class="err hidden"></div>
 
-    <details class="adv">
-      <summary>Advanced — custom API instances</summary>
+    <details class="adv" id="settingsPanel">
+      <summary>
+        <span>API instance — required</span>
+        <span id="savedFlag" class="saved">Saved</span>
+      </summary>
       <div class="advBody">
-        <label class="lbl" for="pipedCustom">Piped API base URL</label>
-        <input id="pipedCustom" type="text" placeholder="https://pipedapi.example.com">
-        <label class="lbl lbl2" for="invidiousCustom">Invidious base URL</label>
-        <input id="invidiousCustom" type="text" placeholder="https://invidious.example.com">
-        <p class="muted" style="margin-top:10px;font-size:12px">
-          Optional. If set, tried before the built-in mirror list.
+        <label class="lbl" for="apiType">API type</label>
+        <select id="apiType">
+          <option value="piped">Piped</option>
+          <option value="invidious">Invidious</option>
+        </select>
+
+        <label class="lbl lbl2" for="apiBase">API base URL</label>
+        <input id="apiBase" type="text" inputmode="url"
+               autocomplete="off" autocapitalize="off" spellcheck="false"
+               placeholder="https://pipedapi.example.com">
+
+        <p class="hint">
+          There is no built-in mirror list. You must enter one Piped or Invidious
+          instance that <strong>allows browser CORS requests</strong>
+          (<code>Access-Control-Allow-Origin: *</code>) — otherwise the browser
+          will report <em>“Failed to fetch”</em>.
+        </p>
+        <p class="hint">
+          Examples of the format: <code>https://pipedapi.example.com</code> for
+          Piped, <code>https://invidious.example.com</code> for Invidious.
+          Use the <strong>ytdlnis</strong> app if no instance is reachable.
         </p>
       </div>
     </details>
   </section>
 
+  <!-- ============================ RESULT CARD =========================== -->
   <section id="infoCard" class="card hidden">
     <div class="media">
       <img id="thumb" alt="" referrerpolicy="no-referrer">
@@ -286,12 +327,10 @@
 
   <div class="note">
     <strong>How this works:</strong> 100% client-side — no server, no backend.
-    The app queries free public <em>Piped</em> and <em>Invidious</em> API instances
-    (automatic failover across ~20 mirrors) to get proxied stream URLs, then
-    downloads the chosen file directly to your browser.
+    You point the app at <em>one</em> Piped or Invidious API instance that sends
+    CORS headers, and it returns proxied stream URLs that the browser can fetch.
     Muxed MP4 (typically 360p / 720p) and audio-only streams download here.
-    For 1080p+ and merged output, use the <strong>Open in ytdlnis</strong> handoff
-    (Android) — it uses the installed app instead.
+    For 1080p+ and merged output, use <strong>Open in ytdlnis</strong> (Android).
   </div>
 
   <p class="foot">
@@ -313,6 +352,10 @@
     pasteBtn:    $("pasteBtn"),
     fetchBtn:    $("fetchBtn"),
     err:         $("err"),
+    settings:    $("settingsPanel"),
+    apiType:     $("apiType"),
+    apiBase:     $("apiBase"),
+    savedFlag:   $("savedFlag"),
     infoCard:    $("infoCard"),
     thumb:       $("thumb"),
     title:       $("title"),
@@ -329,12 +372,10 @@
     status:      $("status"),
     fileRow:     $("fileRow"),
     saveLink:    $("saveLink"),
-    pipedCustom: $("pipedCustom"),
-    invCustom:   $("invidiousCustom"),
   };
 
   /* ------------------------------------------------------------------ *
-   *  State
+   *  State + config
    * ------------------------------------------------------------------ */
   const state = {
     videoId:    null,
@@ -345,50 +386,45 @@
     sourceHost: "",
     controller: null,
     blobUrl:    null,
+    busy:       false,
   };
 
-  /* ------------------------------------------------------------------ *
-   *  Public API instances  (free, no key, HTTPS)
-   *  Mirrors rotate — override via the "Advanced" panel if needed.
-   * ------------------------------------------------------------------ */
-  const PIPED_INSTANCES = [
-    "https://pipedapi.kavin.rocks",
-    "https://pipedapi.adminforge.de",
-    "https://api.piped.projectsegfau.lt",
-    "https://pipedapi.darkness.services",
-    "https://pipedapi.ducks.party",
-    "https://pipedapi.reallyaweso.me",
-    "https://pipedapi.smnz.de",
-    "https://pipedapi.leptons.xyz",
-    "https://pipedapi.nosebs.ru",
-    "https://api.piped.yt",
-    "https://pipedapi.astartes.nl",
-    "https://pipedapi.drgns.space",
-  ];
+  const CFG_KEY = "ytdl-cfg-v2";
+  const cfg = {
+    type: "piped",   // "piped" | "invidious"
+    base: "",        // e.g. "https://pipedapi.example.com"
+  };
 
-  const INVIDIOUS_INSTANCES = [
-    "https://inv.nadeko.net",
-    "https://invidious.nerdvpn.de",
-    "https://invidious.f5.si",
-    "https://inv.tux.pizza",
-    "https://invidious.privacyredirect.com",
-    "https://yewtu.be",
-    "https://iv.ggtyler.dev",
-    "https://invidious.jing.rocks",
-    "https://invidious.materialio.us",
-    "https://invidious.reallyaweso.me",
-  ];
-
-  const VIDEO_ID_RE =
-    /(?:youtu\.be\/|youtube\.com\/(?:watch\?[^#]*\bv=|embed\/|v\/|shorts\/|live\/|.*[?&]v=))([A-Za-z0-9_-]{11})/;
-
-  const LS_KEY = "ytdl-instance";
+  function loadCfg() {
+    try {
+      const raw = localStorage.getItem(CFG_KEY);
+      if (!raw) return;
+      const o = JSON.parse(raw);
+      if (!o || typeof o !== "object") return;
+      if (o.type === "piped" || o.type === "invidious") cfg.type = o.type;
+      if (typeof o.base === "string") cfg.base = o.base.trim();
+    } catch (e) { /* ignore */ }
+  }
+  function saveCfg() {
+    try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) { /* ignore */ }
+    flashSaved();
+  }
+  let savedTimer = null;
+  function flashSaved() {
+    ui.savedFlag.classList.add("show");
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(() => ui.savedFlag.classList.remove("show"), 1400);
+  }
+  function syncSettingsUI() {
+    ui.apiType.value = cfg.type;
+    ui.apiBase.value = cfg.base;
+  }
 
   /* ------------------------------------------------------------------ *
    *  Utilities
    * ------------------------------------------------------------------ */
-  function showErr(msg) {
-    ui.err.textContent = msg;
+  function showErr(html) {
+    ui.err.innerHTML = html;
     ui.err.classList.remove("hidden");
   }
   function clearErr() {
@@ -414,7 +450,7 @@
   function parseSize(v) {
     if (!v) return 0;
     if (typeof v === "number") return v;
-    const s = String(v);
+    const s = String(v).trim();
     if (/^\d+$/.test(s)) return Number(s);
     const m = s.match(/([\d.]+)\s*(B|KB|KiB|MB|MiB|GB|GiB)/i);
     if (!m) return 0;
@@ -439,37 +475,80 @@
     const raw = String(input || "").trim();
     if (!raw) return null;
     if (/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
-    const m = raw.match(VIDEO_ID_RE);
+    const m = raw.match(
+      /(?:youtu\.be\/|youtube\.com\/(?:watch\?[^#]*\bv=|embed\/|v\/|shorts\/|live\/|.*[?&]v=))([A-Za-z0-9_-]{11})/
+    );
     return m ? m[1] : null;
   }
   function hostOf(url) {
     try { return new URL(url).hostname; } catch (e) { return ""; }
   }
+  function normalizeBase(base) {
+    let b = String(base || "").trim();
+    if (!b) return "";
+    if (!/^https?:\/\//i.test(b)) b = "https://" + b;
+    return b.replace(/\/+$/, "");
+  }
+
+  /* ------------------------------------------------------------------ *
+   *  Single-endpoint fetch (no mirror list, no silent failover)
+   * ------------------------------------------------------------------ */
   function fetchJson(url, timeout) {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeout || 8000);
-    return fetch(url, { signal: ctrl.signal, credentials: "omit", mode: "cors", referrerPolicy: "no-referrer" })
+    const timer = setTimeout(() => ctrl.abort(), timeout || 12000);
+    return fetch(url, {
+      signal: ctrl.signal,
+      credentials: "omit",
+      mode: "cors",
+      referrerPolicy: "no-referrer",
+      headers: { "Accept": "application/json" },
+    })
       .then((res) => {
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        if (!res.ok) throw new Error("HTTP " + res.status + " " + (res.statusText || ""));
         return res.json();
       })
       .finally(() => clearTimeout(timer));
   }
-  function rememberInstance(kind, base) {
-    try { localStorage.setItem(LS_KEY + ":" + kind, base); } catch (e) { /* ignore */ }
-  }
-  function getInstanceList(kind) {
-    const base  = kind === "piped" ? PIPED_INSTANCES : INVIDIOUS_INSTANCES;
-    const custom = (kind === "piped" ? ui.pipedCustom : ui.invCustom).value.trim().replace(/\/+$/, "");
-    let last = "";
-    try { last = localStorage.getItem(LS_KEY + ":" + kind) || ""; } catch (e) { /* ignore */ }
 
-    let list = base.slice();
-    if (custom) list.unshift(custom);
-    else if (last && list.indexOf(last) >= 0) {
-      list = [last].concat(list.filter((x) => x !== last));
+  function apiUrlFor(videoId) {
+    const base = normalizeBase(cfg.base);
+    if (cfg.type === "piped") return base + "/streams/" + videoId;
+    // ?local=true makes Invidious rewrite stream URLs to its own origin,
+    // which is what makes browser-side fetch() work (CORS).
+    return base + "/api/v1/videos/" + videoId + "?local=true";
+  }
+
+  function explainFetchError(e, phase) {
+    const name = e && e.name;
+    const msg  = (e && e.message) || String(e);
+
+    if (name === "AbortError") {
+      return "The API request timed out. The instance is slow or unreachable — " +
+             "try another instance in <strong>API instance</strong> settings.";
     }
-    return list;
+    if (e instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(msg)) {
+      return (
+        "<strong>Failed to fetch.</strong> The browser could not talk to " +
+        "<code>" + escapeHtml(normalizeBase(cfg.base) || "(no instance set)") + "</code>." +
+        "<br>Common causes:" +
+        "<br>• The instance is offline or blocking requests." +
+        "<br>• It doesn't send <code>Access-Control-Allow-Origin</code> (CORS), so the browser blocks the response." +
+        "<br>• Mixed content (an <code>http://</code> URL on an <code>https://</code> page)." +
+        "<br><br>Set a working CORS-enabled " +
+        (cfg.type === "piped" ? "Piped" : "Invidious") +
+        " instance under <strong>API instance</strong>, or use the ytdlnis app."
+      );
+    }
+    if (/^HTTP (4\d\d|5\d\d)/.test(msg)) {
+      return (
+        "<strong>" + escapeHtml(msg) + "</strong> — the instance rejected the request. " +
+        (cfg.type === "piped"
+          ? "Piped instances often rate-limit or return 502 when overloaded. "
+          : "Invidious instances often return 500 when their session expires. ") +
+        "Try again or pick another instance under <strong>API instance</strong>."
+      );
+    }
+    return escapeHtml(msg || "Unknown error while fetching.");
   }
 
   /* ------------------------------------------------------------------ *
@@ -478,8 +557,8 @@
   function pickQualityLabel(q) {
     if (!q) return "";
     const s = String(q).toLowerCase();
-    const map = ["4320", "2160", "1440", "1080", "720", "480", "360", "240", "144"];
-    for (const n of map) if (s.indexOf(n) >= 0) return n + "p";
+    const ladder = ["4320", "2160", "1440", "1080", "720", "480", "360", "240", "144"];
+    for (const n of ladder) if (s.indexOf(n) >= 0) return n + "p";
     if (s === "highres") return "Highres";
     return q;
   }
@@ -570,66 +649,10 @@
   }
 
   /* ------------------------------------------------------------------ *
-   *  API resolvers with failover
-   * ------------------------------------------------------------------ */
-  function tryPiped(videoId) {
-    const list = getInstanceList("piped");
-    let i = 0, lastErr = null;
-
-    function next() {
-      if (i >= list.length) {
-        return Promise.reject(new Error(lastErr || "All Piped instances failed."));
-      }
-      const base = list[i++];
-      return fetchJson(base + "/streams/" + videoId, 8000)
-        .then((data) => {
-          if (data && data.title) {
-            rememberInstance("piped", base);
-            return { source: "piped", base: base, data: data };
-          }
-          lastErr = (data && data.error) || "Empty response from " + base;
-          return next();
-        })
-        .catch((e) => {
-          lastErr = (e && e.message) || String(e);
-          return next();
-        });
-    }
-    return next();
-  }
-
-  function tryInvidious(videoId) {
-    const list = getInstanceList("invidious");
-    let i = 0, lastErr = null;
-
-    function next() {
-      if (i >= list.length) {
-        return Promise.reject(new Error(lastErr || "All Invidious instances failed."));
-      }
-      const base = list[i++];
-      // ?local=true makes the instance rewrite stream URLs to its own origin
-      // (which sets CORS headers), so browser-side fetch() works.
-      return fetchJson(base + "/api/v1/videos/" + videoId + "?local=true", 8000)
-        .then((data) => {
-          if (data && data.title) {
-            rememberInstance("invidious", base);
-            return { source: "invidious", base: base, data: data };
-          }
-          lastErr = (data && data.error) || "Empty response from " + base;
-          return next();
-        })
-        .catch((e) => {
-          lastErr = (e && e.message) || String(e);
-          return next();
-        });
-    }
-    return next();
-  }
-
-  /* ------------------------------------------------------------------ *
    *  Fetch video info
    * ------------------------------------------------------------------ */
   function doFetch() {
+    if (state.busy) return;
     clearErr();
     hideFileRow();
 
@@ -639,53 +662,83 @@
     const videoId = extractVideoId(raw);
     if (!videoId) { showErr("Could not find a YouTube video ID in that URL."); return; }
 
+    if (!normalizeBase(cfg.base)) {
+      ui.settings.open = true;
+      showErr(
+        "No API instance configured. Open <strong>API instance</strong> below, " +
+        "pick Piped or Invidious, and enter a CORS-enabled base URL."
+      );
+      ui.apiBase.focus();
+      return;
+    }
+
+    cfg.base = normalizeBase(cfg.base);
+    ui.apiBase.value = cfg.base;
+    saveCfg();
+
+    state.busy = true;
     ui.fetchBtn.disabled = true;
     ui.fetchBtn.textContent = "Fetching…";
     ui.infoCard.classList.add("hidden");
 
-    const p = tryPiped(videoId).catch(() => tryInvidious(videoId));
+    const endpoint = apiUrlFor(videoId);
 
-    p.then((r) => {
-      const formats = r.source === "piped" ? parsePiped(r.data) : parseInvidious(r.data);
-      if (!formats.length) {
-        throw new Error(
-          "The API returned no downloadable formats. " +
-          "That usually means the mirror is rate‑limited — try again or set a custom instance."
-        );
-      }
-
-      const order = { "4320p": 9, "2160p": 8, "1440p": 7, "1080p": 6, "720p": 5, "480p": 4, "360p": 3, "240p": 2, "144p": 1 };
-      formats.sort((a, b) => {
-        if (a.kind !== b.kind) return a.kind === "video" ? -1 : 1;
-        if (a.kind === "video") {
-          const qa = order[a.label.split(" ")[0]] || 0;
-          const qb = order[b.label.split(" ")[0]] || 0;
-          return qb - qa;
+    fetchJson(endpoint, 12000)
+      .then((data) => {
+        if (!data || typeof data !== "object") {
+          throw new Error("The instance returned an unexpected response.");
         }
-        return (b.size || 0) - (a.size || 0);
+        if (data.error) {
+          throw new Error(String(data.error));
+        }
+
+        const formats =
+          cfg.type === "piped" ? parsePiped(data) : parseInvidious(data);
+
+        if (!formats.length) {
+          throw new Error(
+            "The instance returned no downloadable formats. " +
+            (cfg.type === "piped"
+              ? "This Piped server may be rate-limited or missing proxy URLs."
+              : "This Invidious server may not support local stream rewrites.")
+          );
+        }
+
+        const order = {
+          "4320p": 9, "2160p": 8, "1440p": 7, "1080p": 6,
+          "720p": 5, "480p": 4, "360p": 3, "240p": 2, "144p": 1,
+        };
+        formats.sort((a, b) => {
+          if (a.kind !== b.kind) return a.kind === "video" ? -1 : 1;
+          if (a.kind === "video") {
+            const qa = order[a.label.split(" ")[0]] || 0;
+            const qb = order[b.label.split(" ")[0]] || 0;
+            return qb - qa;
+          }
+          return (b.size || 0) - (a.size || 0);
+        });
+
+        state.videoId    = videoId;
+        state.info       = data;
+        state.formats    = formats;
+        state.selected   = 0;
+        state.source     = cfg.type;
+        state.sourceHost = hostOf(cfg.base);
+
+        renderInfo(data, formats);
+        ui.infoCard.classList.remove("hidden");
+        ui.infoCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      })
+      .catch((e) => {
+        console.error(e);
+        showErr(explainFetchError(e, "info"));
+        if (e instanceof TypeError) ui.settings.open = true;
+      })
+      .finally(() => {
+        state.busy = false;
+        ui.fetchBtn.disabled = false;
+        ui.fetchBtn.textContent = "Fetch Video";
       });
-
-      state.videoId    = videoId;
-      state.info       = r.data;
-      state.formats    = formats;
-      state.selected   = 0;
-      state.source     = r.source;
-      state.sourceHost = hostOf(r.base);
-
-      renderInfo(r.data, formats);
-      ui.infoCard.classList.remove("hidden");
-      ui.infoCard.scrollIntoView({ behavior: "smooth", block: "start" });
-    })
-    .catch((e) => {
-      showErr(
-        (e && e.message) ||
-        "Could not fetch the video. Public API mirrors may be temporarily down — please retry."
-      );
-    })
-    .finally(() => {
-      ui.fetchBtn.disabled = false;
-      ui.fetchBtn.textContent = "Fetch Video";
-    });
   }
 
   /* ------------------------------------------------------------------ *
@@ -773,6 +826,7 @@
   function hideFileRow() {
     ui.fileRow.classList.add("hidden");
     ui.saveLink.href = "#";
+    ui.saveLink.textContent = "Save file again";
   }
 
   /* ------------------------------------------------------------------ *
@@ -781,6 +835,7 @@
   async function doDownload() {
     const fmt = state.formats[state.selected];
     if (!state.info || !fmt) return;
+    if (state.controller) return; // already downloading
 
     clearErr();
     hideFileRow();
@@ -845,12 +900,20 @@
         ui.status.textContent = "Download cancelled.";
       } else {
         console.error(e);
+        const isCors = (e instanceof TypeError) ||
+                       /failed to fetch|networkerror|load failed/i.test((e && e.message) || "");
+
         ui.status.className = "status bad";
-        ui.status.innerHTML =
-          "Download failed: " + escapeHtml((e && e.message) || "unknown") +
-          ".<br>The stream URL may have expired, or the server blocked CORS. " +
-          "Try a different format, re‑fetch the video, or use <strong>Open in ytdlnis</strong>.";
-        offerDirectLink(fmt.url, filename);
+        ui.status.innerHTML = isCors
+          ? "Download blocked. The stream host refused the browser request " +
+            "(CORS) or the signed URL expired.<br>" +
+            "Try another format, re‑fetch the video, or use " +
+            "<strong>Open in ytdlnis</strong>."
+          : "Download failed: " + escapeHtml((e && e.message) || "unknown") +
+            ".<br>Try another format, re‑fetch the video, or use " +
+            "<strong>Open in ytdlnis</strong>.";
+
+        offerDirectLink(fmt.url, filename, isCors);
       }
       ui.barWrap.classList.add("hidden");
       ui.dlBtn.disabled = false;
@@ -873,6 +936,7 @@
     state.blobUrl = url;
     ui.saveLink.href = url;
     ui.saveLink.setAttribute("download", filename);
+    ui.saveLink.textContent = "Save file again";
     ui.fileRow.classList.remove("hidden");
 
     ui.bar.style.width = "100%";
@@ -888,13 +952,15 @@
     state.controller = null;
   }
 
-  function offerDirectLink(url, filename) {
-    // Cross‑origin `download` is ignored by browsers, so this may just navigate.
-    // It's still a useful last resort when fetch() is CORS‑blocked.
+  function offerDirectLink(url, filename, isCors) {
+    // Cross-origin `download` is ignored by browsers, so this may just navigate.
+    // It's still a useful last resort when fetch() is CORS-blocked.
     ui.fileRow.classList.remove("hidden");
     ui.saveLink.href = url;
     ui.saveLink.setAttribute("download", filename);
-    ui.saveLink.textContent = "Try direct link (may not save automatically)";
+    ui.saveLink.textContent = isCors
+      ? "Open stream URL directly (may play instead of save)"
+      : "Try direct link";
   }
 
   /* ------------------------------------------------------------------ *
@@ -911,62 +977,77 @@
 
     const isAndroid = /Android/i.test(navigator.userAgent);
     if (!isAndroid) {
-      ui.status.className = "status warn";
-      ui.status.textContent =
-        "The ytdlnis handoff only works on Android. Copy the video URL and paste it into the app instead.";
-      copyText(target, "Video URL copied — open ytdlnis and paste it.");
+      copyText(
+        target,
+        "ytdlnis is Android-only. The video URL has been copied — paste it into the app."
+      );
       return;
     }
 
-    // Android intent: hand the URL to ytdlnis via a SEND intent.
     const encoded = encodeURIComponent(target);
     const intent =
       "intent:#Intent;action=android.intent.action.SEND;type=text/plain;" +
       "S.android.intent.extra.TEXT=" + encoded + ";" +
       "package=com.deniscerri.ytdl;end";
 
+    const before = Date.now();
     try {
       window.location.href = intent;
     } catch (e) {
       copyText(target, "Couldn't open ytdlnis — video URL copied instead.");
+      return;
     }
+    // If the browser can't resolve the intent, the page stays visible.
+    setTimeout(() => {
+      if (!document.hidden && Date.now() - before < 2500) {
+        copyText(
+          target,
+          "ytdlnis doesn't seem to be installed. The video URL has been copied instead."
+        );
+      }
+    }, 1800);
   }
 
   function copyText(text, okMessage) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(() => {
-        ui.status.className = "status ok";
-        ui.status.textContent = okMessage;
-      }).catch(() => {
-        ui.status.className = "status warn";
-        ui.status.textContent = "Couldn't copy automatically — please copy the link manually: " + text;
-      });
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          ui.status.className = "status ok";
+          ui.status.textContent = okMessage;
+        })
+        .catch(() => {
+          ui.status.className = "status warn";
+          ui.status.textContent = "Couldn't copy automatically. Copy manually: " + text;
+        });
     } else {
       ui.status.className = "status warn";
-      ui.status.textContent = "Clipboard unavailable — copy manually: " + text;
+      ui.status.textContent = "Clipboard unavailable. Copy manually: " + text;
     }
   }
 
   /* ------------------------------------------------------------------ *
-   *  Init from ?url=… / ?v=… / #v=… (supports being loaded via ytdlnis)
+   *  Deep-link init  (?url=… / ?v=… / #v=…)
    * ------------------------------------------------------------------ */
   function initFromLocation() {
-    let params;
+    let params, hash;
     try { params = new URLSearchParams(location.search); } catch (e) { params = new URLSearchParams(); }
-    let hash;
     try { hash = new URLSearchParams(location.hash.replace(/^#/, "")); } catch (e) { hash = new URLSearchParams(); }
 
     const raw =
-      params.get("url") || hash.get("url") || params.get("u") || hash.get("u") || "";
+      params.get("url") || hash.get("url") ||
+      params.get("u")   || hash.get("u")   || "";
     const vid =
-      params.get("v") || hash.get("v") || params.get("id") || hash.get("id") || "";
+      params.get("v")   || hash.get("v")   ||
+      params.get("id")  || hash.get("id")  || "";
 
     if (raw) {
       ui.url.value = raw;
-      doFetch();
+      if (normalizeBase(cfg.base)) doFetch();
+      else ui.settings.open = true;
     } else if (vid && /^[A-Za-z0-9_-]{11}$/.test(vid)) {
       ui.url.value = "https://www.youtube.com/watch?v=" + vid;
-      doFetch();
+      if (normalizeBase(cfg.base)) doFetch();
+      else ui.settings.open = true;
     }
   }
 
@@ -976,6 +1057,7 @@
   ui.fetchBtn.addEventListener("click", doFetch);
   ui.dlBtn.addEventListener("click", doDownload);
   ui.ytdlnisBtn.addEventListener("click", openInYtdlnis);
+
   ui.copyBtn.addEventListener("click", () => {
     const target = currentVideoUrl();
     if (!target) return;
@@ -996,9 +1078,9 @@
 
   ui.pasteBtn.addEventListener("click", () => {
     if (navigator.clipboard && navigator.clipboard.readText) {
-      navigator.clipboard.readText().then((t) => {
-        if (t) { ui.url.value = t.trim(); ui.url.focus(); }
-      }).catch(() => ui.url.focus());
+      navigator.clipboard.readText()
+        .then((t) => { if (t) { ui.url.value = t.trim(); ui.url.focus(); } })
+        .catch(() => ui.url.focus());
     } else {
       ui.url.focus();
     }
@@ -1006,18 +1088,38 @@
 
   ui.thumb.addEventListener("error", () => { ui.thumb.style.display = "none"; });
 
-  ui.pipedCustom.addEventListener("change", () => {
-    try { localStorage.removeItem(LS_KEY + ":piped"); } catch (e) { /* ignore */ }
+  ui.apiType.addEventListener("change", () => {
+    cfg.type = ui.apiType.value === "invidious" ? "invidious" : "piped";
+    saveCfg();
   });
-  ui.invCustom.addEventListener("change", () => {
-    try { localStorage.removeItem(LS_KEY + ":invidious"); } catch (e) { /* ignore */ }
+
+  ui.apiBase.addEventListener("change", () => {
+    cfg.base = normalizeBase(ui.apiBase.value);
+    ui.apiBase.value = cfg.base;
+    saveCfg();
+  });
+
+  ui.apiBase.addEventListener("blur", () => {
+    const n = normalizeBase(ui.apiBase.value);
+    if (n !== ui.apiBase.value) {
+      ui.apiBase.value = n;
+      cfg.base = n;
+      saveCfg();
+    }
   });
 
   /* ------------------------------------------------------------------ *
    *  Boot
    * ------------------------------------------------------------------ */
+  loadCfg();
+  syncSettingsUI();
   initFromLocation();
-  if (!ui.url.value) ui.url.focus();
+
+  if (!normalizeBase(cfg.base)) {
+    ui.settings.open = true;
+  } else if (!ui.url.value) {
+    ui.url.focus();
+  }
 })();
 </script>
 </body>
