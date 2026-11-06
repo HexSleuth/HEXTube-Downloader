@@ -1,326 +1,364 @@
 <div align="center">
-<!--
-  ██╗  ██╗███████╗██╗  ██╗████████╗██╗   ██╗██████╗ ███████╗
-  ██║  ██║██╔════╝╚██╗██╔╝╚══██╔══╝██║   ██║██╔══██╗██╔════╝
-  ███████║█████╗   ╚███╔╝    ██║   ██║   ██║██████╔╝█████╗
-  ██╔══██║██╔══╝   ██╔██╗    ██║   ██║   ██║██╔══██╗██╔══╝
-  ██║  ██║███████╗██╔╝ ██╗   ██║   ╚██████╔╝██████╔╝███████╗
-  ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═════╝ ╚══════╝
-  README.md  ·  HEXTube — Downloader & Editor
-  NOTE: Replace asset paths marked  <-- SWAP  with your own files.
--->
-
-<!-- ══════════════════ ANIMATED HEADER ══════════════════ -->
+  
+<!-- ═══════════════════════════════════════════════════════════════════════
+     HEXTube — GitHub README
+     Repo: hexsleuth/HEXTube-Downloader
+     Live: https://hexsleuth.github.io/HEXTube-Downloader/
+     ═══════════════════════════════════════════════════════════════════════ -->
 
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:6C2BD9,50:8B5CF6,100:22D3EE&height=200&section=header&text=HexTube&fontSize=76&fontColor=ffffff&fontAlignY=38&desc=Downloader%20%26%20Editor&descAlignY=60&descSize=18&animation=twinkling" width="100%" alt="HexTube — Downloader & Editor" />
+<!-- ══════════════ ANIMATED HEADER ══════════════ -->
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=0,2,12,20,24&height=220&section=header&text=HEXTube&fontSize=80&fontColor=00E5FF&animation=fadeIn&fontAlignY=38&desc=Paste%20a%20YouTube%20link.%20Pick%20MP4%20or%20MP3.%20Hit%20download.&descAlignY=60&descSize=16&descColor=c9d1d9" width="100%" alt="HEXTube header"/>
+
+<!-- ══════════════ TYPING ANIMATION ══════════════ -->
 
 <a href="https://hexsleuth.github.io/HEXTube-Downloader/">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1000&color=8B5CF6&center=true&vCenter=true&width=620&lines=Grab+it+in+one+tap+%F0%9F%91%86;YouTube+%C2%B7+Instagram+%C2%B7+TikTok+%C2%B7+Facebook;Video%2C+audio%2C+or+full+post+%E2%9A%A1;Zero+uploads.+All+processing+on+device+%F0%9F%94%92;Ready.+%F0%9F%9A%80" alt="Typing SVG" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=22&duration=2600&pause=800&color=00E5FF&center=true&vCenter=true&multiline=true&width=760&height=110&lines=No+signup.+No+tracking.+No+backend.;Piped+%2B+Invidious+live+registry+resolution.;33+DaisyUI+themes.+Dark+mode+force-locked.;MP4+%E2%80%A2+MP3+%E2%80%A2+Cobalt+optional." alt="Typing animation"/>
 </a>
 
 <br/>
 
-<!-- ───────── FIXED LOGO (reliable, always renders) ───────── -->
+<!-- ══════════════ REALTIME BADGES · ROW 1 ══════════════ -->
+
+[![Live Site](https://img.shields.io/website?url=https%3A%2F%2Fhexsleuth.github.io%2FHEXTube-Downloader%2F&style=for-the-badge&label=LIVE&up_color=00E5FF&down_color=ff4d4d&logo=githubpages&logoColor=00E5FF&labelColor=0D1117&cacheSeconds=300)](https://hexsleuth.github.io/HEXTube-Downloader/)
+[![Stars](https://img.shields.io/github/stars/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=github&color=00E5FF&labelColor=0D1117)](https://github.com/hexsleuth/HEXTube-Downloader/stargazers)
+[![Forks](https://img.shields.io/github/forks/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=git&color=7B2FF7&labelColor=0D1117)](https://github.com/hexsleuth/HEXTube-Downloader/forks)
+[![Watchers](https://img.shields.io/github/watchers/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=eye&color=FF2E88&labelColor=0D1117)](https://github.com/hexsleuth/HEXTube-Downloader/watchers)
+
+<!-- ══════════════ REALTIME BADGES · ROW 2 ══════════════ -->
+
+[![Issues](https://img.shields.io/github/issues/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=githubissues&color=FFB000&labelColor=0D1117)](https://github.com/hexsleuth/HEXTube-Downloader/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=gitpullrequest&color=00FFC6&labelColor=0D1117)](https://github.com/hexsleuth/HEXTube-Downloader/pulls)
+[![Last Commit](https://img.shields.io/github/last-commit/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=git&color=00E5FF&labelColor=0D1117)](https://github.com/hexsleuth/HEXTube-Downloader/commits)
+[![Commit Activity](https://img.shields.io/github/commit-activity/m/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=activitypub&color=7B2FF7&labelColor=0D1117)](https://github.com/hexsleuth/HEXTube-Downloader/graphs/commit-activity)
+
+<!-- ══════════════ REALTIME BADGES · ROW 3 ══════════════ -->
+
+[![Release](https://img.shields.io/github/v/release/hexsleuth/HEXTube-Downloader?style=for-the-badge&include_prereleases&sort=semver&color=FF2E88&labelColor=0D1117&logo=github)](https://github.com/hexsleuth/HEXTube-Downloader/releases)
+[![Contributors](https://img.shields.io/github/contributors/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=handshake&color=00FFC6&labelColor=0D1117)](https://github.com/hexsleuth/HEXTube-Downloader/graphs/contributors)
+[![Repo Size](https://img.shields.io/github/repo-size/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=files&color=FFB000&labelColor=0D1117)](https://github.com/hexsleuth/HEXTube-Downloader)
+[![Visitors](https://komarev.com/ghpvc/?username=hexsleuth&label=VISITORS&color=00E5FF&style=for-the-badge)](https://github.com/hexsleuth/HEXTube-Downloader)
+
+<!-- ══════════════ STACK BADGES ══════════════ -->
+
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white&labelColor=0D1117)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white&labelColor=0D1117)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black&labelColor=0D1117)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white&labelColor=0D1117)
+![DaisyUI](https://img.shields.io/badge/DaisyUI-5AD4E6?style=for-the-badge&logo=daisyui&logoColor=black&labelColor=0D1117)
+![Piped](https://img.shields.io/badge/Piped-F96854?style=for-the-badge&logo=piped&logoColor=white&labelColor=0D1117)
+![Invidious](https://img.shields.io/badge/Invidious-00B3A4?style=for-the-badge&logo=invidious&logoColor=white&labelColor=0D1117)
+
+<br/>
+
+<!-- ══════════════ CTA BUTTON ══════════════ -->
+
 <a href="https://hexsleuth.github.io/HEXTube-Downloader/">
-  <img src="https://www.google.com/s2/favicons?domain=hexsleuth.github.io&sz=256" width="88" height="88" alt="HexTube Logo" />
+  <img src="https://img.shields.io/badge/%E2%96%B6%20%20OPEN%20HEXTUBE%20NOW-00E5FF?style=for-the-badge&labelColor=0D1117&logo=googlechrome&logoColor=00E5FF" height="46" alt="Open HEXTube"/>
 </a>
-
-<!--
-  <-- SWAP: For a crisp custom logo, uncomment and point to your asset:
-  <img src="https://raw.githubusercontent.com/HexSleuth/HEXTube-Downloader/main/assets/logo.png"
-       width="110" alt="HexTube Logo" />
--->
-
-<br/>
-
-### 🧬 Downloader &amp; Editor — **video, audio, or full post.** Ready.
-
-<br/>
-
-<!-- ══════════════════ REALTIME BADGES ══════════════════ -->
-
-<!-- Live status + deployment -->
-<a href="https://hexsleuth.github.io/HEXTube-Downloader/">
-  <img src="https://img.shields.io/website?url=https%3A%2F%2Fhexsleuth.github.io%2FHEXTube-Downloader%2F&style=for-the-badge&label=LIVE&labelColor=0d1117&color=22D3EE&logo=googlechrome&logoColor=white" alt="Website Status" />
+<a href="https://github.com/hexsleuth/HEXTube-Downloader/issues/new">
+  <img src="https://img.shields.io/badge/%F0%9F%90%9B%20REPORT%20BUG-FF2E88?style=for-the-badge&labelColor=0D1117&logo=github&logoColor=FF2E88" height="46" alt="Report Bug"/>
 </a>
-<a href="https://github.com/HexSleuth/HEXTube-Downloader/deployments">
-  <img src="https://img.shields.io/github/deployments/HexSleuth/HEXTube-Downloader/github-pages?style=for-the-badge&label=Deploy&labelColor=0d1117&color=6C2BD9&logo=githubactions&logoColor=white" alt="Deployment" />
+<a href="https://github.com/hexsleuth/HEXTube-Downloader/fork">
+  <img src="https://img.shields.io/badge/%F0%9F%8D%B4%20FORK%20REPO-7B2FF7?style=for-the-badge&labelColor=0D1117&logo=git&logoColor=7B2FF7" height="46" alt="Fork Repo"/>
 </a>
-<a href="https://github.com/HexSleuth/HEXTube-Downloader/commits">
-  <img src="https://img.shields.io/github/last-commit/HexSleuth/HEXTube-Downloader?style=for-the-badge&label=Updated&labelColor=0d1117&color=8B5CF6&logo=git&logoColor=white" alt="Last Commit" />
-</a>
-
-<br/>
-
-<!-- Repo pulse (auto-refreshing) -->
-<a href="https://github.com/HexSleuth/HEXTube-Downloader/stargazers">
-  <img src="https://img.shields.io/github/stars/HexSleuth/HEXTube-Downloader?style=for-the-badge&labelColor=0d1117&color=FBBF24&logo=github&logoColor=white" alt="Stars" />
-</a>
-<a href="https://github.com/HexSleuth/HEXTube-Downloader/network/members">
-  <img src="https://img.shields.io/github/forks/HexSleuth/HEXTube-Downloader?style=for-the-badge&labelColor=0d1117&color=22D3EE&logo=git&logoColor=white" alt="Forks" />
-</a>
-<a href="https://github.com/HexSleuth/HEXTube-Downloader/issues">
-  <img src="https://img.shields.io/github/issues/HexSleuth/HEXTube-Downloader?style=for-the-badge&labelColor=0d1117&color=EF4444&logo=githubactions&logoColor=white" alt="Issues" />
-</a>
-<a href="https://github.com/HexSleuth/HEXTube-Downloader/pulls">
-  <img src="https://img.shields.io/github/issues-pr/HexSleuth/HEXTube-Downloader?style=for-the-badge&labelColor=0d1117&color=8B5CF6&logo=git&logoColor=white" alt="Pull Requests" />
-</a>
-<a href="https://github.com/HexSleuth/HEXTube-Downloader">
-  <img src="https://img.shields.io/github/repo-size/HexSleuth/HEXTube-Downloader?style=for-the-badge&labelColor=0d1117&color=6C2BD9&logo=files&logoColor=white" alt="Repo Size" />
-</a>
-<a href="https://github.com/HexSleuth/HEXTube-Downloader/blob/main/LICENSE">
-  <img src="https://img.shields.io/github/license/HexSleuth/HEXTube-Downloader?style=for-the-badge&labelColor=0d1117&color=22D3EE&logo=opensourceinitiative&logoColor=white" alt="License" />
-</a>
-
-<br/>
-
-<!-- Visitors (counts every load = realtime) -->
-<img src="https://komarev.com/ghpvc/?username=HexSleuth&label=Visitors&color=8B5CF6&style=for-the-badge" alt="Visitors" />
-<img src="https://img.shields.io/badge/Zero%20Uploads-100%25%20On--Device-22D3EE?style=for-the-badge&labelColor=0d1117&logo=shieldcheck&logoColor=white" alt="Zero Uploads" />
-<img src="https://img.shields.io/badge/Mobile-Friendly-✓-22C55E?style=for-the-badge&labelColor=0d1117&logo=responsive&logoColor=white" alt="Mobile Friendly" />
 
 <br/><br/>
 
-<!-- ══════════════════ CTA BUTTON ══════════════════ -->
-
-<a href="https://hexsleuth.github.io/HEXTube-Downloader/">
-  <img src="https://img.shields.io/badge/▶%20%20OPEN%20HEXTUBE-6C2BD9?style=for-the-badge&labelColor=0d1117&logo=rocket&logoColor=white" height="46" alt="Open HexTube" />
-</a>
-
-</div>
-
----
-
-## 📱 Grab it in one tap
-
-<div align="center">
-
-> **YouTube · Instagram · TikTok · Facebook · Twitter · Pinterest**
-> — video, audio, or full post. **Ready.**
-
-<br/>
-
-<img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube" />
-<img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram" />
-<img src="https://img.shields.io/badge/TikTok-000000?style=for-the-badge&logo=tiktok&logoColor=white" alt="TikTok" />
-<img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook" />
-<img src="https://img.shields.io/badge/Twitter%2FX-1DA1F2?style=for-the-badge&logo=x&logoColor=white" alt="Twitter / X" />
-<img src="https://img.shields.io/badge/Pinterest-BD081C?style=for-the-badge&logo=pinterest&logoColor=white" alt="Pinterest" />
+<img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="100%" alt="divider"/>
 
 </div>
 
 <br/>
 
-<!-- ══════════════════ GIF DEMOS ══════════════════ -->
-
-## 🎬 See it in action
-
-<!--
-  <-- SWAP: drop your own GIFs into /assets and update the src paths.
-  Recommended: < 5 MB each, 720–900 px wide, 10–15 s loops.
--->
+> **HEXTube** is a **single-page**, **zero-install** YouTube downloader front-end. Drop a link, choose **MP4** or **MP3**, and grab your file — served through **live-fetched Piped** and **Invidious** instances, with optional **Cobalt** support. No accounts. No tracking. No build step.
 
 <div align="center">
 
-**① Paste a link → ② Pick a format → ③ Ready to save**
-
-<p align="center">
-  <a href="https://hexsleuth.github.io/HEXTube-Downloader/">
-    <img src="https://raw.githubusercontent.com/HexSleuth/HEXTube-Downloader/main/assets/demo-download.gif"
-         width="100%" alt="HexTube — one-tap download demo (animated GIF)" />
-  </a>
-</p>
-
-<sub>▶ <a href="https://hexsleuth.github.io/HEXTube-Downloader/">Open the live app</a> · GIF not loading? <a href="https://hexsleuth.github.io/HEXTube-Downloader/">Try the interactive demo</a></sub>
-
-<br/><br/>
-
-**✂️ Video Editor — trim, cut, convert. Nothing leaves your device.**
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/HexSleuth/HEXTube-Downloader/main/assets/demo-editor.gif"
-       width="100%" alt="HexTube — in-browser video editor demo (animated GIF)" />
-</p>
-
-<sub>Powered by <b>ffmpeg.wasm</b> · first run downloads ~30 MB once</sub>
-
-</div>
-
-<br/>
-
----
-
-## ⚡ Features
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### ⬇️ Downloader
-- 🎯 **One-tap grab** — paste &amp; go
-- 🎥 **Video** · 🎧 **Audio** · 🖼️ **Full post**
-- 🌐 6 platforms out of the box
-- 📦 No sign-up, no install, no redirects
-- 📲 Fully responsive on phones
-
-</td>
-<td width="50%" valign="top">
-
-### ✂️ Editor
-- 🔒 **Zero uploads** — 100% local
-- 🧠 **ffmpeg.wasm** in the browser
-- ✂️ Trim · cut · convert
-- 💾 Direct save to device
-- ⏳ ~30 MB one-time core cache
-
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-
-### 🕘 Results &amp; History
-- 📋 Every job listed with status
-- 🔁 Re-download anytime
-- 🧹 One-tap clear
-- 💬 *“No downloads yet. Paste a link to get started.”*
-
-</td>
-<td width="50%" valign="top">
-
-### 🛡️ Privacy first
-- 🚫 No files touch a server
-- 🚫 No accounts, no tracking pixels
-- ✅ Everything runs in your tab
-- 📴 Works offline after first load
-
-</td>
-</tr>
-</table>
-
----
-
-## 🛠️ Tech Stack
-
-<div align="center">
-
-<img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5" />
-<img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3" />
-<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript" />
-<img src="https://img.shields.io/badge/ffmpeg.wasm-007808?style=for-the-badge&logo=ffmpeg&logoColor=white" alt="ffmpeg.wasm" />
-<img src="https://img.shields.io/badge/GitHub%20Pages-222222?style=for-the-badge&logo=githubpages&logoColor=white" alt="GitHub Pages" />
-<img src="https://img.shields.io/badge/PWA-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" alt="PWA" />
+### ⚡ [Live Demo](https://hexsleuth.github.io/HEXTube-Downloader/) ⚡
 
 </div>
 
 ---
 
-## 🚀 Quick Start
+## 📱 Mobile-First, Desktop-Ready
 
-```bash
-# 1 · Clone
-git clone https://github.com/HexSleuth/HEXTube-Downloader.git
-cd HEXTube-Downloader
+<div align="center">
 
-# 2 · Serve locally (any static server)
-npx serve .
-#   or:  python -m http.server 8080
+| 💎 Feature | 📐 Behaviour |
+| :--- | :--- |
+| **Fluid single-column layout** | Scales from 320 px phones → 4K desktops |
+| **Thumb-friendly targets** | Every button ≥ 44 px tap area |
+| **No horizontal scroll** | Badges wrap, tables scroll internally |
+| **Sticky status bar** | Progress % always visible on small screens |
+| **One-tap themes** | 33 DaisyUI themes in a scrollable chip grid |
+| **Reduced-motion aware** | Animations respect `prefers-reduced-motion` |
 
-# 3 · Open
-#   http://localhost:8080
+</div>
+
+---
+
+## ✨ Feature Matrix
+
+<div align="center">
+
+| | Feature | Description |
+| :---: | :--- | :--- |
+| 🎯 | **One-box workflow** | Paste → pick format → download. Three steps. |
+| 🎬 | **MP4 & MP3** | Video with audio, or audio-only extraction. |
+| 📡 | **Live instance discovery** | Piped & Invidious lists fetched from official registries at download time — always-working servers. |
+| 🧩 | **Cobalt (optional)** | Bring your own endpoint via Settings for a third fallback. |
+| 📊 | **Realtime progress** | Live percentage, status line, and error surface. |
+| 🎨 | **33 DaisyUI themes** | Corporate → Cyberpunk → Abyss → Silk. |
+| 🌑 | **Dark mode force-locked** | Themes only recolor accents + dark surface tint. Never light mode. |
+| 🔒 | **No backend, no logs** | Static site. Your links never touch our servers. |
+| 🪶 | **Zero install** | Pure static HTML/CSS/JS on GitHub Pages. |
+
+</div>
+
+---
+
+## 🚀 How It Works
+
+```mermaid
+flowchart LR
+    A["🔗 Paste YouTube URL"] --> B{"🎚️ Pick format"}
+    B -->|MP4| C["🧠 Resolve stream"]
+    B -->|MP3| C
+    C --> D["📡 Piped registry"]
+    C --> E["📡 Invidious registry"]
+    D --> F["✅ Live working instance"]
+    E --> F
+    F --> G["⬇️ Download starts"]
+    C -.->|optional| H["🧩 Your Cobalt endpoint"]
+    H --> G
+
+    classDef default fill:#0D1117,stroke:#00E5FF,color:#c9d1d9
+    classDef accent fill:#161b22,stroke:#7B2FF7,color:#00E5FF
+    class A,G accent
 ```
 
-💡 Just want to use it? → hexsleuth.github.io/HEXTube-Downloader — nothing to install.
+<div align="center">
+
+UI Flow Preview
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  https://youtu.be/…                              [Paste] │
+├──────────────────────────────────────────────────────────┤
+│  ( ) MP4   (•) MP3                        [ Download ]   │
+├──────────────────────────────────────────────────────────┤
+│  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░  64%          │
+│  Fetching live Invidious instances…                      │
+└──────────────────────────────────────────────────────────┘
+```
+
+</div>
 
 ---
 
-📊 Live Project Stats
+🛰️ Download Engines
 
 <div align="center">
 
-<img src="https://github-readme-stats.vercel.app/api?username=HexSleuth&show_icons=true&hide_border=true&title_color=8B5CF6&icon_color=22D3EE&text_color=8b949e&bg_color=0d1117&include_all_commits=true&count_private=true" width="100%" alt="GitHub Stats" />
-
-<img src="https://github-readme-streak-stats.herokuapp.com/?user=HexSleuth&hide_border=true&background=0d1117&stroke=8B5CF6&ring=22D3EE&fire=FBBF24&currStreakLabel=8B5CF6" width="100%" alt="Streak Stats" />
-
-<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=HexSleuth&layout=compact&hide_border=true&title_color=8B5CF6&text_color=8b949e&bg_color=0d1117&langs_count=8" width="100%" alt="Top Languages" />
-
-<img src="https://github-readme-activity-graph.vercel.app/graph?username=HexSleuth&bg_color=0d1117&color=8B5CF6&line=22D3EE&point=ffffff&hide_border=true&area=true" width="100%" alt="Activity Graph" />
+Engine Source of Truth Auto Notes
+Piped Official Piped registry ✅ Tried first
+Invidious Official Invidious registry ✅ Automatic fallback
+Cobalt Your own endpoint ⚙️ Configure in Settings
 
 </div>
+
+🔄 Instance lists are pulled at download time, not cached at build time — so you always hit a server that's currently alive.
+
+---
+
+🎨 Themes
+
+33 DaisyUI themes. Dark mode is force-locked by 𓋹•HexSleuth•𓃠 — themes only recolor accents and the dark surface tint, so the interface can never fall back to light mode.
+
+<details>
+<summary><b>🎛️ Click to expand full theme list</b></summary>
+
+<br/>
+
+<div align="center">
+
+corporate · cupcake · bumblebee · emerald · synthwave · retro · cyberpunk · valentine · halloween · garden · forest · aqua · lofi · pastel · fantasy · wireframe · black · luxury · dracula · cmyk · autumn · business · acid · lemonade · night · coffee · winter · dim · nord · sunset · caramellatte · abyss · silk
+
+</div>
+
+</details>
+
+---
+
+⚡ Quick Start
+
+🌐 Use it now (nothing to install)
+
+👉 hexsleuth.github.io/HEXTube-Downloader
+
+🖥️ Run it locally
+
+```bash
+# 1. Clone
+git clone https://github.com/hexsleuth/HEXTube-Downloader.git
+cd HEXTube-Downloader
+
+# 2. Serve (any static server works)
+python -m http.server 8080
+#    or: npx serve .
+
+# 3. Open
+#    http://localhost:8080
+```
+
+🚀 Deploy your own copy
+
+```bash
+# Fork → Settings → Pages → Deploy from branch → main / (root)
+# Done. Your fork is live at:
+# https://<your-username>.github.io/HEXTube-Downloader/
+```
+
+---
+
+🧭 Usage
+
+1. Paste any YouTube URL (watch?v=, youtu.be/, shorts/).
+2. Choose MP4 for video or MP3 for audio-only.
+3. Hit Download — HEXTube resolves a live Piped/Invidious instance automatically.
+4. (Optional) Open Settings → add your own Cobalt endpoint as a third engine.
+5. (Optional) Pick a theme from the chip grid — dark mode stays locked.
+
+---
+
+📊 Project Pulse
+
+<div align="center">
+
+<img src="https://github-readme-stats.vercel.app/api?username=hexsleuth&show_icons=true&theme=midnight-purple&hide_border=true&bg_color=0D1117&title_color=00E5FF&icon_color=7B2FF7&text_color=c9d1d9&include_all_commits=true&count_private=true" height="170" alt="GitHub stats"/>
+<img src="https://github-readme-stats.vercel.app/api/pin/?username=hexsleuth&repo=HEXTube-Downloader&theme=midnight-purple&hide_border=true&bg_color=0D1117&title_color=00E5FF&icon_color=7B2FF7&text_color=c9d1d9" height="170" alt="Pinned repo"/>
+
+
+
+
+
+https://github-readme-activity-graph.vercel.app/graph?username=hexsleuth&repo=HEXTube-Downloader&bg_color=0D1117&color=00E5FF&line=7B2FF7&point=FF2E88&area=true&hide_border=true
+
+</div>
+
+---
+
+🗺️ Roadmap
+
+☑ Paste → MP4 / MP3 → download flow
+☑ Live Piped + Invidious registry resolution
+☑ Optional Cobalt endpoint
+☑ 33 DaisyUI themes + force-locked dark mode
+☑ Realtime progress & error states
+☑ Mobile-first responsive layout
+☐ Playlist / batch downloads
+☐ Subtitle & thumbnail export
+☐ PWA install + offline shell
+☐ i18n (multi-language UI)
 
 ---
 
 ❓ FAQ
 
 <details>
-<summary><b>Is anything uploaded to a server?</b></summary>
+<summary><b>🔒 Is anything uploaded to a server?</b></summary>
 <br/>
-No. Every byte is processed locally in your browser with <code>ffmpeg.wasm</code>. Nothing is uploaded — ever.
+No. HEXTube is a static site — your URL is resolved client-side against public Piped / Invidious instances. Nothing is logged by this project.
 </details>
 
 <details>
-<summary><b>Why does the editor take a moment on first use?</b></summary>
+<summary><b>⚠️ Why do downloads sometimes fail?</b></summary>
 <br/>
-The first run downloads the ~30 MB ffmpeg core <b>once</b>. It's cached afterwards, so later sessions start instantly.
+Public Piped/Invidious instances go up and down constantly. HEXTube re-fetches the live registry on every download and retries across instances, but if <i>all</i> public instances are down, the request can still fail. Add your own <b>Cobalt</b> endpoint in Settings for maximum reliability.
 </details>
 
 <details>
-<summary><b>Does it work on mobile?</b></summary>
+<summary><b>🌑 Why can't I switch to light mode?</b></summary>
 <br/>
-Yes — the entire interface is touch-first and responsive. Results save straight to your device's downloads.
+By design. Dark mode is force-locked — themes recolor accents and the dark surface tint only.
 </details>
 
 <details>
-<summary><b>Which platforms are supported?</b></summary>
+<summary><b>🏠 Can I self-host it?</b></summary>
 <br/>
-YouTube, Instagram, TikTok, Facebook, Twitter/X and Pinterest — as video, audio, or full post.
+Yes — it's plain static files. Any host (GitHub Pages, Netlify, Vercel, nginx, a USB stick) works.
 </details>
 
 <details>
-<summary><b>I don't see any downloads in History.</b></summary>
+<summary><b>📱 Does it work on mobile?</b></summary>
 <br/>
-That's expected on a fresh start: <i>“No downloads yet. Paste a link to get started.”</i>
+Yes. The interface is mobile-first: fluid layout, thumb-friendly controls, no horizontal scroll, and a sticky progress bar.
+</details>
+
+<details>
+<summary><b>🎬 Does it support Shorts or music.youtube.com?</b></summary>
+<br/>
+Any standard YouTube URL form works — including <code>youtu.be/</code>, <code>/watch?v=</code>, and <code>/shorts/</code>. Just paste and let the resolver pick the stream.
 </details>
 
 ---
 
 🤝 Contributing
 
-Contributions, issues and feature requests are welcome!
+Contributions keep this alive.
 
-1. 🍴 Fork the repo
-2. 🌿 git checkout -b feature/amazing-idea
-3. 💾 git commit -m "feat: add amazing idea"
-4. 🚀 git push origin feature/amazing-idea
-5. ✅ Open a Pull Request
+```bash
+# 1. Fork the repo
+# 2. Create a branch
+git checkout -b feat/your-idea
 
-<a href="https://github.com/HexSleuth/HEXTube-Downloader/issues/new">
-  <img src="https://img.shields.io/badge/Report%20a%20Bug-EF4444?style=for-the-badge&logo=github&logoColor=white" alt="Report a bug" />
-</a>
-<a href="https://github.com/HexSleuth/HEXTube-Downloader/issues/new">
-  <img src="https://img.shields.io/badge/Request%20a%20Feature-8B5CF6?style=for-the-badge&logo=github&logoColor=white" alt="Request a feature" />
-</a>
+# 3. Commit
+git commit -m "feat: add your idea"
+
+# 4. Push & open a PR
+git push origin feat/your-idea
+```
+
+Please keep the project static, dependency-free at runtime, and dark-mode locked. 🖤
+
+<div align="center">
+
+https://contrib.rocks/image?repo=hexsleuth/HEXTube-Downloader
+
+</div>
 
 ---
 
-⚖️ Disclaimer
+⚠️ Disclaimer
 
-HexTube is intended for downloading content you own or have explicit permission to use.
-Respect the Terms of Service of each platform and all applicable copyright laws.
-The authors accept no liability for misuse.
+HEXTube is a front-end-only utility for personal, educational use. It hosts no media and stores no files. Respect YouTube's Terms of Service and the copyright of content owners — only download content you own or that is licensed for reuse.
+
+---
+
+📄 License
+
+Distributed under the MIT License — see LICENSE.
 
 ---
 
 <div align="center">
 
-<a href="https://hexsleuth.github.io/HEXTube-Downloader/">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:22D3EE,50:8B5CF6,100:6C2BD9&height=150&section=footer&text=Ready%20to%20save%20%E2%9A%A1&fontSize=34&fontColor=ffffff&fontAlignY=68&animation=twinkling" width="100%" alt="Footer" />
-</a>
+⭐ Star History
 
-<sub>Built with 💜 by <a href="https://github.com/HexSleuth">HexSleuth</a> · Powered by ffmpeg.wasm · Hosted on GitHub Pages</sub>
+https://api.star-history.com/svg?repos=hexsleuth/HEXTube-Downloader&type=Date&theme=dark
 
 <br/>
 
-<img src="https://img.shields.io/badge/⭐%20Star%20this%20repo%20if%20it%20helped!-0d1117?style=for-the-badge&logo=github&logoColor=FBBF24" alt="Star this repo" />
+<a href="https://hexsleuth.github.io/HEXTube-Downloader/">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&duration=3000&pause=1000&color=00E5FF&center=true&vCenter=true&width=540&height=45&lines=Thanks+for+stopping+by.;Paste.+Pick.+Download.;%E2%9A%A1+HEXTube+%E2%80%94+no+build%2C+no+backend.;Star+the+repo+if+it+helped+%E2%AD%90" alt="Typing footer"/>
+</a>
+
+<br/>
+
+Crafted with 🖤 by 𓋹•HexSleuth•𓃠
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=24,20,12,2,0&height=130&section=footer" width="100%" alt="footer"/>
 
 </div>
