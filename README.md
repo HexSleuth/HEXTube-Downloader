@@ -13,7 +13,7 @@
 
 <br/>
 <!-- ─── Animated Header Wave ─── -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20,24,30&height=200&section=header&text=HexTube&fontSize=70&fontColor=ffffff&fontAlignY=35&animation=twinkling&desc=Downloader%20%26%20Editor&descAlignY=58&descSize=20" width="100%" alt="HexTube Banner" />
+
 
 <!-- ─── Typing Animation ─── -->
 <a href="https://hexsleuth.github.io/HEXTube-Downloader/">
