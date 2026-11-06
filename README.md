@@ -5,7 +5,13 @@
 <!--  Single-page GitHub README · Realtime badges · Animated · Mobile-ready  -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f0c29,50:302b63,100:24243e&height=190&section=header&text=HEXTube&fontSize=68&fontColor=00E5FF&animation=fadeIn&fontAlignY=34&desc=Paste%20a%20YouTube%20link.%20Pick%20MP4%20or%20MP3.%20Hit%20download.&descAlignY=56&descSize=15" width="100%" alt="HEXTube — header"/>
 
+<a href="https://hexsleuth.github.io/HEXTube-Downloader/">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=2800&pause=900&color=00E5FF&center=true&vCenter=true&width=680&height=45&lines=Paste+a+YouTube+link...;Pick+MP4+or+MP3...;Hit+download.;No+signup.+No+tracking.+Just+media.;Piped+%2B+Invidious+live+registries.;33+DaisyUI+themes.+Dark+mode+locked." alt="Typing SVG — HEXTube" />
+</a>
+
+<br/>
 <!-- ─── Animated Header Wave ─── -->
 <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=6,11,20,24,30&height=200&section=header&text=HexTube&fontSize=70&fontColor=ffffff&fontAlignY=35&animation=twinkling&desc=Downloader%20%26%20Editor&descAlignY=58&descSize=20" width="100%" alt="HexTube Banner" />
 
