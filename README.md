@@ -1,94 +1,198 @@
 <div align="center">
-  
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!--                          HEX TUBE — README                             -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!--
+  ██╗  ██╗███████╗██╗  ██╗████████╗██╗   ██╗██████╗ ███████╗
+  ██║  ██║██╔════╝╚██╗██╔╝╚══██╔══╝██║   ██║██╔══██╗██╔════╝
+  ███████║█████╗   ╚███╔╝    ██║   ██║   ██║██████╔╝█████╗
+  ██╔══██║██╔══╝   ██╔██╗    ██║   ██║   ██║██╔══██╗██╔══╝
+  ██║  ██║███████╗██╔╝ ██╗   ██║   ╚██████╔╝██████╔╝███████╗
+  ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═════╝ ╚══════╝
+  README.md  ·  HEXTube — Downloader & Editor
+  NOTE: Replace asset paths marked  <-- SWAP  with your own files.
+-->
+
+<!-- ══════════════════ ANIMATED HEADER ══════════════════ -->
 
 
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:6C2BD9,50:8B5CF6,100:22D3EE&height=200&section=header&text=HexTube&fontSize=76&fontColor=ffffff&fontAlignY=38&desc=Downloader%20%26%20Editor&descAlignY=60&descSize=18&animation=twinkling" width="100%" alt="HexTube — Downloader & Editor" />
 
-<!-- ░░ ANIMATED WAVE HEADER ░░ -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0ea5e9,50:8b5cf6,100:ec4899&height=200&section=header&text=HexTube&fontSize=72&fontAlignY=32&fontColor=ffffff&animation=twinkling&desc=Downloader%20%26%20Editor&descAlignY=55&descSize=20" width="100%" alt="HexTube"/>
-
-<!-- ░░ ANIMATED TYPING TAGLINE ░░ -->
 <a href="https://hexsleuth.github.io/HEXTube-Downloader/">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=900&color=38BDF8&center=true&vCenter=true&width=520&height=45&lines=Grab+it+in+one+tap+%E2%9A%A1;YouTube+%C2%B7+Instagram+%C2%B7+TikTok+%C2%B7+Facebook;Twitter+%C2%B7+Pinterest+%E2%80%94+video%2C+audio%2C+post;Zero+uploads.+100%25+on-device.;Powered+by+ffmpeg.wasm+%F0%9F%94%A5" alt="Typing SVG" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1000&color=8B5CF6&center=true&vCenter=true&width=620&lines=Grab+it+in+one+tap+%F0%9F%91%86;YouTube+%C2%B7+Instagram+%C2%B7+TikTok+%C2%B7+Facebook;Video%2C+audio%2C+or+full+post+%E2%9A%A1;Zero+uploads.+All+processing+on+device+%F0%9F%94%92;Ready.+%F0%9F%9A%80" alt="Typing SVG" />
 </a>
 
 <br/>
 
-<!-- ═══════════ REALTIME BADGES ═══════════ -->
+<!-- ───────── FIXED LOGO (reliable, always renders) ───────── -->
+<a href="https://hexsleuth.github.io/HEXTube-Downloader/">
+  <img src="https://www.google.com/s2/favicons?domain=hexsleuth.github.io&sz=256" width="88" height="88" alt="HexTube Logo" />
+</a>
 
-[![Live Site](https://img.shields.io/website?url=https%3A%2F%2Fhexsleuth.github.io%2FHEXTube-Downloader%2F&label=HexTube&up_message=ONLINE&down_message=OFFLINE&style=for-the-badge&logo=googlechrome&logoColor=white&color=22c55e)](https://hexsleuth.github.io/HEXTube-Downloader/)
-[![Deploy](https://img.shields.io/github/deployments/hexsleuth/HEXTube-Downloader/github-pages?label=DEPLOY&style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/hexsleuth/HEXTube-Downloader/deployments)
-
-[![Stars](https://img.shields.io/github/stars/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=github&label=STARS&color=f5c542)](https://github.com/hexsleuth/HEXTube-Downloader/stargazers)
-[![Forks](https://img.shields.io/github/forks/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=git&label=FORKS&color=38bdf8)](https://github.com/hexsleuth/HEXTube-Downloader/network/members)
-[![Issues](https://img.shields.io/github/issues/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=githubissues&label=ISSUES&color=ef4444)](https://github.com/hexsleuth/HEXTube-Downloader/issues)
-[![PRs](https://img.shields.io/github/issues-pr/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=gitpullrequest&label=PRs&color=a855f7)](https://github.com/hexsleuth/HEXTube-Downloader/pulls)
-
-[![Last Commit](https://img.shields.io/github/last-commit/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=git&label=LAST%20COMMIT&color=0ea5e9)](https://github.com/hexsleuth/HEXTube-Downloader/commits)
-[![Commit Activity](https://img.shields.io/github/commit-activity/m/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=activitypub&label=COMMITS%2FMO&color=8b5cf6)](https://github.com/hexsleuth/HEXTube-Downloader/graphs/commit-activity)
-[![License](https://img.shields.io/github/license/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=opensourceinitiative&label=LICENSE&color=22c55e)](https://github.com/hexsleuth/HEXTube-Downloader/blob/main/LICENSE)
-[![Visitors](https://api.visitorbadge.io/api/visitors?path=hexsleuth.HEXTube-Downloader&label=VISITORS&countColor=%2338bdf8&style=for-the-badge)](https://github.com/hexsleuth/HEXTube-Downloader)
+<!--
+  <-- SWAP: For a crisp custom logo, uncomment and point to your asset:
+  <img src="https://raw.githubusercontent.com/HexSleuth/HEXTube-Downloader/main/assets/logo.png"
+       width="110" alt="HexTube Logo" />
+-->
 
 <br/>
 
-<!-- ░░ CTA BUTTONS ░░ -->
+### 🧬 Downloader &amp; Editor — **video, audio, or full post.** Ready.
+
+<br/>
+
+<!-- ══════════════════ REALTIME BADGES ══════════════════ -->
+
+<!-- Live status + deployment -->
 <a href="https://hexsleuth.github.io/HEXTube-Downloader/">
-  <img src="https://img.shields.io/badge/%E2%96%B6%20LAUNCH%20HEXTUBE-0ea5e9?style=for-the-badge&logoColor=white" height="42" alt="Launch"/>
+  <img src="https://img.shields.io/website?url=https%3A%2F%2Fhexsleuth.github.io%2FHEXTube-Downloader%2F&style=for-the-badge&label=LIVE&labelColor=0d1117&color=22D3EE&logo=googlechrome&logoColor=white" alt="Website Status" />
 </a>
-<a href="#-features">
-  <img src="https://img.shields.io/badge/%E2%9C%A8%20FEATURES-8b5cf6?style=for-the-badge&logoColor=white" height="42" alt="Features"/>
+<a href="https://github.com/HexSleuth/HEXTube-Downloader/deployments">
+  <img src="https://img.shields.io/github/deployments/HexSleuth/HEXTube-Downloader/github-pages?style=for-the-badge&label=Deploy&labelColor=0d1117&color=6C2BD9&logo=githubactions&logoColor=white" alt="Deployment" />
 </a>
-<a href="https://github.com/hexsleuth/HEXTube-Downloader/issues/new">
-  <img src="https://img.shields.io/badge/%F0%9F%90%9B%20REPORT%20BUG-ef4444?style=for-the-badge&logoColor=white" height="42" alt="Report"/>
+<a href="https://github.com/HexSleuth/HEXTube-Downloader/commits">
+  <img src="https://img.shields.io/github/last-commit/HexSleuth/HEXTube-Downloader?style=for-the-badge&label=Updated&labelColor=0d1117&color=8B5CF6&logo=git&logoColor=white" alt="Last Commit" />
 </a>
+
+<br/>
+
+<!-- Repo pulse (auto-refreshing) -->
+<a href="https://github.com/HexSleuth/HEXTube-Downloader/stargazers">
+  <img src="https://img.shields.io/github/stars/HexSleuth/HEXTube-Downloader?style=for-the-badge&labelColor=0d1117&color=FBBF24&logo=github&logoColor=white" alt="Stars" />
+</a>
+<a href="https://github.com/HexSleuth/HEXTube-Downloader/network/members">
+  <img src="https://img.shields.io/github/forks/HexSleuth/HEXTube-Downloader?style=for-the-badge&labelColor=0d1117&color=22D3EE&logo=git&logoColor=white" alt="Forks" />
+</a>
+<a href="https://github.com/HexSleuth/HEXTube-Downloader/issues">
+  <img src="https://img.shields.io/github/issues/HexSleuth/HEXTube-Downloader?style=for-the-badge&labelColor=0d1117&color=EF4444&logo=githubactions&logoColor=white" alt="Issues" />
+</a>
+<a href="https://github.com/HexSleuth/HEXTube-Downloader/pulls">
+  <img src="https://img.shields.io/github/issues-pr/HexSleuth/HEXTube-Downloader?style=for-the-badge&labelColor=0d1117&color=8B5CF6&logo=git&logoColor=white" alt="Pull Requests" />
+</a>
+<a href="https://github.com/HexSleuth/HEXTube-Downloader">
+  <img src="https://img.shields.io/github/repo-size/HexSleuth/HEXTube-Downloader?style=for-the-badge&labelColor=0d1117&color=6C2BD9&logo=files&logoColor=white" alt="Repo Size" />
+</a>
+<a href="https://github.com/HexSleuth/HEXTube-Downloader/blob/main/LICENSE">
+  <img src="https://img.shields.io/github/license/HexSleuth/HEXTube-Downloader?style=for-the-badge&labelColor=0d1117&color=22D3EE&logo=opensourceinitiative&logoColor=white" alt="License" />
+</a>
+
+<br/>
+
+<!-- Visitors (counts every load = realtime) -->
+<img src="https://komarev.com/ghpvc/?username=HexSleuth&label=Visitors&color=8B5CF6&style=for-the-badge" alt="Visitors" />
+<img src="https://img.shields.io/badge/Zero%20Uploads-100%25%20On--Device-22D3EE?style=for-the-badge&labelColor=0d1117&logo=shieldcheck&logoColor=white" alt="Zero Uploads" />
+<img src="https://img.shields.io/badge/Mobile-Friendly-✓-22C55E?style=for-the-badge&labelColor=0d1117&logo=responsive&logoColor=white" alt="Mobile Friendly" />
 
 <br/><br/>
 
-> ### ⚡ Grab it in one tap
-> **YouTube · Instagram · TikTok · Facebook · Twitter · Pinterest**
-> — video, audio, or full post.
-> **Ready.**
+<!-- ══════════════════ CTA BUTTON ══════════════════ -->
 
-<br/>
+<a href="https://hexsleuth.github.io/HEXTube-Downloader/">
+  <img src="https://img.shields.io/badge/▶%20%20OPEN%20HEXTUBE-6C2BD9?style=for-the-badge&labelColor=0d1117&logo=rocket&logoColor=white" height="46" alt="Open HexTube" />
+</a>
 
 </div>
 
 ---
 
+## 📱 Grab it in one tap
+
 <div align="center">
 
-## 📱 Mobile-First. Always.
+> **YouTube · Instagram · TikTok · Facebook · Twitter · Pinterest**
+> — video, audio, or full post. **Ready.**
 
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=16&pause=1200&color=8B5CF6&center=true&vCenter=true&width=460&lines=One-handed+design+%C2%B7+No+app+install;Works+in+any+modern+browser;Paste+%E2%86%92+Pick+%E2%86%92+Save" alt="Mobile" />
+<br/>
+
+<img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube" />
+<img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram" />
+<img src="https://img.shields.io/badge/TikTok-000000?style=for-the-badge&logo=tiktok&logoColor=white" alt="TikTok" />
+<img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook" />
+<img src="https://img.shields.io/badge/Twitter%2FX-1DA1F2?style=for-the-badge&logo=x&logoColor=white" alt="Twitter / X" />
+<img src="https://img.shields.io/badge/Pinterest-BD081C?style=for-the-badge&logo=pinterest&logoColor=white" alt="Pinterest" />
 
 </div>
 
-<table align="center">
+<br/>
+
+<!-- ══════════════════ GIF DEMOS ══════════════════ -->
+
+## 🎬 See it in action
+
+<!--
+  <-- SWAP: drop your own GIFs into /assets and update the src paths.
+  Recommended: < 5 MB each, 720–900 px wide, 10–15 s loops.
+-->
+
+<div align="center">
+
+**① Paste a link → ② Pick a format → ③ Ready to save**
+
+<p align="center">
+  <a href="https://hexsleuth.github.io/HEXTube-Downloader/">
+    <img src="https://raw.githubusercontent.com/HexSleuth/HEXTube-Downloader/main/assets/demo-download.gif"
+         width="100%" alt="HexTube — one-tap download demo (animated GIF)" />
+  </a>
+</p>
+
+<sub>▶ <a href="https://hexsleuth.github.io/HEXTube-Downloader/">Open the live app</a> · GIF not loading? <a href="https://hexsleuth.github.io/HEXTube-Downloader/">Try the interactive demo</a></sub>
+
+<br/><br/>
+
+**✂️ Video Editor — trim, cut, convert. Nothing leaves your device.**
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/HexSleuth/HEXTube-Downloader/main/assets/demo-editor.gif"
+       width="100%" alt="HexTube — in-browser video editor demo (animated GIF)" />
+</p>
+
+<sub>Powered by <b>ffmpeg.wasm</b> · first run downloads ~30 MB once</sub>
+
+</div>
+
+<br/>
+
+---
+
+## ⚡ Features
+
+<table>
 <tr>
-<td align="center" width="33%">
+<td width="50%" valign="top">
 
-### 📲
-**Tap & Go**
-No installs.
-No sign-ups.
-
-</td>
-<td align="center" width="33%">
-
-### 🔒
-**Private by Design**
-Zero uploads.
-Everything local.
+### ⬇️ Downloader
+- 🎯 **One-tap grab** — paste &amp; go
+- 🎥 **Video** · 🎧 **Audio** · 🖼️ **Full post**
+- 🌐 6 platforms out of the box
+- 📦 No sign-up, no install, no redirects
+- 📲 Fully responsive on phones
 
 </td>
-<td align="center" width="33%">
+<td width="50%" valign="top">
 
-### 🎬
-**Built-in Editor**
-Trim, cut & export
-right in the browser.
+### ✂️ Editor
+- 🔒 **Zero uploads** — 100% local
+- 🧠 **ffmpeg.wasm** in the browser
+- ✂️ Trim · cut · convert
+- 💾 Direct save to device
+- ⏳ ~30 MB one-time core cache
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### 🕘 Results &amp; History
+- 📋 Every job listed with status
+- 🔁 Re-download anytime
+- 🧹 One-tap clear
+- 💬 *“No downloads yet. Paste a link to get started.”*
+
+</td>
+<td width="50%" valign="top">
+
+### 🛡️ Privacy first
+- 🚫 No files touch a server
+- 🚫 No accounts, no tracking pixels
+- ✅ Everything runs in your tab
+- 📴 Works offline after first load
 
 </td>
 </tr>
@@ -96,253 +200,127 @@ right in the browser.
 
 ---
 
-## ✨ Features
-
-<details open>
-<summary><b>⬇️ Universal Downloader</b></summary>
-<br/>
-
-- 🎯 **One-tap grab** — paste a link, hit save
-- 🎞️ **Video, audio or full post** — you choose the output
-- 🌐 **Six major platforms** in a single page
-- 🔗 **Smart link parsing** — no manual format hunting
-
-</details>
-
-<details>
-<summary><b>🎬 On-Device Video Editor</b></summary>
-<br/>
-
-- ✂️ **Trim & cut** clips without re-uploading
-- 🧠 **Powered by `ffmpeg.wasm`** — real FFmpeg, in your browser
-- 📦 **~30 MB one-time download** on first run, then cached
-- 🚫 **Zero uploads** — your media never leaves the device
-
-</details>
-
-<details>
-<summary><b>🗂️ History & Results</b></summary>
-<br/>
-
-- 🕘 **Local history** of everything you've grabbed
-- 📊 **Results panel** with instant previews
-- 💾 **Direct-to-device saving** via the browser
-- 🧹 **No accounts, no cloud, no tracking**
-
-</details>
-
----
-
-## 🌐 Supported Platforms
-
-<div align="center">
-
-| Platform | Video | Audio | Full Post |
-|:---|:---:|:---:|:---:|
-| ![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=flat-square&logo=youtube&logoColor=white) | ✅ | ✅ | ✅ |
-| ![Instagram](https://img.shields.io/badge/Instagram-E4405F?style=flat-square&logo=instagram&logoColor=white) | ✅ | ✅ | ✅ |
-| ![TikTok](https://img.shields.io/badge/TikTok-000000?style=flat-square&logo=tiktok&logoColor=white) | ✅ | ✅ | ✅ |
-| ![Facebook](https://img.shields.io/badge/Facebook-1877F2?style=flat-square&logo=facebook&logoColor=white) | ✅ | ✅ | ✅ |
-| ![Twitter](https://img.shields.io/badge/X-000000?style=flat-square&logo=x&logoColor=white) | ✅ | ✅ | ✅ |
-| ![Pinterest](https://img.shields.io/badge/Pinterest-BD081C?style=flat-square&logo=pinterest&logoColor=white) | ✅ | ✅ | ✅ |
-
-</div>
-
----
-
-## 🚀 How It Works
-
-```
-
-┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-│  1. PASTE   │ → │  2. CHOOSE  │ → │  3. EDIT    │ → │  4. SAVE    │
-│   a link    │   │  format     │   │  (optional) │   │  to device  │
-└─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘
-│
-▼
-┌────────────────────┐
-│  ffmpeg.wasm 🧠    │
-│  runs on YOUR CPU  │
-└────────────────────┘
-
-```
-
-1. **Paste** any supported link into the input.
-2. **Choose** video, audio, or the full post.
-3. **Edit** if you want — trim and cut in-browser.
-4. **Save** straight to your device. Done.
-
-> ⚠️ **First-run note:** the editor downloads **~30 MB** of `ffmpeg.wasm` once. After that it's cached and instant.
-
----
-
 ## 🛠️ Tech Stack
 
 <div align="center">
 
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![ffmpeg.wasm](https://img.shields.io/badge/ffmpeg.wasm-007808?style=for-the-badge&logo=ffmpeg&logoColor=white)
-![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-222222?style=for-the-badge&logo=githubpages&logoColor=white)
-![PWA Ready](https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)
-
-</div>
-
-<div align="center">
-
-| Layer | Technology |
-|:---|:---|
-| **UI** | Vanilla HTML / CSS / JS — no framework bloat |
-| **Media Engine** | `ffmpeg.wasm` (WebAssembly) |
-| **Hosting** | GitHub Pages (static, global CDN) |
-| **Storage** | Browser-local only (`IndexedDB` / `localStorage`) |
-| **Backend** | ❌ None. That's the point. |
+<img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5" />
+<img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3" />
+<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript" />
+<img src="https://img.shields.io/badge/ffmpeg.wasm-007808?style=for-the-badge&logo=ffmpeg&logoColor=white" alt="ffmpeg.wasm" />
+<img src="https://img.shields.io/badge/GitHub%20Pages-222222?style=for-the-badge&logo=githubpages&logoColor=white" alt="GitHub Pages" />
+<img src="https://img.shields.io/badge/PWA-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" alt="PWA" />
 
 </div>
 
 ---
 
-## 🔐 Privacy First
+## 🚀 Quick Start
 
-<div align="center">
+```bash
+# 1 · Clone
+git clone https://github.com/HexSleuth/HEXTube-Downloader.git
+cd HEXTube-Downloader
 
-| What we collect | What we don't |
-|:---|:---|
-| Nothing. | Your links. |
-| Nothing. | Your files. |
-| Nothing. | Your identity. |
-| Nothing. | Your history (it stays local). |
+# 2 · Serve locally (any static server)
+npx serve .
+#   or:  python -m http.server 8080
 
-</div>
+# 3 · Open
+#   http://localhost:8080
+```
 
-> 🛡️ **All processing runs on this device.** There is no server to upload to — HexTube is a static page. Your media is yours.
+💡 Just want to use it? → hexsleuth.github.io/HEXTube-Downloader — nothing to install.
 
 ---
 
-## ❓ FAQ
+📊 Live Project Stats
+
+<div align="center">
+
+<img src="https://github-readme-stats.vercel.app/api?username=HexSleuth&show_icons=true&hide_border=true&title_color=8B5CF6&icon_color=22D3EE&text_color=8b949e&bg_color=0d1117&include_all_commits=true&count_private=true" width="100%" alt="GitHub Stats" />
+
+<img src="https://github-readme-streak-stats.herokuapp.com/?user=HexSleuth&hide_border=true&background=0d1117&stroke=8B5CF6&ring=22D3EE&fire=FBBF24&currStreakLabel=8B5CF6" width="100%" alt="Streak Stats" />
+
+<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=HexSleuth&layout=compact&hide_border=true&title_color=8B5CF6&text_color=8b949e&bg_color=0d1117&langs_count=8" width="100%" alt="Top Languages" />
+
+<img src="https://github-readme-activity-graph.vercel.app/graph?username=HexSleuth&bg_color=0d1117&color=8B5CF6&line=22D3EE&point=ffffff&hide_border=true&area=true" width="100%" alt="Activity Graph" />
+
+</div>
+
+---
+
+❓ FAQ
 
 <details>
-<summary><b>Is HexTube free?</b></summary>
+<summary><b>Is anything uploaded to a server?</b></summary>
 <br/>
-Yes — completely free and open source. No ads, no accounts, no paywalls.
+No. Every byte is processed locally in your browser with <code>ffmpeg.wasm</code>. Nothing is uploaded — ever.
 </details>
 
 <details>
-<summary><b>Do I need to install anything?</b></summary>
+<summary><b>Why does the editor take a moment on first use?</b></summary>
 <br/>
-No. It runs entirely in your browser. Just open the site and paste a link.
-</details>
-
-<details>
-<summary><b>Why does the editor download ~30 MB on first use?</b></summary>
-<br/>
-That's <code>ffmpeg.wasm</code> — a full FFmpeg build compiled to WebAssembly. It's fetched once, cached by your browser, and then loads instantly on return visits.
-</details>
-
-<details>
-<summary><b>Are my downloads uploaded anywhere?</b></summary>
-<br/>
-Never. HexTube has no backend. All downloading, editing and exporting happens locally on your device.
+The first run downloads the ~30 MB ffmpeg core <b>once</b>. It's cached afterwards, so later sessions start instantly.
 </details>
 
 <details>
 <summary><b>Does it work on mobile?</b></summary>
 <br/>
-Yes — the interface is designed mobile-first with large tap targets and a single-column layout that adapts to any screen.
+Yes — the entire interface is touch-first and responsive. Results save straight to your device's downloads.
 </details>
 
 <details>
-<summary><b>Which browsers are supported?</b></summary>
+<summary><b>Which platforms are supported?</b></summary>
 <br/>
-Any modern browser with WebAssembly support: Chrome, Edge, Firefox, Safari (iOS 15+), and most Chromium-based mobile browsers.
+YouTube, Instagram, TikTok, Facebook, Twitter/X and Pinterest — as video, audio, or full post.
+</details>
+
+<details>
+<summary><b>I don't see any downloads in History.</b></summary>
+<br/>
+That's expected on a fresh start: <i>“No downloads yet. Paste a link to get started.”</i>
 </details>
 
 ---
 
-## 🗺️ Roadmap
+🤝 Contributing
 
-- [x] Universal downloader (6 platforms)
-- [x] On-device video editor with `ffmpeg.wasm`
-- [x] Local history & results panel
-- [x] Mobile-first responsive UI
-- [ ] Batch downloads
-- [ ] Subtitle / caption extraction
-- [ ] Offline PWA install
-- [ ] Dark / light theme toggle
+Contributions, issues and feature requests are welcome!
 
-> 💡 Have an idea? [Open a feature request](https://github.com/hexsleuth/HEXTube-Downloader/issues/new).
+1. 🍴 Fork the repo
+2. 🌿 git checkout -b feature/amazing-idea
+3. 💾 git commit -m "feat: add amazing idea"
+4. 🚀 git push origin feature/amazing-idea
+5. ✅ Open a Pull Request
 
----
-
-## 🤝 Contributing
-
-Contributions are what make open source great — every star, issue and PR helps.
-
-```bash
-# 1. Fork the repo
-# 2. Clone your fork
-git clone https://github.com/<your-user>/HEXTube-Downloader.git
-
-# 3. Create a branch
-git checkout -b feat/amazing-feature
-
-# 4. Make changes & commit
-git commit -m "feat: add amazing feature"
-
-# 5. Push and open a PR
-git push origin feat/amazing-feature
-```
-
-<div align="center">
-
-https://img.shields.io/github/contributors/hexsleuth/HEXTube-Downloader?style=for-the-badge&logo=github&label=CONTRIBUTORS&color=22c55e
-https://img.shields.io/github/issues/hexsleuth/HEXTube-Downloader/good%20first%20issue?style=for-the-badge&logo=github&label=GOOD%20FIRST&color=7057ff
-
-</div>
-
----
-
-📊 Live Repo Stats
-
-<div align="center">
-
-<img src="https://github-readme-stats.vercel.app/api/pin/?username=hexsleuth&repo=HEXTube-Downloader&theme=tokyonight&hide_border=true&border_radius=12" width="100%" alt="Repo Card"/>
-
-<img src="https://github-readme-activity-graph.vercel.app/graph?username=hexsleuth&repo=HEXTube-Downloader&theme=tokyo-night&hide_border=true&area=true" width="100%" alt="Activity Graph"/>
-
-</div>
-
----
-
-📄 License
-
-Distributed under the MIT License. See LICENSE for details.
-
-<div align="center">
-
-⚠️ Disclaimer
-
-HexTube is intended for personal use and for downloading content you own
-or have explicit permission to save. Respect the Terms of Service of every
-platform and the rights of content creators.
-
-<br/>
-
-⭐ If HexTube saved you time, drop a star — it really helps! ⭐
-
-<br/>
-
-<a href="https://hexsleuth.github.io/HEXTube-Downloader/">
-  <img src="https://img.shields.io/badge/GET%20HEXTUBE%20%E2%86%92-0ea5e9?style=for-the-badge&logo=googlechrome&logoColor=white" height="45" alt="Get HexTube"/>
+<a href="https://github.com/HexSleuth/HEXTube-Downloader/issues/new">
+  <img src="https://img.shields.io/badge/Report%20a%20Bug-EF4444?style=for-the-badge&logo=github&logoColor=white" alt="Report a bug" />
+</a>
+<a href="https://github.com/HexSleuth/HEXTube-Downloader/issues/new">
+  <img src="https://img.shields.io/badge/Request%20a%20Feature-8B5CF6?style=for-the-badge&logo=github&logoColor=white" alt="Request a feature" />
 </a>
 
+---
 
+⚖️ Disclaimer
 
+HexTube is intended for downloading content you own or have explicit permission to use.
+Respect the Terms of Service of each platform and all applicable copyright laws.
+The authors accept no liability for misuse.
 
+---
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:ec4899,50:8b5cf6,100:0ea5e9&height=140&section=footer&animation=twinkling" width="100%" alt="footer"/>
+<div align="center">
 
-<sub>Built with ❤️ by <a href="https://github.com/hexsleuth">hexsleuth</a> · Powered by <code>ffmpeg.wasm</code></sub>
+<a href="https://hexsleuth.github.io/HEXTube-Downloader/">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:22D3EE,50:8B5CF6,100:6C2BD9&height=150&section=footer&text=Ready%20to%20save%20%E2%9A%A1&fontSize=34&fontColor=ffffff&fontAlignY=68&animation=twinkling" width="100%" alt="Footer" />
+</a>
+
+<sub>Built with 💜 by <a href="https://github.com/HexSleuth">HexSleuth</a> · Powered by ffmpeg.wasm · Hosted on GitHub Pages</sub>
+
+<br/>
+
+<img src="https://img.shields.io/badge/⭐%20Star%20this%20repo%20if%20it%20helped!-0d1117?style=for-the-badge&logo=github&logoColor=FBBF24" alt="Star this repo" />
 
 </div>
