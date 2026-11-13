@@ -738,10 +738,10 @@ input[type="range"]::-moz-range-thumb{
         <strong>YouTube</strong>: Piped &amp; Invidious auto-discovery. &nbsp;
         <strong>TikTok</strong>: tikwm.com (no auth). &nbsp;
         <strong>Twitter / X</strong>: fxtwitter (no auth). &nbsp;
-        <strong>Instagram</strong>: Cobalt pool + embed scrape. &nbsp;
+        <strong>Instagram</strong>: embed/captioned + multi-proxy bypass + optional Cobalt. &nbsp;
         <strong>Facebook · Pinterest</strong>: multi-proxy og scrape + Cobalt.
         <br/><br/>
-        <strong>Tip:</strong> Public Cobalt instances are often overloaded. Add your own Cobalt endpoint above for reliable Instagram / Facebook / Pinterest downloads.
+        <strong>Tip:</strong> Instagram embed scraping tries <em>10 URL variants × 6 proxies</em> in parallel — no API key required. Add your own Cobalt endpoint above for extra reliability.
       </p>
     </div>
 
@@ -963,7 +963,8 @@ input[type="range"]::-moz-range-thumb{
     title: "",
     platform: null,
     postResults: [],
-    postTitle: ""
+    postTitle: "",
+    lastExtracted: ""
   };
 
   if (typeof Promise.any !== "function") {
@@ -1098,7 +1099,7 @@ input[type="range"]::-moz-range-thumb{
   function detectPlatform(url) {
     var u = String(url || "").toLowerCase();
     if (/youtube\.com|youtu\.be/.test(u)) return "youtube";
-    if (/instagram\.com|instagr\.am/.test(u)) return "instagram";
+    if (/instagram\.com/.test(u)) return "instagram";
     if (/tiktok\.com|vm\.tiktok\.com/.test(u)) return "tiktok";
     if (/facebook\.com|fb\.watch/.test(u)) return "facebook";
     if (/twitter\.com|x\.com/.test(u)) return "twitter";
@@ -1108,6 +1109,22 @@ input[type="range"]::-moz-range-thumb{
     if (/soundcloud\.com/.test(u)) return "soundcloud";
     if (/twitch\.tv/.test(u)) return "twitch";
     return null;
+  }
+
+  /* ============================================================
+     NEW: Auto-extract first URL from pasted text
+     ============================================================ */
+  function extractFirstUrl(text) {
+    if (!text) return "";
+    var trimmed = String(text).trim();
+    if (/^https?:\/\/[^\s<>"']+$/i.test(trimmed)) return trimmed;
+    var m = trimmed.match(/https?:\/\/[^\s<>"')\]}]/i);
+    if (!m) m = trimmed.match(/https?:\/\/[^\s<>"')\]}]+/i);
+    if (m) return m[0];
+    var domainRe = /(?:www\.)?(?:youtube\.com|youtu\.be|instagram\.com|tiktok\.com|vm\.tiktok\.com|vt\.tiktok\.com|twitter\.com|x\.com|facebook\.com|fb\.watch|pinterest\.com|pin\.it|reddit\.com|redd\.it|vimeo\.com|soundcloud\.com|twitch\.tv)\/[^\s<>"')\]}]+/i;
+    m = trimmed.match(domainRe);
+    if (m) return "https://" + m[0].replace(/^https?:\/\//i, "");
+    return trimmed;
   }
 
   function extractVideoId(input) {
@@ -1130,7 +1147,7 @@ input[type="range"]::-moz-range-thumb{
   }
 
   function extractInstagramShortcode(url) {
-    var m = String(url || "").match(/(?:instagram\.com|instagr\.am)\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
+    var m = String(url || "").match(/instagram\.com\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
     return m ? m[1] : null;
   }
 
@@ -1204,7 +1221,7 @@ input[type="range"]::-moz-range-thumb{
     if (platform === "youtube") el.platformBadgeText.textContent = "Detected: YouTube — Piped / Invidious / Cobalt";
     else if (platform === "tiktok") el.platformBadgeText.textContent = "Detected: TikTok — tikwm / Cobalt";
     else if (platform === "twitter") el.platformBadgeText.textContent = "Detected: Twitter / X — fxtwitter";
-    else if (platform === "instagram") el.platformBadgeText.textContent = "Detected: Instagram — embed scrape (reels + posts) / Cobalt";
+    else if (platform === "instagram") el.platformBadgeText.textContent = "Detected: Instagram — embed scrape (no API key) / Cobalt";
     else el.platformBadgeText.textContent = "Detected: " + info.label + " — public Cobalt pool";
   }
 
@@ -1637,7 +1654,6 @@ input[type="range"]::-moz-range-thumb{
       payload.audioFormat = el.audioFormat.value === "best" ? "mp3" : el.audioFormat.value;
       payload.audioBitrate = el.audioBitrate.value;
     } else if (mode === "post") {
-      /* Cobalt v10 supports "auto" but returns a picker for multi-media posts */
       payload.downloadMode = "auto";
     } else {
       payload.downloadMode = "auto";
@@ -1915,177 +1931,129 @@ input[type="range"]::-moz-range-thumb{
     throw lastErr || new Error("fxtwitter failed");
   }
 
-  /* ==================================================================
-     -------- INSTAGRAM HELPERS (UPGRADED / FIXED) --------
-     Reels + videos + single posts + carousels now resolve reliably.
-     Strategy (mirrors the server-side embed scraper logic):
-       1. Normalise the shortcode & build every known embed/mirror URL.
-       2. Fetch them in parallel through a pool of CORS proxies.
-       3. Parse `video_url` / `playable_url` / `video_versions` first,
-          then `display_url` / `image_versions2` / `thumbnail_src`,
-          then `<img class="EmbeddedMediaImage">`, og:tags and finally
-          any raw scontent/cdninstagram/fbcdn CDN URL.
-       4. Unescape \uXXXX, \/ , &amp; before parsing.
-     ================================================================== */
-
+  /* ============================================================
+     INSTAGRAM — UPGRADED SECTION (no API key, no token)
+     ============================================================ */
   function instagramUnescape(s) {
     return String(s || "")
-      .replace(/\\u0026/gi, "&")
-      .replace(/\\u002F/gi, "/")
-      .replace(/\\u003D/gi, "=")
-      .replace(/\\u003F/gi, "?")
+      .replace(/\\u0026/g, "&")
+      .replace(/\\u002F/g, "/")
+      .replace(/\\u003D/g, "=")
+      .replace(/\\u003F/g, "?")
       .replace(/\\\//g, "/")
       .replace(/\\"/g, '"')
       .replace(/&amp;/g, "&")
       .replace(/\\\\/g, "\\");
   }
 
-  /* Deep unescape: \uXXXX, \/, \", \n, &amp; — needed before regex parsing */
-  function igDeepUnescape(s) {
-    var out = String(s || "");
-    out = out.replace(/\\u([0-9a-fA-F]{4})/g, function (_, h) {
-      return String.fromCharCode(parseInt(h, 16));
-    });
-    out = out.replace(/\\\//g, "/");
-    out = out.replace(/\\"/g, '"');
-    out = out.replace(/\\n/g, "\n");
-    out = out.replace(/\\t/g, "\t");
-    out = out.replace(/&amp;/g, "&");
-    out = out.replace(/&#0?38;/g, "&");
-    return out;
-  }
-
-  function igReAll(text, re, cb) {
-    var m;
-    while ((m = re.exec(text)) !== null) cb(m);
-  }
-
-  /* Caption scrape — mirrors the `.Caption` selector used server-side */
-  function igCaptionFromHtml(html) {
+  /* Extract caption from embed HTML (mirrors the Node.js "Caption" selector approach) */
+  function extractInstagramCaption(html) {
     if (!html) return "";
-    var raw = "";
-    var m = html.match(/<div[^>]*class=["'][^"']*\bCaption\b[^"']*["'][^>]*>([\s\S]{0,5000}?)<\/div>/i);
-    if (m) raw = m[1];
-    if (!raw) {
-      var m2 = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']*)["']/i);
-      if (m2) raw = m2[1];
+    var cap = "";
+    // Caption div (embed captioned page)
+    var m = html.match(/<div[^>]+class="[^"]*Caption[^"]*"[^>]*>([\s\S]{0,1500}?)<\/div>/i);
+    if (m) {
+      cap = m[1]
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<[^>]+>/g, "")
+        .replace(/view all comments/gi, "")
+        .replace(/&amp;/g, "&")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .trim();
     }
-    var txt = String(raw)
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    txt = igDeepUnescape(txt);
-    txt = txt.replace(/view all comments/gi, "").trim();
-    txt = txt.replace(/^["'\s]+|["'\s]+$/g, "");
-    return txt.slice(0, 300);
+    // og:description fallback
+    if (!cap) {
+      var og = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i) ||
+               html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i);
+      if (og) {
+        var d = instagramUnescape(og[1]).trim();
+        if (d && d.length > 3 && !/^Instagram post/i.test(d)) cap = d;
+      }
+    }
+    // Title fallback
+    if (!cap) {
+      var ogT = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i);
+      if (ogT) {
+        var t = instagramUnescape(ogT[1]).trim();
+        if (t) cap = t;
+      }
+    }
+    // Cleanup common boilerplate
+    cap = cap.replace(/on Instagram[:\s]*["“”]?/i, "")
+             .replace(/["“”]\s*$/g, "")
+             .replace(/^\s*["“”]/g, "")
+             .trim();
+    return cap.slice(0, 200);
   }
 
-  /* Build every candidate URL for a given shortcode */
-  function igCandidateUrls(rawUrl, shortcode) {
-    var type = "p";
-    if (/\/reels?\//i.test(rawUrl)) type = "reel";
-    else if (/\/tv\//i.test(rawUrl)) type = "tv";
+  /* Handle JSON payloads from ?__a=1 / graphql endpoints */
+  function extractFromInstagramJSON(json, shortcode, mode) {
+    if (!json) return null;
+    var media = null;
+    if (json.graphql && json.graphql.shortcode_media) media = json.graphql.shortcode_media;
+    else if (json.data && json.data.shortcode_media) media = json.data.shortcode_media;
+    else if (json.items && json.items.length) {
+      // Different API format - convert
+      var item = json.items[0];
+      var mediaArr = [];
+      if (item.carousel_media) {
+        item.carousel_media.forEach(function (mi) {
+          if (mi.video_versions && mi.video_versions.length) mediaArr.push({ url: mi.video_versions[0].url, type: "video" });
+          if (mi.image_versions2 && mi.image_versions2.candidates && mi.image_versions2.candidates.length) {
+            mediaArr.push({ url: mi.image_versions2.candidates[0].url, type: "image" });
+          }
+        });
+      } else {
+        if (item.video_versions && item.video_versions.length) mediaArr.push({ url: item.video_versions[0].url, type: "video" });
+        if (item.image_versions2 && item.image_versions2.candidates && item.image_versions2.candidates.length) {
+          mediaArr.push({ url: item.image_versions2.candidates[0].url, type: "image" });
+        }
+      }
+      if (!mediaArr.length) return null;
+      return _buildIGResult(mediaArr, item.caption && item.caption.text, shortcode, mode);
+    }
+    if (!media) return null;
 
-    var list = [
-      "https://www.instagram.com/" + type + "/" + shortcode + "/embed/captioned/",
-      "https://www.instagram.com/p/" + shortcode + "/embed/captioned/",
-      "https://www.instagram.com/" + type + "/" + shortcode + "/embed/",
-      "https://www.instagram.com/p/" + shortcode + "/embed/",
-      "https://www.ddinstagram.com/p/" + shortcode + "/",
-      "https://www.kkinstagram.com/p/" + shortcode + "/",
-      "https://www.instagram.com/" + type + "/" + shortcode + "/?__a=1&__d=dis"
-    ];
-
-    var seen = {}, out = [];
-    list.forEach(function (u) { if (!seen[u]) { seen[u] = true; out.push(u); } });
-    return out;
+    var mediaArr2 = [];
+    if (media.edge_sidecar_to_children && media.edge_sidecar_to_children.edges) {
+      media.edge_sidecar_to_children.edges.forEach(function (edge) {
+        var n = edge && edge.node;
+        if (!n) return;
+        if (n.is_video && n.video_url) mediaArr2.push({ url: n.video_url, type: "video" });
+        else if (n.display_url) mediaArr2.push({ url: n.display_url, type: "image" });
+      });
+    } else {
+      if (media.is_video && media.video_url) mediaArr2.push({ url: media.video_url, type: "video" });
+      if (media.display_url) mediaArr2.push({ url: media.display_url, type: "image" });
+    }
+    if (!mediaArr2.length) return null;
+    var cap = media.edge_media_to_caption && media.edge_media_to_caption.edges && media.edge_media_to_caption.edges[0]
+      ? media.edge_media_to_caption.edges[0].node.text
+      : "";
+    return _buildIGResult(mediaArr2, cap, shortcode, mode);
   }
 
-  /* Extract EVERY media URL we can find in an Instagram embed/HTML page */
-  function extractInstagramMedia(html, shortcode, mode) {
-    if (!html || typeof html !== "string" || html.length < 200) return null;
-
-    var text = igDeepUnescape(html);
-
-    function uniqPush(arr, url) {
-      if (!url) return;
-      var u = String(url).trim().replace(/^\\+/, "");
-      if (!/^https?:\/\//i.test(u)) return;
-      if (u.length < 25) return;
-      if (arr.indexOf(u) !== -1) return;
-      arr.push(u);
-    }
-
-    /* ---- TIER 1 — JSON payload keys (highest quality, most reliable) ---- */
-    var t1Videos = [], t1Images = [];
-
-    igReAll(text, /"video_url"\s*:\s*"([^"]+)"/g, function (m) { uniqPush(t1Videos, m[1]); });
-    igReAll(text, /"playable_url(?:_quality_hd|_quality_sd)?"\s*:\s*"([^"]+)"/g, function (m) { uniqPush(t1Videos, m[1]); });
-    igReAll(text, /"video_versions"\s*:\s*\[([\s\S]{0,4000}?)\]/g, function (m) {
-      igReAll(m[1], /"url"\s*:\s*"([^"]+)"/g, function (mm) { uniqPush(t1Videos, mm[1]); });
+  function _buildIGResult(mediaArr, caption, shortcode, mode) {
+    var seen = {};
+    var videos = [], images = [];
+    mediaArr.forEach(function (item) {
+      if (!item || !item.url || seen[item.url]) return;
+      seen[item.url] = true;
+      if (item.type === "video") videos.push(item.url);
+      else images.push(item.url);
     });
-
-    igReAll(text, /"display_url"\s*:\s*"([^"]+)"/g, function (m) { uniqPush(t1Images, m[1]); });
-    igReAll(text, /"image_versions2"\s*:\s*\{([\s\S]{0,4000}?)\}/g, function (m) {
-      igReAll(m[1], /"url"\s*:\s*"([^"]+)"/g, function (mm) { uniqPush(t1Images, mm[1]); });
-    });
-    if (!t1Images.length) {
-      igReAll(text, /"thumbnail_src"\s*:\s*"([^"]+)"/g, function (m) { uniqPush(t1Images, m[1]); });
-    }
-
-    /* ---- TIER 2 — DOM tags & meta ---- */
-    var t2Videos = [], t2Images = [];
-
-    igReAll(text, /<video[^>]*\bsrc\s*=\s*["']([^"']+)["']/gi, function (m) { uniqPush(t2Videos, m[1]); });
-    igReAll(text, /<source[^>]*\bsrc\s*=\s*["']([^"']+)["']/gi, function (m) { uniqPush(t2Videos, m[1]); });
-    igReAll(text, /"src"\s*:\s*"(https?:[^"]+?\.mp4[^"]*)"/gi, function (m) { uniqPush(t2Videos, m[1]); });
-
-    igReAll(text, /<img[^>]*class\s*=\s*["'][^"']*EmbeddedMediaImage[^"']*["'][^>]*\bsrc\s*=\s*["']([^"']+)["']/gi, function (m) { uniqPush(t2Images, m[1]); });
-    igReAll(text, /<img[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*class\s*=\s*["'][^"']*EmbeddedMediaImage[^"']*["']/gi, function (m) { uniqPush(t2Images, m[1]); });
-
-    igReAll(text, /<meta[^>]+property=["']og:video(?::secure_url|:url)?["'][^>]+content=["']([^"']+)["']/gi, function (m) { uniqPush(t2Videos, m[1]); });
-    igReAll(text, /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:video(?::secure_url|:url)?["']/gi, function (m) { uniqPush(t2Videos, m[1]); });
-    igReAll(text, /<meta[^>]+property=["']og:image(?::secure_url|:url)?["'][^>]+content=["']([^"']+)["']/gi, function (m) { uniqPush(t2Images, m[1]); });
-    igReAll(text, /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image(?::secure_url|:url)?["']/gi, function (m) { uniqPush(t2Images, m[1]); });
-
-    /* ---- TIER 3 — any raw CDN URL ---- */
-    var t3Videos = [], t3Images = [];
-    igReAll(text, /(https?:\/\/[^\s"'<>\\]+?(?:scontent|cdninstagram|fbcdn)[^\s"'<>\\]*?\.(?:mp4|jpg|jpeg|webp|heic))/gi, function (m) {
-      var u = m[1];
-      if (/\.mp4(\?|#|$)/i.test(u)) uniqPush(t3Videos, u);
-      else uniqPush(t3Images, u);
-    });
-
-    var videos = t1Videos.length ? t1Videos : (t2Videos.length ? t2Videos : t3Videos);
-    var images = t1Images.length ? t1Images : (t2Images.length ? t2Images : t3Images);
-
-    /* Noise filter — drop profile pics / static assets */
-    images = images.filter(function (u) {
-      if (/static\.cdninstagram\.com/i.test(u)) return false;
-      if (/\/rsrc\.php/i.test(u)) return false;
-      if (/(?:s|p)150x150|(?:s|p)320x320/.test(u)) return false;
-      if (/\/profiles\//i.test(u)) return false;
-      return true;
-    });
-
-    /* Single video + single image => the image is just the poster frame */
-    if (mode === "post" && videos.length === 1 && images.length === 1) images = [];
-
     if (!videos.length && !images.length) return null;
 
-    var caption = igCaptionFromHtml(text);
-    var baseTitle = caption ? sanitizeFilename(caption).slice(0, 70) : "";
-    var title = baseTitle || ("instagram_" + shortcode);
+    var title = (caption && String(caption).trim()) || ("instagram_" + shortcode);
+    title = title.replace(/\s+/g, " ").trim().slice(0, 120);
 
     if (mode === "post") {
       var all = [];
       images.forEach(function (u) { all.push({ url: u, ext: "jpg", type: "image" }); });
       videos.forEach(function (u) { all.push({ url: u, ext: "mp4", type: "video" }); });
-      if (!all.length) return null;
       return { multi: all, title: title, id: shortcode, platform: "instagram" };
     }
-
     if (mode === "audio") {
       if (videos.length) {
         return {
@@ -2103,7 +2071,6 @@ input[type="range"]::-moz-range-thumb{
       }
       return null;
     }
-
     if (videos.length) {
       return {
         url: videos[0], audioUrl: null, needsMerge: false,
@@ -2118,79 +2085,217 @@ input[type="range"]::-moz-range-thumb{
     };
   }
 
-  /* Multi-URL, multi-proxy Instagram scrape — every candidate and every
-     proxy is fired in parallel; the first successful extraction wins.  */
+  /* Extract every media URL from Instagram embed/HTML/JSON response */
+  function extractInstagramMedia(html, shortcode, mode) {
+    if (!html || html.length < 100) return null;
+
+    var trimmed = String(html).trim();
+
+    // 1. If response is JSON (from __a=1 or graphql), parse it
+    if (trimmed.charAt(0) === "{" || trimmed.indexOf('"graphql"') !== -1) {
+      var jsonStr = trimmed;
+      // Sometimes wrapped by proxy in HTML - try to find JSON
+      if (trimmed.charAt(0) !== "{") {
+        var jsonStart = trimmed.indexOf('{"graphql"');
+        if (jsonStart === -1) jsonStart = trimmed.indexOf('{"data"');
+        if (jsonStart !== -1) {
+          var jsonEnd = trimmed.lastIndexOf("}");
+          if (jsonEnd > jsonStart) jsonStr = trimmed.substring(jsonStart, jsonEnd + 1);
+        }
+      }
+      try {
+        var json = JSON.parse(jsonStr);
+        var jsonResult = extractFromInstagramJSON(json, shortcode, mode);
+        if (jsonResult) return jsonResult;
+      } catch (e) { /* fall through to HTML parsing */ }
+    }
+
+    var found = [];
+
+    // 2. Look for video_url in embedded JSON (Node.js approach)
+    var videoUrlIdx = html.indexOf('"video_url"');
+    if (videoUrlIdx === -1) videoUrlIdx = html.indexOf('\\"video_url\\"');
+    if (videoUrlIdx !== -1) {
+      var crop = html.substring(videoUrlIdx, Math.min(html.length, videoUrlIdx + 2500));
+      var vm = crop.match(/"video_url"\s*:\s*"([^"]+)"/) ||
+               crop.match(/\\"video_url\\"\s*:\s*\\"([^"\\]+)/);
+      if (vm) {
+        var vu = instagramUnescape(vm[1]);
+        if (vu && vu.length > 20 && /^https?:/.test(vu)) found.push({ url: vu, type: "video" });
+      }
+    }
+
+    // 3. Direct CDN URLs (scontent / cdninstagram / fbcdn)
+    var cdnRegexes = [
+      /https?:\\?\/\\?\/[^"'\s\\<>]*?(?:scontent|cdninstagram|fbcdn)[^"'\s\\<>]*?\.mp4[^"'\s\\<>]*/gi,
+      /https?:\\?\/\\?\/[^"'\s\\<>]*?(?:scontent|cdninstagram|fbcdn)[^"'\s\\<>]*?\.(?:jpg|jpeg|webp|heic)[^"'\s\\<>]*/gi
+    ];
+    cdnRegexes.forEach(function (re) {
+      var m;
+      while ((m = re.exec(html)) !== null) {
+        var u = instagramUnescape(m[0]).replace(/\\/g, "");
+        if (u.length > 30 && /^https?:/.test(u)) {
+          found.push({ url: u, type: /\.mp4/i.test(u) ? "video" : "image" });
+        }
+      }
+    });
+
+    // 4. JSON key patterns
+    var jsonPatterns = [
+      { re: /"video_url"\s*:\s*"([^"]+)"/g, type: "video" },
+      { re: /\\"video_url\\"\s*:\s*\\"([^"\\]+)/g, type: "video" },
+      { re: /"playable_url_quality_hd"\s*:\s*"([^"]+)"/g, type: "video" },
+      { re: /"playable_url"\s*:\s*"([^"]+)"/g, type: "video" },
+      { re: /"display_url"\s*:\s*"([^"]+)"/g, type: "image" },
+      { re: /\\"display_url\\"\s*:\s*\\"([^"\\]+)/g, type: "image" },
+      { re: /"thumbnail_src"\s*:\s*"([^"]+)"/g, type: "image" },
+      { re: /"src"\s*:\s*"(https:\\?\/\\?\/[^"]*(?:scontent|cdninstagram|fbcdn)[^"]*)"/g, type: "video" }
+    ];
+    jsonPatterns.forEach(function (p) {
+      var m;
+      while ((m = p.re.exec(html)) !== null) {
+        var u = instagramUnescape(m[1]);
+        if (/^https?:/.test(u) && u.length > 30) found.push({ url: u, type: p.type });
+      }
+    });
+
+    // 5. og:video / og:image
+    var ogPatterns = [
+      { re: /<meta[^>]+property=["']og:video(?::secure_url|:url)?["'][^>]+content=["']([^"']+)["']/gi, type: "video" },
+      { re: /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:video(?::secure_url|:url)?["']/gi, type: "video" },
+      { re: /<meta[^>]+property=["']og:image(?::secure_url|:url)?["'][^>]+content=["']([^"']+)["']/gi, type: "image" },
+      { re: /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image(?::secure_url|:url)?["']/gi, type: "image" }
+    ];
+    ogPatterns.forEach(function (p) {
+      var m;
+      while ((m = p.re.exec(html)) !== null) {
+        var u = instagramUnescape(m[1]);
+        if (/^https?:/.test(u)) found.push({ url: u, type: p.type });
+      }
+    });
+
+    // 6. <video> and <source> tags
+    var tagPatterns = [
+      { re: /<video[^>]+src=["']([^"']+)["']/gi, type: "video" },
+      { re: /<source[^>]+src=["']([^"']+)["']/gi, type: "video" }
+    ];
+    tagPatterns.forEach(function (p) {
+      var m;
+      while ((m = p.re.exec(html)) !== null) {
+        var u = instagramUnescape(m[1]);
+        if (/^https?:/.test(u)) found.push({ url: u, type: p.type });
+      }
+    });
+
+    // 7. EmbeddedMediaImage img (specific to embed page)
+    var imgTagRe = /<img[^>]+class=["'][^"']*EmbeddedMediaImage[^"']*["'][^>]*>/gi;
+    var imgTags = html.match(imgTagRe) || [];
+    imgTags.forEach(function (tag) {
+      var srcM = tag.match(/src=["']([^"']+)["']/i);
+      if (srcM) {
+        var u = instagramUnescape(srcM[1]);
+        if (/^https?:/.test(u)) found.push({ url: u, type: "image" });
+      }
+    });
+
+    if (!found.length) return null;
+
+    // Dedupe + partition
+    var seen = {};
+    var videos = [], images = [];
+    found.forEach(function (item) {
+      if (!item.url || seen[item.url]) return;
+      seen[item.url] = true;
+      if (item.type === "video") videos.push(item.url);
+      else images.push(item.url);
+    });
+    if (!videos.length && !images.length) return null;
+
+    var caption = extractInstagramCaption(html);
+    return _buildIGResult(
+      videos.map(function (u) { return { url: u, type: "video" }; })
+        .concat(images.map(function (u) { return { url: u, type: "image" }; })),
+      caption, shortcode, mode
+    );
+  }
+
+  /* Multi-URL, multi-proxy Instagram scraper — no API key needed */
   async function scrapeInstagramEmbed(rawUrl, mode) {
     var shortcode = extractInstagramShortcode(rawUrl);
     if (!shortcode) throw new Error("invalid Instagram URL");
 
-    var candidates = igCandidateUrls(rawUrl, shortcode);
-    setStatus(
-      "Instagram: scraping " + candidates.length + " sources × " +
-      (CORS_PROXIES.length + 1) + " fetchers…",
-      "info"
-    );
+    var type = "p";
+    if (/\/reels?\//.test(rawUrl)) type = "reel";
+    else if (/\/tv\//.test(rawUrl)) type = "tv";
 
-    function attempt(targetUrl) {
-      var promises = [];
+    // Order matters: primary embed endpoints first, then bypass services, then JSON endpoints.
+    var candidates = [
+      "https://www.instagram.com/" + type + "/" + shortcode + "/embed/captioned/",
+      "https://www.instagram.com/p/" + shortcode + "/embed/captioned/",
+      "https://www.instagram.com/" + type + "/" + shortcode + "/embed/",
+      "https://www.instagram.com/p/" + shortcode + "/embed/",
+      "https://ddinstagram.com/p/" + shortcode,
+      "https://kkinstagram.com/p/" + shortcode,
+      "https://www.instagram.com/" + type + "/" + shortcode + "/?__a=1&__d=dis",
+      "https://www.instagram.com/p/" + shortcode + "/?__a=1&__d=dis",
+      "https://www.instagram.com/" + type + "/" + shortcode + "/",
+      "https://www.instagram.com/p/" + shortcode + "/"
+    ];
 
-      /* direct fetch (some mirrors are CORS-friendly) */
-      promises.push(new Promise(function (resolve, reject) {
-        var ctrl = new AbortController();
-        var timer = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 8000);
-        fetch(targetUrl, { credentials: "omit", signal: ctrl.signal, referrerPolicy: "no-referrer" })
-          .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
-          .then(function (text) {
-            clearTimeout(timer);
-            var result = extractInstagramMedia(text, shortcode, mode);
-            if (!result) throw new Error("no media");
-            resolve(result);
-          })
-          .catch(function (e) { clearTimeout(timer); reject(e); });
-      }));
+    // Dedupe
+    var uniq = [], seenU = {};
+    candidates.forEach(function (u) { if (!seenU[u]) { seenU[u] = true; uniq.push(u); } });
+    candidates = uniq;
 
-      /* every CORS proxy */
-      CORS_PROXIES.forEach(function (proxyFn) {
-        promises.push(new Promise(function (resolve, reject) {
+    var lastErr = null;
+
+    for (var i = 0; i < candidates.length; i++) {
+      var targetUrl = candidates[i];
+      setStatus("IG: URL " + (i + 1) + "/" + candidates.length + " · " + hostOf(targetUrl), "info");
+
+      // Try all proxies in parallel for this URL — first success wins
+      var promises = CORS_PROXIES.map(function (proxyFn) {
+        return new Promise(function (resolve, reject) {
           var ctrl = new AbortController();
           var timer = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 11000);
-          fetch(proxyFn(targetUrl), { credentials: "omit", signal: ctrl.signal, referrerPolicy: "no-referrer" })
-            .then(function (r) {
-              if (!r.ok) throw new Error("HTTP " + r.status);
-              return r.text();
+          fetch(proxyFn(targetUrl), {
+            credentials: "omit",
+            signal: ctrl.signal,
+            referrerPolicy: "no-referrer",
+            headers: { "Accept": "text/html,application/json,*/*" }
+          })
+            .then(function (res) {
+              clearTimeout(timer);
+              if (!res.ok) throw new Error("HTTP " + res.status);
+              return res.text();
             })
             .then(function (text) {
-              clearTimeout(timer);
-              if (!text || text.length < 200) throw new Error("empty response");
+              if (!text || text.length < 100) throw new Error("empty response");
               var result = extractInstagramMedia(text, shortcode, mode);
-              if (!result) throw new Error("no media");
-              resolve(result);
+              if (result) resolve(result);
+              else reject(new Error("no media found"));
             })
-            .catch(function (e) { clearTimeout(timer); reject(e); });
-        }));
+            .catch(function (e) {
+              clearTimeout(timer);
+              reject(e);
+            });
+        });
       });
 
-      return Promise.any(promises);
+      try {
+        var result = await Promise.any(promises);
+        console.log("[HexTube] ✓ IG scrape success URL " + (i + 1) + " (" + hostOf(targetUrl) + ")");
+        return result;
+      } catch (e) {
+        lastErr = e;
+        console.warn("[IG scrape] URL " + (i + 1) + " (" + hostOf(targetUrl) + ") failed on all proxies");
+      }
     }
 
-    /* Fire all candidates in parallel (staggered slightly to avoid a
-       request stampede), then take the first successful extraction.     */
-    var attempts = candidates.map(function (u, i) {
-      return new Promise(function (resolve) {
-        setTimeout(function () {
-          resolve(attempt(u).then(function (r) {
-            console.log("[HexTube] ✓ IG scrape success: " + hostOf(u));
-            return r;
-          }));
-        }, i * 180);
-      });
-    });
-
-    try {
-      return await Promise.any(attempts);
-    } catch (e) {
-      throw new Error("Instagram scrape failed on all sources/proxies. Open the post in a browser to verify it is public.");
-    }
+    throw new Error(
+      "Instagram scrape failed on all " + candidates.length + " URLs × " + CORS_PROXIES.length + " proxies" +
+      (lastErr ? " — " + lastErr.message : "")
+    );
   }
 
   /* -------- PINTEREST SCRAPE -------- */
@@ -2384,14 +2489,21 @@ input[type="range"]::-moz-range-thumb{
         });
     }
 
-    /* ---------- INSTAGRAM — embed scrape first (reels + posts), Cobalt last ---------- */
+    /* ============================================================
+       INSTAGRAM — UPGRADED ORCHESTRATION
+       Strategy (no API key / token required):
+         1. If user has custom Cobalt endpoint → try it first
+         2. Embed scrape (10 URLs × 6 proxies in parallel) → primary bypass
+         3. Public Cobalt pool → secondary fallback
+       ============================================================ */
     if (platform === "instagram") {
       return (async function () {
         var steps = [];
 
+        // Priority 1: custom Cobalt (only if user configured it)
         if (getCobaltEndpoint()) {
           steps.push({
-            name: "your Cobalt",
+            name: "custom Cobalt",
             run: function () {
               setStatus("Instagram: trying your Cobalt…", "info");
               return tryCobalt(rawUrl, mode);
@@ -2399,14 +2511,16 @@ input[type="range"]::-moz-range-thumb{
           });
         }
 
+        // Priority 2: embed scrape — no API key, pure bypass
         steps.push({
-          name: "embed scrape",
+          name: "embed scrape (no API key)",
           run: function () {
-            setStatus("Instagram: scraping embed page…", "info");
+            setStatus("Instagram: bypass via embed scrape…", "info");
             return scrapeInstagramEmbed(rawUrl, mode);
           }
         });
 
+        // Priority 3: public Cobalt pool (may still work for reels)
         steps.push({
           name: "public Cobalt pool",
           run: function () {
@@ -2418,22 +2532,17 @@ input[type="range"]::-moz-range-thumb{
         var lastErr = null;
         for (var i = 0; i < steps.length; i++) {
           try {
-            console.log("[HexTube] IG: trying step " + (i + 1) + " (" + steps[i].name + ")");
-            var result = await steps[i].run();
-            if (result) {
-              console.log("[HexTube] ✓ IG step " + (i + 1) + " succeeded (" + steps[i].name + ")");
-              return result;
-            }
-            throw new Error("empty result");
+            console.log("[HexTube] IG: step " + (i + 1) + " (" + steps[i].name + ")");
+            return await steps[i].run();
           } catch (e) {
             lastErr = e;
-            console.warn("[HexTube] IG: step " + (i + 1) + " (" + steps[i].name + ") failed:", e && e.message);
+            console.warn("[HexTube] IG: step " + (i + 1) + " (" + steps[i].name + ") failed:", e.message);
           }
         }
 
         throw new Error(
-          "Instagram download failed. All methods exhausted. " +
-          (lastErr ? lastErr.message.slice(0, 180) : "Make sure the post is public, or add your own Cobalt endpoint in Settings.")
+          "Instagram download failed. All bypass methods exhausted. " +
+          (lastErr ? lastErr.message.slice(0, 180) : "Add a custom Cobalt endpoint in Settings as a last resort.")
         );
       })();
     }
@@ -2509,9 +2618,7 @@ input[type="range"]::-moz-range-thumb{
     return true;
   }
 
-  /* Try a URL directly, then through each CORS proxy. Returns the response or throws. */
   async function fetchWithFallback(url) {
-    // Direct
     try {
       var res = await fetch(url, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer" });
       if (res.ok) return { res: res, viaProxy: false };
@@ -2519,7 +2626,6 @@ input[type="range"]::-moz-range-thumb{
     } catch (e) {
       console.warn("[fetchWithFallback] direct failed:", e.message);
     }
-    // Proxies
     for (var i = 0; i < CORS_PROXIES.length; i++) {
       try {
         var proxyUrl = CORS_PROXIES[i](url);
@@ -2572,7 +2678,6 @@ input[type="range"]::-moz-range-thumb{
       return { saved: true, size: outBlob.size, filename: filename };
     } catch (err) {
       console.warn("[fetchAndSave] failed:", err.message);
-      // Last resort: open in new tab
       if (openInNewTab(url)) {
         onProgress(100, "opened in new tab");
         return { saved: false, fallback: true, filename: filename };
@@ -2581,7 +2686,6 @@ input[type="range"]::-moz-range-thumb{
     }
   }
 
-  /* Fetch a media URL to a Blob with proxy fallback — used by ZIP builder */
   async function fetchMediaBlob(url) {
     var result = await fetchWithFallback(url);
     return result.res.blob();
@@ -2684,7 +2788,6 @@ input[type="range"]::-moz-range-thumb{
     }
   }
 
-  /* -------- VIDEO → AUDIO VIA FFMPEG -------- */
   async function downloadExtractAudio(videoUrl, baseFilename) {
     var audioFormat = el.audioFormat.value;
     var audioBitrate = el.audioBitrate.value;
@@ -2751,7 +2854,6 @@ input[type="range"]::-moz-range-thumb{
     }
   }
 
-  /* -------- MERGE (YouTube video-only stream) -------- */
   async function downloadMerged(result, baseFilename) {
     try {
       var ffmpeg = await loadFFmpeg(function (msg) { setStatus(msg, "info"); });
@@ -2818,7 +2920,6 @@ input[type="range"]::-moz-range-thumb{
     }
   }
 
-  /* -------- DOWNLOAD FLOW -------- */
   function guessExtension() {
     if (state.mode === "audio") {
       var fmt = el.audioFormat.value;
@@ -2977,11 +3078,6 @@ input[type="range"]::-moz-range-thumb{
       toast("Invalid YouTube link", "error");
       return;
     }
-    if (platform === "instagram" && !extractInstagramShortcode(raw)) {
-      setStatus("That doesn't look like an Instagram post or reel link.", "error");
-      toast("Invalid Instagram link", "error");
-      return;
-    }
 
     state.lastId = extractVideoId(raw);
     if (platform === "youtube" && state.lastId && el.preview.classList.contains("hidden")) showPreview(state.lastId);
@@ -3036,6 +3132,9 @@ input[type="range"]::-moz-range-thumb{
       });
   }
 
+  /* ============================================================
+     UPGRADED handlePaste — auto-extracts URL from pasted text
+     ============================================================ */
   function handlePaste() {
     if (!navigator.clipboard || !navigator.clipboard.readText) {
       toast("Clipboard unavailable — paste manually", "error");
@@ -3046,10 +3145,26 @@ input[type="range"]::-moz-range-thumb{
       .then(function (text) {
         var value = (text || "").trim();
         if (!value) { toast("Clipboard is empty", "info"); return; }
-        el.urlInput.value = value;
+
+        var url = extractFirstUrl(value);
+        var wasExtracted = (url !== value) && /^https?:\/\//i.test(url);
+
+        el.urlInput.value = url;
         state.lastId = null;
         handleUrlChange();
-        toast("Link pasted", "ok", 1800);
+
+        var platform = detectPlatform(url);
+        if (platform) {
+          toast(
+            (wasExtracted ? "URL auto-extracted" : "Link pasted") +
+            " · " + (PLATFORMS[platform] && PLATFORMS[platform].label || platform),
+            "ok", 2200
+          );
+        } else if (wasExtracted) {
+          toast("URL auto-extracted from pasted text", "ok", 2200);
+        } else {
+          toast("Link pasted", "ok", 1800);
+        }
       })
       .catch(function () {
         toast("Clipboard denied — paste manually", "error");
@@ -4139,6 +4254,28 @@ input[type="range"]::-moz-range-thumb{
     el.urlInput.addEventListener("keydown", function (evt) {
       if (evt.key === "Enter") { evt.preventDefault(); handleDownload(); }
     });
+
+    /* NEW: intercept paste to auto-extract embedded URLs */
+    el.urlInput.addEventListener("paste", function (evt) {
+      try {
+        var pasted = (evt.clipboardData || window.clipboardData).getData("text");
+        if (!pasted) return;
+        var extracted = extractFirstUrl(pasted);
+        if (extracted && extracted !== pasted && /^https?:\/\//i.test(extracted)) {
+          evt.preventDefault();
+          el.urlInput.value = extracted;
+          state.lastId = null;
+          handleUrlChange();
+          var plat = detectPlatform(extracted);
+          toast(
+            "URL auto-extracted from pasted text" +
+            (plat ? " · " + (PLATFORMS[plat] && PLATFORMS[plat].label || plat) : ""),
+            "ok", 2200
+          );
+        }
+      } catch (e) {}
+    });
+
     el.pasteBtn.addEventListener("click", handlePaste);
     el.modeVideo.addEventListener("click", function () { setMode("video"); });
     el.modeAudio.addEventListener("click", function () { setMode("audio"); });
