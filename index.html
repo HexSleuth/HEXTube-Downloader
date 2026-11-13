@@ -738,7 +738,7 @@ input[type="range"]::-moz-range-thumb{
         <strong>YouTube</strong>: Piped &amp; Invidious auto-discovery. &nbsp;
         <strong>TikTok</strong>: tikwm.com (no auth). &nbsp;
         <strong>Twitter / X</strong>: fxtwitter (no auth). &nbsp;
-        <strong>Instagram</strong>: multi-method native extractor (oembed + mobile API + GraphQL + embed scrape) + Cobalt fallback. &nbsp;
+        <strong>Instagram</strong>: Cobalt (canine.tools first) + native mobile API + embed scrape. &nbsp;
         <strong>Facebook · Pinterest · Reddit · Bluesky · Vimeo · SoundCloud · Twitch · Streamable · Dailymotion · Tumblr · Snapchat · Loom · Bilibili · VK · OK.ru · Newgrounds · Rutube</strong>: native client parsers + Cobalt fallback.
         <br/><br/>
         <strong>Tip:</strong> Public Cobalt instances are often overloaded. Add your own Cobalt endpoint above for reliable Instagram / Facebook / Pinterest downloads.
@@ -906,7 +906,10 @@ input[type="range"]::-moz-range-thumb{
   var PIPED_REGISTRY = "https://piped-instances.kavin.rocks/";
   var INVIDIOUS_REGISTRY = "https://api.invidious.io/instances.json?sort_by=health";
 
+  // cobalt.canine.tools is the priority instance (used by many for reliable IG),
+  // followed by other known public instances.
   var PUBLIC_COBALT_INSTANCES = [
+    "https://cobalt.canine.tools",
     "https://cobalt-api.kwiatekmiki.com",
     "https://cobalt-backend.canine.tools",
     "https://capi.oak.li",
@@ -1173,6 +1176,43 @@ input[type="range"]::-moz-range-thumb{
     return m2 ? m2[1] : null;
   }
 
+  /*
+   * Instagram URLs from the share sheet often carry encoded tracking params:
+   *   ?exln=MXZ2YWcxanlleHo5dQ==   (share-link base64-ish token)
+   *   ?igsh=...                    (tracking)
+   *   ?utm_source=...              (analytics)
+   *
+   * Cobalt strips these before resolving (see cleanURL in url.js) because the
+   * underlying extractor works on the base shortcode only. If we forward the
+   * raw URL to Cobalt, some instances fail with "unsupported link".
+   *
+   * This normalizer mirrors cobalt's behaviour so the Cobalt API receives:
+   *   https://www.instagram.com/reel/DdpXX0XMZSo
+   * and returns the direct CDN URL:
+   *   https://scontent-phl2-1.cdninstagram.com/o1/v/t2/f2/m86/....mp4?...
+   */
+  function normalizeInstagramUrl(rawUrl) {
+    try {
+      var u = new URL(String(rawUrl));
+      u.search = "";
+      u.hash = "";
+      u.username = "";
+      u.password = "";
+      try { u.port = ""; } catch (e) {}
+      if (u.pathname.length > 1 && u.pathname.endsWith("/")) {
+        u.pathname = u.pathname.slice(0, -1);
+      }
+      if (/ddinstagram\.com$/i.test(u.hostname)) {
+        u.hostname = "www.instagram.com";
+      } else if (/instagram\.com$/i.test(u.hostname) && !/^www\./i.test(u.hostname)) {
+        u.hostname = "www.instagram.com";
+      }
+      return u.toString();
+    } catch (e) {
+      return String(rawUrl || "");
+    }
+  }
+
   function extractPinterestId(url) {
     var m = String(url || "").match(/pinterest\.[a-z.]+\/pin\/([^\/?#]+)/);
     return m ? m[1] : null;
@@ -1339,7 +1379,7 @@ input[type="range"]::-moz-range-thumb{
     if (platform === "youtube") el.platformBadgeText.textContent = "Detected: YouTube — Piped / Invidious / Cobalt";
     else if (platform === "tiktok") el.platformBadgeText.textContent = "Detected: TikTok — tikwm / Cobalt";
     else if (platform === "twitter") el.platformBadgeText.textContent = "Detected: Twitter / X — fxtwitter";
-    else if (platform === "instagram") el.platformBadgeText.textContent = "Detected: Instagram — multi-method native + Cobalt";
+    else if (platform === "instagram") el.platformBadgeText.textContent = "Detected: Instagram — Cobalt (canine.tools first) + native mobile API + embed scrape";
     else if (platform === "bluesky") el.platformBadgeText.textContent = "Detected: Bluesky — public API";
     else if (platform === "soundcloud") el.platformBadgeText.textContent = "Detected: SoundCloud — native parser";
     else if (platform === "twitch") el.platformBadgeText.textContent = "Detected: Twitch clips — GraphQL";
@@ -1770,7 +1810,15 @@ input[type="range"]::-moz-range-thumb{
 
   /* ============================== COBALT ============================== */
   function buildCobaltPayload(rawUrl, mode) {
-    var payload = { url: rawUrl, filenameStyle: "pretty" };
+    // Instagram: strip encoded tracking params (?exln=..., ?igsh=..., ?utm_*)
+    // before forwarding to Cobalt. The base shortcode URL is what Cobalt needs
+    // in order to return the direct scontent-*.cdninstagram.com/....mp4 CDN URL.
+    var finalUrl = rawUrl;
+    if (detectPlatform(rawUrl) === "instagram") {
+      finalUrl = normalizeInstagramUrl(rawUrl);
+    }
+
+    var payload = { url: finalUrl, filenameStyle: "pretty" };
     if (mode === "audio") {
       payload.downloadMode = "audio";
       payload.audioFormat = el.audioFormat.value === "best" ? "mp3" : el.audioFormat.value;
@@ -1791,7 +1839,7 @@ input[type="range"]::-moz-range-thumb{
     if (apiKey) headers["Authorization"] = "Api-Key " + apiKey;
 
     var ctrl = new AbortController();
-    var timer = setTimeout(function () { ctrl.abort(); }, 15000);
+    var timer = setTimeout(function () { ctrl.abort(); }, 20000);
 
     return fetch(endpoint, {
       method: "POST", headers: headers,
@@ -1843,7 +1891,7 @@ input[type="range"]::-moz-range-thumb{
 
   function _looksLikeVideoUrl(url, fname) {
     var s = (String(url || "") + " " + String(fname || "")).toLowerCase();
-    return /\.(mp4|webm|mkv|mov|m4v|avi|flv|3gp)(\?|#|$|\s)/.test(s);
+    return /\.(mp4|webm|mkv|mov|m4v|avi|flv|3gp)(\?|#|$|\s)/.test(s) || /\/o1\/v\//.test(s);
   }
   function _looksLikeAudioUrl(url, fname) {
     var s = (String(url || "") + " " + String(fname || "")).toLowerCase();
@@ -2053,16 +2101,13 @@ input[type="range"]::-moz-range-thumb{
     throw lastErr || new Error("fxtwitter failed");
   }
 
-  /* ============================== INSTAGRAM (UPGRADED) ============================== */
-  var IG_CONFIG = {
-    APP_ID: "936619743392459",
-    MOBILE_UA: "Instagram 275.0.0.27.98 Android (33/13; 280dpi; 720x1423; Xiaomi; Redmi 7; onclite; qcom; en_US; 458229237)",
-    DOC_ID_POST: "8845758582119845",
-    DOC_ID_REELS: "25317500907894419",
-    CACHE_DTSG: { value: "", expiry: 0 },
-    CACHE_APPID: { value: "", expiry: 0 },
-    CACHE_MEDIA_ID: {}
-  };
+  /* ============================== INSTAGRAM (upgraded from cobalt) ============================== */
+  // Ported from https://github.com/imputnet/cobalt/blob/main/api/src/processing/services/instagram.js
+  // Adapted for browser (CORS proxies, no cookie jar) — multi-strategy extraction.
+
+  var INSTAGRAM_MOBILE_UA = "Instagram 275.0.0.27.98 Android (33/13; 280dpi; 720x1423; Xiaomi; Redmi 7; onclite; qcom; en_US; 458229237)";
+  var INSTAGRAM_WEB_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36";
+  var INSTAGRAM_APP_ID = "936619743392459";
 
   function instagramUnescape(s) {
     return String(s || "")
@@ -2076,459 +2121,485 @@ input[type="range"]::-moz-range-thumb{
       .replace(/\\\\/g, "\\");
   }
 
-  async function igFetch(url, options) {
-    options = options || {};
-    var opts = Object.assign({ credentials: "omit", referrerPolicy: "no-referrer" }, options);
-    try {
-      var res = await fetch(url, opts);
-      if (res.ok) return res;
-    } catch (e) {}
+  // Fetch with IG headers, falls back to CORS proxies.
+  async function fetchInstagramEndpoint(url, headers, isJson, ms) {
+    var timeout = ms || 15000;
+    var attempts = [];
+
+    // 1) Direct with headers (works when CORS allows or when proxies forward headers)
+    attempts.push(async function () {
+      var ctrl = new AbortController();
+      var timer = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, timeout);
+      try {
+        var res = await fetch(url, { headers: headers, credentials: "omit", signal: ctrl.signal });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return isJson ? await res.json() : await res.text();
+      } finally { clearTimeout(timer); }
+    });
+
+    // 2) Each CORS proxy (custom headers usually dropped, but many IG endpoints still work)
     for (var i = 0; i < CORS_PROXIES.length; i++) {
-      try {
-        var proxied = CORS_PROXIES[i](url);
-        var res2 = await fetch(proxied, opts);
-        if (res2.ok) return res2;
-      } catch (e) {}
+      (function (proxyFn) {
+        attempts.push(async function () {
+          var ctrl = new AbortController();
+          var timer = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, timeout);
+          try {
+            var res = await fetch(proxyFn(url), { credentials: "omit", signal: ctrl.signal });
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            return isJson ? await res.json() : await res.text();
+          } finally { clearTimeout(timer); }
+        });
+      })(CORS_PROXIES[i]);
     }
-    throw new Error("All fetch methods failed for Instagram");
+
+    var lastErr = null;
+    for (var a = 0; a < attempts.length; a++) {
+      try { return await attempts[a](); }
+      catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error("all fetch methods failed");
   }
 
-  async function igFetchJson(url, options) {
-    var res = await igFetch(url, options);
-    return res.json();
-  }
-
-  async function igFetchText(url, options) {
-    var res = await igFetch(url, options);
-    return res.text();
-  }
-
-  async function igResolveShareLink(shareId) {
+  // cobalt: getMediaId — resolve shortcode → numeric media_id via oembed.
+  async function getInstagramMediaId(shortcode) {
+    var oembedUrl = "https://i.instagram.com/api/v1/oembed/?url=" +
+      encodeURIComponent("https://www.instagram.com/p/" + shortcode + "/");
     try {
-      var res = await igFetch("https://www.instagram.com/share/" + shareId + "/", {
-        headers: { "user-agent": "curl/7.88.1" },
-        redirect: "manual"
-      });
-      return res.headers.get("location");
+      var json = await fetchInstagramEndpoint(oembedUrl, {
+        "user-agent": INSTAGRAM_MOBILE_UA,
+        "x-ig-app-id": INSTAGRAM_APP_ID,
+        "accept": "application/json"
+      }, true, 12000);
+      return json && json.media_id ? json.media_id : null;
     } catch (e) {
+      console.warn("[IG] oembed failed:", e.message);
       return null;
     }
   }
 
-  async function igGetMediaId(shortcode) {
-    if (IG_CONFIG.CACHE_MEDIA_ID[shortcode]) return IG_CONFIG.CACHE_MEDIA_ID[shortcode];
+  // cobalt: requestMobileApi — get full post via i.instagram.com/api/v1/media/{id}/info/
+  async function requestInstagramMobileApi(mediaId) {
+    var url = "https://i.instagram.com/api/v1/media/" + mediaId + "/info/";
     try {
-      var url = "https://i.instagram.com/api/v1/oembed/?url=" + encodeURIComponent("https://www.instagram.com/p/" + shortcode + "/");
-      var json = await igFetchJson(url, {
-        headers: {
-          "x-ig-app-id": IG_CONFIG.APP_ID,
-          "user-agent": IG_CONFIG.MOBILE_UA
-        }
-      });
-      if (json && json.media_id) {
-        IG_CONFIG.CACHE_MEDIA_ID[shortcode] = json.media_id;
-        return json.media_id;
-      }
-    } catch (e) {}
-    return null;
-  }
-
-  async function igGetDtsgToken() {
-    if (IG_CONFIG.CACHE_DTSG.value && IG_CONFIG.CACHE_DTSG.expiry > Date.now()) return IG_CONFIG.CACHE_DTSG.value;
-    try {
-      var html = await igFetchText("https://www.instagram.com/");
-      var m = html.match(/"dtsg":{"token":"(.*?)"/);
-      if (m) {
-        IG_CONFIG.CACHE_DTSG.value = m[1];
-        IG_CONFIG.CACHE_DTSG.expiry = Date.now() + 86390000;
-        return m[1];
-      }
-    } catch (e) {}
-    return null;
-  }
-
-  async function igGetAppId() {
-    if (IG_CONFIG.CACHE_APPID.value && IG_CONFIG.CACHE_APPID.expiry > Date.now()) return IG_CONFIG.CACHE_APPID.value;
-    try {
-      var html = await igFetchText("https://www.instagram.com/");
-      var m = html.match(/"X-IG-App-ID":"([^"]+)"/) || html.match(/appId["']?\s*:\s*["']?(\d+)/);
-      if (m) {
-        IG_CONFIG.CACHE_APPID.value = m[1];
-        IG_CONFIG.CACHE_APPID.expiry = Date.now() + 3600000;
-        return m[1];
-      }
-    } catch (e) {}
-    return IG_CONFIG.APP_ID;
-  }
-
-  async function igMobileApi(mediaId) {
-    try {
-      var url = "https://i.instagram.com/api/v1/media/" + mediaId + "/info/";
-      var json = await igFetchJson(url, {
-        headers: {
-          "x-ig-app-id": IG_CONFIG.APP_ID,
-          "user-agent": IG_CONFIG.MOBILE_UA
-        }
-      });
-      return json && json.items && json.items[0];
+      return await fetchInstagramEndpoint(url, {
+        "user-agent": INSTAGRAM_MOBILE_UA,
+        "x-ig-app-id": INSTAGRAM_APP_ID,
+        "accept": "application/json",
+        "x-fb-http-engine": "Liger",
+        "accept-language": "en-US"
+      }, true, 15000);
     } catch (e) {
+      console.warn("[IG] mobile api failed:", e.message);
       return null;
     }
   }
 
-  async function igGraphQL(shortcode) {
-    var dtsg = await igGetDtsgToken();
-    var appId = await igGetAppId();
-    var body = new URLSearchParams({
-      __a: "1",
-      __d: "www",
-      __user: "0",
-      lsd: dtsg || Math.random().toString(36).substring(2),
-      fb_api_caller_class: "RelayModern",
-      fb_api_req_friendly_name: "PolarisPostActionLoadPostQueryQuery",
-      variables: JSON.stringify({
-        shortcode: shortcode,
-        fetch_tagged_user_count: null,
-        hoisted_comment_id: null,
-        hoisted_reply_id: null
-      }),
-      server_timestamps: "true",
-      doc_id: IG_CONFIG.DOC_ID_POST
-    });
+  // cobalt: requestHTML — get /p/{shortcode}/embed/captioned/ and parse contextJSON.
+  async function requestInstagramHTML(shortcode) {
+    var url = "https://www.instagram.com/p/" + shortcode + "/embed/captioned/";
     try {
-      var headers = {
-        "content-type": "application/x-www-form-urlencoded",
-        "x-fb-friendly-name": "PolarisPostActionLoadPostQueryQuery",
-        "x-ig-app-id": appId,
-        "user-agent": IG_CONFIG.MOBILE_UA
-      };
-      if (dtsg) {
-        headers["x-fb-lsd"] = dtsg;
-        headers["x-csrftoken"] = dtsg;
-      }
-      var res = await igFetch("https://www.instagram.com/graphql/query", {
-        method: "POST",
-        headers: headers,
-        body: body.toString()
-      });
-      var json = await res.json();
-      return json && json.data;
-    } catch (e) {
-      return null;
-    }
-  }
+      var html = await fetchInstagramEndpoint(url, {
+        "user-agent": INSTAGRAM_WEB_UA,
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "en-GB,en;q=0.9"
+      }, false, 15000);
 
-  async function igEmbedScrape(shortcode) {
-    try {
-      var html = await igFetchText("https://www.instagram.com/p/" + shortcode + "/embed/captioned/");
       if (!html || html.length < 200) return null;
-      var result = { html: html, shortcode_media: null, video_url: null, display_url: null };
-      try {
-        var m = html.match(/"init",\[\],\[(.*?)\]\],/);
-        if (m) {
-          var parsed = JSON.parse(m[1]);
-          if (parsed && parsed.contextJSON) {
-            var ctx = JSON.parse(parsed.contextJSON);
-            if (ctx && ctx.shortcode_media) result.shortcode_media = ctx.shortcode_media;
+
+      // Try to extract init/contextJSON (same trick cobalt uses)
+      var match = html.match(/"init",\[\],\[(.*?)\]\],/);
+      if (match && match[1]) {
+        try {
+          var data = JSON.parse(match[1]);
+          if (data && data.contextJSON) {
+            return { contextData: JSON.parse(data.contextJSON) };
           }
+        } catch (e) { /* fallthrough to raw html */ }
+      }
+
+      // Return raw HTML so existing extractInstagramMedia can parse it
+      return { rawHtml: html };
+    } catch (e) {
+      console.warn("[IG] HTML embed failed:", e.message);
+      return null;
+    }
+  }
+
+  // cobalt: extractNewPost — mobile API shape (carousel_media / video_versions / image_versions2)
+  function extractInstagramNewPost(data, shortcode) {
+    if (!data) return null;
+
+    var carousel = data.carousel_media;
+    if (carousel && carousel.length) {
+      var items = [];
+      for (var i = 0; i < carousel.length; i++) {
+        var e = carousel[i];
+        if (!e || !e.image_versions2 || !e.image_versions2.candidates) continue;
+        var type = (e.video_versions && e.video_versions.length) ? "video" : "photo";
+        var imageUrl = e.image_versions2.candidates[0].url;
+        var url = imageUrl;
+        var itemExt = type === "video" ? "mp4" : "jpg";
+
+        if (type === "video") {
+          var video = e.video_versions.reduce(function (a, b) {
+            return (a.width * a.height < b.width * b.height) ? b : a;
+          });
+          url = video.url;
         }
-      } catch (e) {}
-      var ogVideo = html.match(/<meta[^>]+property=["']og:video["'][^>]+content=["']([^"']+)["']/i);
-      if (ogVideo) result.video_url = instagramUnescape(ogVideo[1]);
-      var ogImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
-      if (ogImage) result.display_url = instagramUnescape(ogImage[1]);
-      var videoUrl = html.match(/"video_url"\s*:\s*"([^"]+)"/);
-      if (videoUrl && !result.video_url) result.video_url = instagramUnescape(videoUrl[1]);
-      var displayUrl = html.match(/"display_url"\s*:\s*"([^"]+)"/);
-      if (displayUrl && !result.display_url) result.display_url = instagramUnescape(displayUrl[1]);
-      return result;
-    } catch (e) {
-      return null;
-    }
-  }
 
-  async function igUsernameToId(username) {
-    try {
-      var url = "https://www.instagram.com/api/v1/users/web_profile_info/?username=" + encodeURIComponent(username);
-      var json = await igFetchJson(url, {
-        headers: {
-          "x-ig-app-id": IG_CONFIG.APP_ID,
-          "user-agent": IG_CONFIG.MOBILE_UA
-        }
+        items.push({ type: type, url: url, thumb: imageUrl, ext: itemExt });
+      }
+      if (items.length) return { items: items };
+    }
+
+    if (data.video_versions && data.video_versions.length) {
+      var v = data.video_versions.reduce(function (a, b) {
+        return (a.width * a.height < b.width * b.height) ? b : a;
       });
-      return json && json.data && json.data.user && json.data.user.id;
-    } catch (e) {
-      return null;
+      var thumb = (data.image_versions2 && data.image_versions2.candidates)
+        ? data.image_versions2.candidates[0].url : null;
+      return { single: { type: "video", url: v.url, thumb: thumb, ext: "mp4" } };
     }
+
+    if (data.image_versions2 && data.image_versions2.candidates) {
+      var imgUrl = data.image_versions2.candidates[0].url;
+      return { single: { type: "photo", url: imgUrl, thumb: imgUrl, ext: "jpg" } };
+    }
+
+    return null;
   }
 
-  async function igGetStory(username, storyId) {
-    var userId = await igUsernameToId(username);
-    if (!userId) return null;
-    var dtsg = await igGetDtsgToken();
-    var body = new URLSearchParams({
-      fb_dtsg: dtsg || "",
-      jazoest: "26438",
-      variables: JSON.stringify({ reel_ids_arr: [userId] }),
-      server_timestamps: "true",
-      doc_id: IG_CONFIG.DOC_ID_REELS
-    });
-    try {
-      var res = await igFetch("https://www.instagram.com/api/graphql/", {
-        method: "POST",
-        headers: {
-          "content-type": "application/x-www-form-urlencoded",
-          "x-ig-app-id": IG_CONFIG.APP_ID,
-          "user-agent": IG_CONFIG.MOBILE_UA
-        },
-        body: body.toString()
-      });
-      var json = await res.json();
-      var reels = json.data && json.data.xdt_api__v1__feed__reels_media && json.data.xdt_api__v1__feed__reels_media.reels_media;
-      if (!reels) return null;
-      var reel = reels.find(function (r) { return r.id === userId; });
-      if (!reel || !reel.items) return null;
-      return reel.items.find(function (i) { return i.pk === storyId; }) || null;
-    } catch (e) {
-      return null;
-    }
-  }
+  // cobalt: extractOldPost — graphql/web shape (shortcode_media / edge_sidecar_to_children)
+  function extractInstagramOldPost(data, shortcode) {
+    if (!data) return null;
 
-  async function igDetectError(shortcode) {
-    try {
-      var html = await igFetchText("https://www.instagram.com/p/" + shortcode + "/");
-      if (html.includes("Sorry, this page isn't available")) return "link.unsupported";
-      if (/Restricted|private account|private_post|sensitive/i.test(html)) return "content.post.private";
-      return "fetch.empty";
-    } catch (e) {
-      return "fetch.fail";
-    }
-  }
+    var shortcodeMedia = data.shortcode_media || data.xdt_shortcode_media;
+    if (!shortcodeMedia) return null;
 
-  function igNormalizePost(data) {
-    var result = { picker: [], video: null, image: null, title: null };
-    if (!data) return result;
-
-    if (data.edge_sidecar_to_children) {
-      var edges = data.edge_sidecar_to_children.edges || [];
-      result.picker = edges.filter(function (e) { return e.node; }).map(function (e) {
-        var node = e.node;
+    var sidecar = shortcodeMedia.edge_sidecar_to_children;
+    if (sidecar && sidecar.edges && sidecar.edges.length) {
+      var items = [];
+      for (var i = 0; i < sidecar.edges.length; i++) {
+        var node = sidecar.edges[i].node;
+        if (!node || !node.display_url) continue;
         var type = node.is_video && node.video_url ? "video" : "photo";
         var url = type === "video" ? node.video_url : node.display_url;
-        return {
-          url: instagramUnescape(url),
-          ext: type === "video" ? "mp4" : "jpg",
-          type: type === "video" ? "video" : "image",
-          thumb: node.display_url ? instagramUnescape(node.display_url) : url
-        };
-      });
-      if (data.video_url) result.video = instagramUnescape(data.video_url);
-      else if (data.display_url) result.image = instagramUnescape(data.display_url);
-    } else if (data.carousel_media) {
-      result.picker = data.carousel_media.filter(function (item) { return item; }).map(function (item) {
-        var imageUrl = item.image_versions2 && item.image_versions2.candidates && item.image_versions2.candidates[0] && item.image_versions2.candidates[0].url;
-        var videos = item.video_versions || [];
-        var type = videos.length ? "video" : "photo";
-        var url = imageUrl;
-        var ext = "jpg";
-        if (type === "video") {
-          var best = videos.reduce(function (a, b) { return (a.width * a.height < b.width * b.height) ? b : a; }, videos[0]);
-          url = best.url;
-          ext = "mp4";
-        }
-        return { url: url, ext: ext, type: type === "video" ? "video" : "image", thumb: imageUrl };
-      });
-    } else if (data.video_versions && data.video_versions.length) {
-      var bestV = data.video_versions.reduce(function (a, b) { return (a.width * a.height < b.width * b.height) ? b : a; }, data.video_versions[0]);
-      result.video = bestV.url;
-    } else if (data.image_versions2 && data.image_versions2.candidates) {
-      result.image = data.image_versions2.candidates[0].url;
-    } else if (data.shortcode_media) {
-      var sm = data.shortcode_media;
-      if (sm.edge_sidecar_to_children) {
-        var edges2 = sm.edge_sidecar_to_children.edges || [];
-        result.picker = edges2.filter(function (e) { return e.node; }).map(function (e) {
-          var node = e.node;
-          var type = node.is_video && node.video_url ? "video" : "photo";
-          var url = type === "video" ? node.video_url : node.display_url;
-          return {
-            url: instagramUnescape(url),
-            ext: type === "video" ? "mp4" : "jpg",
-            type: type === "video" ? "video" : "image",
-            thumb: node.display_url ? instagramUnescape(node.display_url) : url
-          };
-        });
+        items.push({ type: type, url: url, thumb: node.display_url, ext: type === "video" ? "mp4" : "jpg" });
       }
-      if (sm.video_url) result.video = instagramUnescape(sm.video_url);
-      else if (sm.display_url) result.image = instagramUnescape(sm.display_url);
+      if (items.length) return { items: items };
     }
 
-    if (!result.video && !result.image && !result.picker.length) {
-      if (data.video_url) result.video = instagramUnescape(data.video_url);
-      if (data.display_url) result.image = instagramUnescape(data.display_url);
+    if (shortcodeMedia.video_url) {
+      return { single: { type: "video", url: shortcodeMedia.video_url, thumb: shortcodeMedia.display_url || null, ext: "mp4" } };
     }
-    return result;
+
+    if (shortcodeMedia.display_url) {
+      return { single: { type: "photo", url: shortcodeMedia.display_url, thumb: shortcodeMedia.display_url, ext: "jpg" } };
+    }
+
+    return null;
   }
 
-  async function scrapeInstagramEmbed(rawUrl, mode) {
-    var shortcode = extractInstagramShortcode(rawUrl);
-
-    var shareMatch = String(rawUrl).match(/instagram\.com\/share\/(?:p\/|reel\/)?([A-Za-z0-9_-]+)/);
-    if (shareMatch && !shortcode) {
-      setStatus("IG: resolving share link…", "info");
-      var resolved = await igResolveShareLink(shareMatch[1]);
-      if (resolved) {
-        var newShortcode = extractInstagramShortcode(resolved);
-        if (newShortcode) shortcode = newShortcode;
-      }
-      if (!shortcode) throw new Error("Could not resolve Instagram share link");
-    }
-
-    var storyMatch = String(rawUrl).match(/instagram\.com\/stories\/([^\/]+)\/(\d+)/);
-    if (storyMatch) {
-      setStatus("IG: fetching story from @" + storyMatch[1] + "…", "info");
-      var storyItem = await igGetStory(storyMatch[1], storyMatch[2]);
-      if (!storyItem) throw new Error("Could not fetch Instagram story (may be expired or private)");
-      var sn = igNormalizePost(storyItem);
-      var storyTitle = "instagram_story_" + storyMatch[1] + "_" + storyMatch[2];
-      if (mode === "post") {
-        var sAll = [];
-        if (sn.video) sAll.push({ url: sn.video, ext: "mp4", type: "video" });
-        if (sn.image) sAll.push({ url: sn.image, ext: "jpg", type: "image" });
-        if (!sAll.length) throw new Error("No media in story");
-        return { multi: sAll, title: storyTitle, id: "", platform: "instagram" };
-      }
-      if (mode === "audio" && sn.video) {
-        return { url: sn.video, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: true, filename: sanitizeFilename(storyTitle) + ".mp3", title: storyTitle };
-      }
-      if (sn.video) {
-        return { url: sn.video, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: sanitizeFilename(storyTitle) + ".mp4", title: storyTitle };
-      }
-      if (sn.image) {
-        return { url: sn.image, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: sanitizeFilename(storyTitle) + ".jpg", title: storyTitle };
-      }
-      throw new Error("No media in story");
-    }
-
-    if (!shortcode) throw new Error("Invalid Instagram URL");
-
-    setStatus("IG: resolving " + shortcode + "…", "info");
-
-    var postData = null;
-    var method = null;
-
-    try {
-      setStatus("IG: trying oembed + mobile API…", "info");
-      var mediaId = await igGetMediaId(shortcode);
-      if (mediaId) {
-        postData = await igMobileApi(mediaId);
-        if (postData) method = "mobile-api";
-      }
-    } catch (e) { console.warn("[IG] mobile-api failed:", e.message); }
-
-    if (!postData) {
-      try {
-        setStatus("IG: trying GraphQL…", "info");
-        var gqlData = await igGraphQL(shortcode);
-        if (gqlData && (gqlData.shortcode_media || gqlData.xdt_shortcode_media)) {
-          postData = gqlData.shortcode_media || gqlData.xdt_shortcode_media;
-          method = "graphql";
-        }
-      } catch (e) { console.warn("[IG] graphql failed:", e.message); }
-    }
-
-    if (!postData) {
-      try {
-        setStatus("IG: trying embed scrape…", "info");
-        var embed = await igEmbedScrape(shortcode);
-        if (embed && (embed.shortcode_media || embed.video_url || embed.display_url)) {
-          postData = embed;
-          method = "embed";
-        }
-      } catch (e) { console.warn("[IG] embed failed:", e.message); }
-    }
-
-    if (!postData) {
-      var errType = await igDetectError(shortcode);
-      if (errType === "content.post.private") throw new Error("Instagram post is private or restricted");
-      if (errType === "link.unsupported") throw new Error("Instagram post does not exist or is unavailable");
-      throw new Error("Instagram: all extraction methods failed. Try adding a Cobalt endpoint in Settings, or check if the post is public.");
-    }
-
-    console.log("[HexTube] IG: extracted via " + method);
-    setStatus("IG: extracted via " + method, "ok");
-
-    var normalized = igNormalizePost(postData);
+  // Format any extracted IG data for current download mode.
+  function formatInstagramData(extracted, shortcode, mode) {
+    if (!extracted) return null;
     var title = "instagram_" + shortcode;
 
-    if (postData.edge_media_to_caption && postData.edge_media_to_caption.edges && postData.edge_media_to_caption.edges[0]) {
-      title = String(postData.edge_media_to_caption.edges[0].node.text).slice(0, 80);
-    } else if (postData.caption && postData.caption.text) {
-      title = String(postData.caption.text).slice(0, 80);
+    if (extracted.items && extracted.items.length) {
+      if (mode === "post") {
+        var all = extracted.items.map(function (item) {
+          return { url: item.url, ext: item.ext, type: item.type === "video" ? "video" : "image" };
+        });
+        return { multi: all, title: title, id: shortcode, platform: "instagram" };
+      }
+
+      // prefer video for video mode, first item otherwise
+      var videoItem = null;
+      for (var i = 0; i < extracted.items.length; i++) {
+        if (extracted.items[i].type === "video") { videoItem = extracted.items[i]; break; }
+      }
+      var pick = (mode === "video" && videoItem) ? videoItem : extracted.items[0];
+
+      if (mode === "audio") {
+        return {
+          url: pick.url, audioUrl: null, needsMerge: false,
+          isAudio: false, needsAudioExtract: pick.type === "video",
+          filename: title + ".mp3", title: title
+        };
+      }
+      return {
+        url: pick.url, audioUrl: null, needsMerge: false,
+        isAudio: false, needsAudioExtract: false,
+        filename: title + "." + pick.ext, title: title
+      };
     }
+
+    if (extracted.single) {
+      var s = extracted.single;
+      if (mode === "post") {
+        return {
+          multi: [{ url: s.url, ext: s.ext, type: s.type === "video" ? "video" : "image" }],
+          title: title, id: shortcode, platform: "instagram"
+        };
+      }
+      if (mode === "audio") {
+        return {
+          url: s.url, audioUrl: null, needsMerge: false,
+          isAudio: false, needsAudioExtract: s.type === "video",
+          filename: title + ".mp3", title: title
+        };
+      }
+      return {
+        url: s.url, audioUrl: null, needsMerge: false,
+        isAudio: false, needsAudioExtract: false,
+        filename: title + "." + s.ext, title: title
+      };
+    }
+
+    return null;
+  }
+
+  // Existing HTML-scrape extractor (kept for fallback compat).
+  function extractInstagramMedia(html, shortcode, mode) {
+    if (!html || html.length < 200) return null;
+
+    var found = [];
+
+    var cdnRegex = /https?:\\?\/\\?\/[^"'\s\\<>]*?(?:scontent|cdninstagram|fbcdn)[^"'\s\\<>]*?\.(mp4|jpg|jpeg|webp|heic)/gi;
+    var cdnMatches = html.match(cdnRegex) || [];
+    cdnMatches.forEach(function (u) {
+      var clean = instagramUnescape(u).replace(/\\/g, "");
+      if (/\.mp4/i.test(clean)) found.push({ url: clean, type: "video" });
+      else found.push({ url: clean, type: "image" });
+    });
+
+    var jsonPatterns = [
+      { re: /"video_url"\s*:\s*"([^"]+)"/g, type: "video" },
+      { re: /\\"video_url\\"\s*:\s*\\"([^"\\]+)/g, type: "video" },
+      { re: /"playable_url"\s*:\s*"([^"]+)"/g, type: "video" },
+      { re: /"display_url"\s*:\s*"([^"]+)"/g, type: "image" },
+      { re: /\\"display_url\\"\s*:\s*\\"([^"\\]+)/g, type: "image" },
+      { re: /"thumbnail_src"\s*:\s*"([^"]+)"/g, type: "image" }
+    ];
+    jsonPatterns.forEach(function (p) {
+      var m;
+      while ((m = p.re.exec(html)) !== null) {
+        var u = instagramUnescape(m[1]);
+        if (/^https?:/.test(u) && u.length > 30) found.push({ url: u, type: p.type });
+      }
+    });
+
+    var ogPatterns = [
+      { re: /<meta[^>]+property=["']og:video(?::secure_url|:url)?["'][^>]+content=["']([^"']+)["']/gi, type: "video" },
+      { re: /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:video(?::secure_url|:url)?["']/gi, type: "video" },
+      { re: /<meta[^>]+property=["']og:image(?::secure_url|:url)?["'][^>]+content=["']([^"']+)["']/gi, type: "image" },
+      { re: /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image(?::secure_url|:url)?["']/gi, type: "image" }
+    ];
+    ogPatterns.forEach(function (p) {
+      var m;
+      while ((m = p.re.exec(html)) !== null) {
+        var u = instagramUnescape(m[1]);
+        if (/^https?:/.test(u)) found.push({ url: u, type: p.type });
+      }
+    });
+
+    var tagPatterns = [
+      { re: /<video[^>]+src=["']([^"']+)["']/gi, type: "video" },
+      { re: /<source[^>]+src=["']([^"']+)["']/gi, type: "video" }
+    ];
+    tagPatterns.forEach(function (p) {
+      var m;
+      while ((m = p.re.exec(html)) !== null) {
+        var u = instagramUnescape(m[1]);
+        if (/^https?:/.test(u)) found.push({ url: u, type: p.type });
+      }
+    });
+
+    if (!found.length) return null;
+
+    var seen = {};
+    var videos = [], images = [];
+    found.forEach(function (item) {
+      if (!item.url || seen[item.url]) return;
+      seen[item.url] = true;
+      if (item.type === "video") videos.push(item.url);
+      else images.push(item.url);
+    });
+
+    if (!videos.length && !images.length) return null;
+
+    var title = "instagram_" + shortcode;
 
     if (mode === "post") {
       var all = [];
-      if (normalized.picker.length) {
-        normalized.picker.forEach(function (p) { all.push({ url: p.url, ext: p.ext, type: p.type }); });
-      } else if (normalized.video) {
-        all.push({ url: normalized.video, ext: "mp4", type: "video" });
-      } else if (normalized.image) {
-        all.push({ url: normalized.image, ext: "jpg", type: "image" });
-      }
-      if (!all.length) throw new Error("No media found in post");
-      return { multi: all, title: title, id: shortcode, platform: "instagram" };
+      images.forEach(function (u) { all.push({ url: u, ext: "jpg", type: "image" }); });
+      videos.forEach(function (u) { all.push({ url: u, ext: "mp4", type: "video" }); });
+      return { multi: all, title: title, id: "", platform: "instagram" };
     }
 
     if (mode === "audio") {
-      var audioSrc = normalized.video;
-      if (!audioSrc && normalized.picker.length) {
-        var firstVideo = normalized.picker.find(function (p) { return p.type === "video"; });
-        if (firstVideo) audioSrc = firstVideo.url;
+      if (videos.length) {
+        return {
+          url: videos[0], audioUrl: null, needsMerge: false,
+          isAudio: false, needsAudioExtract: true,
+          filename: sanitizeFilename(title) + ".mp3", title: title
+        };
       }
-      if (!audioSrc) throw new Error("No video found in this post for audio extraction");
-      return {
-        url: audioSrc, audioUrl: null, needsMerge: false,
-        isAudio: false, needsAudioExtract: true,
-        filename: sanitizeFilename(title) + ".mp3", title: title
-      };
+      if (images.length) {
+        return {
+          url: images[0], audioUrl: null, needsMerge: false,
+          isAudio: false, needsAudioExtract: false,
+          filename: sanitizeFilename(title) + ".jpg", title: title
+        };
+      }
+      return null;
     }
 
-    if (normalized.video) {
+    if (videos.length) {
       return {
-        url: normalized.video, audioUrl: null, needsMerge: false,
+        url: videos[0], audioUrl: null, needsMerge: false,
         isAudio: false, needsAudioExtract: false,
         filename: sanitizeFilename(title) + ".mp4", title: title
       };
     }
-    if (normalized.picker.length === 1) {
-      var p1 = normalized.picker[0];
-      return {
-        url: p1.url, audioUrl: null, needsMerge: false,
-        isAudio: false, needsAudioExtract: false,
-        filename: sanitizeFilename(title) + "." + p1.ext, title: title
-      };
+    return {
+      url: images[0], audioUrl: null, needsMerge: false,
+      isAudio: false, needsAudioExtract: false,
+      filename: sanitizeFilename(title) + ".jpg", title: title
+    };
+  }
+
+  // Existing scrape: multiple candidate URLs × multiple CORS proxies.
+  async function scrapeInstagramEmbed(rawUrl, mode) {
+    var shortcode = extractInstagramShortcode(rawUrl);
+    if (!shortcode) throw new Error("invalid Instagram URL");
+
+    var type = "p";
+    if (/\/reels?\//.test(rawUrl)) type = "reel";
+    else if (/\/tv\//.test(rawUrl)) type = "tv";
+
+    var candidates = [
+      "https://www.instagram.com/" + type + "/" + shortcode + "/embed/captioned/",
+      "https://www.instagram.com/p/" + shortcode + "/embed/captioned/",
+      "https://www.instagram.com/" + type + "/" + shortcode + "/embed/",
+      "https://www.instagram.com/p/" + shortcode + "/embed/",
+      "https://ddinstagram.com/p/" + shortcode,
+      "https://www.instagram.com/" + type + "/" + shortcode + "/?__a=1&__d=dis"
+    ];
+
+    var uniq = [], seenU = {};
+    candidates.forEach(function (u) { if (!seenU[u]) { seenU[u] = true; uniq.push(u); } });
+    candidates = uniq;
+
+    var lastErr = null;
+    for (var i = 0; i < candidates.length; i++) {
+      var targetUrl = candidates[i];
+      setStatus("IG: URL " + (i + 1) + "/" + candidates.length + " · " + hostOf(targetUrl), "info");
+
+      try {
+        var promises = CORS_PROXIES.map(function (proxyFn) {
+          return new Promise(function (resolve, reject) {
+            var ctrl = new AbortController();
+            var timer = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 12000);
+            fetch(proxyFn(targetUrl), { credentials: "omit", signal: ctrl.signal, referrerPolicy: "no-referrer" })
+              .then(function (res) {
+                clearTimeout(timer);
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                return res.text();
+              })
+              .then(function (text) {
+                if (!text || text.length < 200) throw new Error("empty response");
+                var result = extractInstagramMedia(text, shortcode, mode);
+                if (result) resolve(result);
+                else reject(new Error("no media found"));
+              })
+              .catch(function (e) {
+                clearTimeout(timer);
+                reject(e);
+              });
+          });
+        });
+
+        var result = await Promise.any(promises);
+        console.log("[HexTube] ✓ IG scrape success via URL " + (i + 1));
+        return result;
+      } catch (e) {
+        lastErr = e;
+        console.warn("[IG scrape] URL " + (i + 1) + " (" + hostOf(targetUrl) + ") failed on all proxies");
+      }
     }
-    if (normalized.picker.length > 1) {
-      return {
-        multi: normalized.picker.map(function (p) { return { url: p.url, ext: p.ext, type: p.type }; }),
-        title: title, id: shortcode, platform: "instagram"
-      };
+
+    throw new Error("Instagram scrape failed on all URLs and proxies" + (lastErr ? " — " + lastErr.message : ""));
+  }
+
+  // Main cobalt-style orchestrator for Instagram.
+  async function tryInstagramCobaltStyle(rawUrl, mode) {
+    var shortcode = extractInstagramShortcode(rawUrl);
+    if (!shortcode) throw new Error("invalid Instagram URL");
+
+    var lastErr = null;
+
+    // 1) Mobile API (cobalt's primary path)
+    try {
+      setStatus("Instagram: mobile API…", "info");
+      var mediaId = await getInstagramMediaId(shortcode);
+      if (mediaId) {
+        var mobileData = await requestInstagramMobileApi(mediaId);
+        if (mobileData && mobileData.items && mobileData.items[0]) {
+          var extracted = extractInstagramNewPost(mobileData.items[0], shortcode);
+          var result = formatInstagramData(extracted, shortcode, mode);
+          if (result) {
+            console.log("[IG] ✓ via mobile API");
+            return result;
+          }
+        }
+      }
+    } catch (e) {
+      lastErr = e;
+      console.warn("[IG] mobile API path failed:", e.message);
     }
-    if (normalized.image) {
-      return {
-        url: normalized.image, audioUrl: null, needsMerge: false,
-        isAudio: false, needsAudioExtract: false,
-        filename: sanitizeFilename(title) + ".jpg", title: title
-      };
+
+    // 2) HTML embed captioned
+    try {
+      setStatus("Instagram: embed captioned…", "info");
+      var htmlData = await requestInstagramHTML(shortcode);
+      if (htmlData) {
+        if (htmlData.contextData) {
+          var extracted2 = extractInstagramOldPost(htmlData.contextData, shortcode);
+          var result2 = formatInstagramData(extracted2, shortcode, mode);
+          if (result2) {
+            console.log("[IG] ✓ via embed contextJSON");
+            return result2;
+          }
+        }
+        if (htmlData.rawHtml) {
+          var result3 = extractInstagramMedia(htmlData.rawHtml, shortcode, mode);
+          if (result3) {
+            console.log("[IG] ✓ via embed HTML parse");
+            return result3;
+          }
+        }
+      }
+    } catch (e) {
+      lastErr = e;
+      console.warn("[IG] embed path failed:", e.message);
     }
-    throw new Error("No media found in post");
+
+    // 3) Existing multi-URL scrape
+    setStatus("Instagram: scraping fallback…", "info");
+    try {
+      return await scrapeInstagramEmbed(rawUrl, mode);
+    } catch (e) {
+      lastErr = e;
+      throw lastErr;
+    }
   }
 
   /* ============================== PINTEREST ============================== */
   async function scrapePinterest(rawUrl, mode) {
     var id = extractPinterestId(rawUrl);
     if (!id) throw new Error("invalid Pinterest URL");
+
     var pinUrl = "https://www.pinterest.com/pin/" + id + "/";
     for (var i = 0; i < CORS_PROXIES.length; i++) {
       try {
@@ -2539,12 +2610,15 @@ input[type="range"]::-moz-range-thumb{
         clearTimeout(timer);
         if (!res.ok) continue;
         var html = await res.text();
+
         var ogImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
         var ogVideo = html.match(/<meta[^>]+property=["']og:video(?::url)?["'][^>]+content=["']([^"']+)["']/i);
+
         var title = "pinterest_" + id;
         var videoUrl = ogVideo ? instagramUnescape(ogVideo[1]) : null;
         var imageUrl = ogImage ? instagramUnescape(ogImage[1]) : null;
         if (!videoUrl && !imageUrl) continue;
+
         if (mode === "post") {
           var all = [];
           if (imageUrl) all.push({ url: imageUrl, ext: "jpg", type: "image" });
@@ -2553,12 +2627,24 @@ input[type="range"]::-moz-range-thumb{
         }
         if (mode === "audio") {
           if (!videoUrl) throw new Error("no video on this pin");
-          return { url: videoUrl, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: true, filename: title + ".mp3", title: title };
+          return {
+            url: videoUrl, audioUrl: null, needsMerge: false,
+            isAudio: false, needsAudioExtract: true,
+            filename: title + ".mp3", title: title
+          };
         }
         if (videoUrl) {
-          return { url: videoUrl, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: title + ".mp4", title: title };
+          return {
+            url: videoUrl, audioUrl: null, needsMerge: false,
+            isAudio: false, needsAudioExtract: false,
+            filename: title + ".mp4", title: title
+          };
         }
-        return { url: imageUrl, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: title + ".jpg", title: title };
+        return {
+          url: imageUrl, audioUrl: null, needsMerge: false,
+          isAudio: false, needsAudioExtract: false,
+          filename: title + ".jpg", title: title
+        };
       } catch (e) {
         console.warn("[Pinterest] proxy " + i + " failed:", e.message);
       }
@@ -2569,6 +2655,7 @@ input[type="range"]::-moz-range-thumb{
   /* ============================== FACEBOOK ============================== */
   async function scrapeFacebook(rawUrl, mode) {
     var fbUrl = String(rawUrl).replace("web.facebook.com", "www.facebook.com").replace("m.facebook.com", "www.facebook.com");
+
     for (var i = 0; i < CORS_PROXIES.length; i++) {
       try {
         setStatus("Scraping Facebook (proxy " + (i + 1) + ")…", "info");
@@ -2578,17 +2665,25 @@ input[type="range"]::-moz-range-thumb{
         clearTimeout(timer);
         if (!res.ok) continue;
         var html = await res.text();
+
         var ogVideo = html.match(/<meta[^>]+property=["']og:video(?::url)?["'][^>]+content=["']([^"']+)["']/i);
         var ogImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
         var hdMatch = html.match(/"browser_native_hd_url":(".*?")/);
         var sdMatch = html.match(/"browser_native_sd_url":(".*?")/);
+
         var videoUrl = null;
-        if (hdMatch && hdMatch[1]) { try { videoUrl = JSON.parse(hdMatch[1]); } catch (e) {} }
-        if (!videoUrl && sdMatch && sdMatch[1]) { try { videoUrl = JSON.parse(sdMatch[1]); } catch (e) {} }
+        if (hdMatch && hdMatch[1]) {
+          try { videoUrl = JSON.parse(hdMatch[1]); } catch (e) {}
+        }
+        if (!videoUrl && sdMatch && sdMatch[1]) {
+          try { videoUrl = JSON.parse(sdMatch[1]); } catch (e) {}
+        }
         if (!videoUrl && ogVideo) videoUrl = instagramUnescape(ogVideo[1]);
         var imageUrl = ogImage ? instagramUnescape(ogImage[1]) : null;
+
         var title = "facebook_" + Date.now();
         if (!videoUrl && !imageUrl) continue;
+
         if (mode === "post") {
           var all = [];
           if (imageUrl) all.push({ url: imageUrl, ext: "jpg", type: "image" });
@@ -2597,12 +2692,24 @@ input[type="range"]::-moz-range-thumb{
         }
         if (mode === "audio") {
           if (!videoUrl) throw new Error("no video to extract from");
-          return { url: videoUrl, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: true, filename: title + ".mp3", title: title };
+          return {
+            url: videoUrl, audioUrl: null, needsMerge: false,
+            isAudio: false, needsAudioExtract: true,
+            filename: title + ".mp3", title: title
+          };
         }
         if (videoUrl) {
-          return { url: videoUrl, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: title + ".mp4", title: title };
+          return {
+            url: videoUrl, audioUrl: null, needsMerge: false,
+            isAudio: false, needsAudioExtract: false,
+            filename: title + ".mp4", title: title
+          };
         }
-        return { url: imageUrl, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: title + ".jpg", title: title };
+        return {
+          url: imageUrl, audioUrl: null, needsMerge: false,
+          isAudio: false, needsAudioExtract: false,
+          filename: title + ".jpg", title: title
+        };
       } catch (e) {
         console.warn("[Facebook] proxy " + i + " failed:", e.message);
       }
@@ -2616,11 +2723,14 @@ input[type="range"]::-moz-range-thumb{
     if (!parts) throw new Error("invalid Bluesky URL");
     var user = parts.user;
     var post = parts.post;
+
     setStatus("Fetching Bluesky post…", "info");
-    var apiUrl = "https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?depth=0&parentHeight=0&uri=" +
-      encodeURIComponent("at://" + user + "/app.bsky.feed.post/" + post);
+    var apiUrl = "https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?depth=0&parentHeight=0&uri="
+      + encodeURIComponent("at://" + user + "/app.bsky.feed.post/" + post);
+
     var json = await fetchJSON(apiUrl, 12000);
     if (!json || !json.thread || !json.thread.post) throw new Error("empty Bluesky response");
+
     var postObj = json.thread.post;
     var embed = postObj.embed || {};
     var embedType = embed.$type || "";
@@ -2632,7 +2742,8 @@ input[type="range"]::-moz-range-thumb{
       try {
         var hlsText = await fetchText(masterHls, 12000);
         var lines = hlsText.split("\n");
-        var bestUri = null, bestBandwidth = -1;
+        var bestUri = null;
+        var bestBandwidth = -1;
         for (var i = 0; i < lines.length; i++) {
           if (lines[i].indexOf("BANDWIDTH=") !== -1) {
             var bwMatch = lines[i].match(/BANDWIDTH=(\d+)/);
@@ -2647,11 +2758,23 @@ input[type="range"]::-moz-range-thumb{
         if (bestUri) {
           var fullUri = new URL(bestUri, masterHls).toString();
           if (mode === "audio") {
-            return { url: fullUri, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: true, filename: sanitizeFilename(filenameBase) + ".mp3", title: "bluesky_" + post };
+            return {
+              url: fullUri, audioUrl: null, needsMerge: false,
+              isAudio: false, needsAudioExtract: true,
+              filename: sanitizeFilename(filenameBase) + ".mp3",
+              title: "bluesky_" + post
+            };
           }
-          return { url: fullUri, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: sanitizeFilename(filenameBase) + ".mp4", title: "bluesky_" + post };
+          return {
+            url: fullUri, audioUrl: null, needsMerge: false,
+            isAudio: false, needsAudioExtract: false,
+            filename: sanitizeFilename(filenameBase) + ".mp4",
+            title: "bluesky_" + post
+          };
         }
-      } catch (e) { console.warn("[bluesky] HLS parse failed:", e.message); }
+      } catch (e) {
+        console.warn("[bluesky] HLS parse failed:", e.message);
+      }
       throw new Error("could not parse Bluesky HLS");
     }
 
@@ -2662,7 +2785,12 @@ input[type="range"]::-moz-range-thumb{
         var all = imageUrls.map(function (u) { return { url: u, ext: "jpg", type: "image" }; });
         return { multi: all, title: filenameBase, id: post, platform: "bluesky" };
       }
-      return { url: imageUrls[0], audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: sanitizeFilename(filenameBase) + ".jpg", title: filenameBase };
+      return {
+        url: imageUrls[0], audioUrl: null, needsMerge: false,
+        isAudio: false, needsAudioExtract: false,
+        filename: sanitizeFilename(filenameBase) + ".jpg",
+        title: filenameBase
+      };
     }
 
     throw new Error("no downloadable Bluesky content");
@@ -2672,6 +2800,7 @@ input[type="range"]::-moz-range-thumb{
   async function tryReddit(rawUrl, mode) {
     var id = extractRedditId(rawUrl);
     if (!id) throw new Error("invalid Reddit URL");
+
     setStatus("Fetching Reddit JSON…", "info");
     var jsonUrl = "https://www.reddit.com/comments/" + id + ".json";
     var json = null;
@@ -2686,17 +2815,26 @@ input[type="range"]::-moz-range-thumb{
       }
     }
     if (!json || !Array.isArray(json) || !json[0]) throw new Error("Reddit fetch failed");
+
     var postData = json[0].data.children[0].data;
     var title = postData.title || ("reddit_" + id);
 
     if (postData.url && /\.gif(\?|#|$)/i.test(postData.url) && /^i\.redd\.it|^preview\.redd\.it/.test(hostOf(postData.url))) {
-      return { url: postData.url, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: sanitizeFilename(title) + ".gif", title: title };
+      return {
+        url: postData.url, audioUrl: null, needsMerge: false,
+        isAudio: false, needsAudioExtract: false,
+        filename: sanitizeFilename(title) + ".gif", title: title
+      };
     }
 
     var redditVideo = postData.secure_media && postData.secure_media.reddit_video;
     if (!redditVideo) {
       if (postData.url && /\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(postData.url)) {
-        return { url: postData.url, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: sanitizeFilename(title) + ".jpg", title: title };
+        return {
+          url: postData.url, audioUrl: null, needsMerge: false,
+          isAudio: false, needsAudioExtract: false,
+          filename: sanitizeFilename(title) + ".jpg", title: title
+        };
       }
       throw new Error("no reddit_video in response");
     }
@@ -2705,12 +2843,25 @@ input[type="range"]::-moz-range-thumb{
     var audioUrl = videoUrl.split("_")[0] + "_audio.mp4";
 
     if (mode === "audio") {
-      return { url: audioUrl, audioUrl: null, needsMerge: false, isAudio: true, needsAudioExtract: false, filename: sanitizeFilename(title) + ".mp3", title: title };
+      return {
+        url: audioUrl, audioUrl: null, needsMerge: false,
+        isAudio: true, needsAudioExtract: false,
+        filename: sanitizeFilename(title) + ".mp3", title: title
+      };
     }
     if (mode === "post") {
-      return { url: videoUrl, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: sanitizeFilename(title) + ".mp4", title: title };
+      return {
+        url: videoUrl, audioUrl: null, needsMerge: false,
+        isAudio: false, needsAudioExtract: false,
+        filename: sanitizeFilename(title) + ".mp4", title: title
+      };
     }
-    return { url: videoUrl, audioUrl: audioUrl, needsMerge: true, isAudio: false, needsAudioExtract: false, filename: sanitizeFilename(title) + ".mp4", title: title };
+
+    return {
+      url: videoUrl, audioUrl: audioUrl, needsMerge: true,
+      isAudio: false, needsAudioExtract: false,
+      filename: sanitizeFilename(title) + ".mp4", title: title
+    };
   }
 
   /* ============================== SOUNDCLOUD ============================== */
@@ -2720,7 +2871,10 @@ input[type="range"]::-moz-range-thumb{
     try {
       var html = await fetchText("https://soundcloud.com/", 12000);
       var m = html.match(/,client_id:"([A-Za-z0-9]{32})"/);
-      if (m) { _scClientId = m[1]; return _scClientId; }
+      if (m) {
+        _scClientId = m[1];
+        return _scClientId;
+      }
       var scriptMatches = html.matchAll(/<script[^>]+src="([^"]*a-v2\.sndcdn\.com[^"]+)"/g);
       for (var script of scriptMatches) {
         try {
@@ -2746,9 +2900,12 @@ input[type="range"]::-moz-range-thumb{
   async function trySoundcloud(rawUrl, mode) {
     var parts = extractSoundcloudUrl(rawUrl);
     if (!parts) throw new Error("invalid SoundCloud URL");
+
     var clientId = await getSoundcloudClientId();
     if (!clientId) throw new Error("could not obtain SoundCloud client_id");
+
     setStatus("Resolving SoundCloud track…", "info");
+
     var resolveUrl;
     if (parts.shortLink) {
       try {
@@ -2769,11 +2926,14 @@ input[type="range"]::-moz-range-thumb{
     } else {
       resolveUrl = "https://soundcloud.com/" + parts.author + "/" + parts.song;
     }
+
     var apiUrl = "https://api-v2.soundcloud.com/resolve?url=" + encodeURIComponent(resolveUrl) + "&client_id=" + clientId;
     var json = await fetchJSON(apiUrl, 15000);
     if (!json) throw new Error("SoundCloud resolve failed");
+
     var transcodings = (json.media && json.media.transcodings) || [];
     if (!transcodings.length) throw new Error("no SoundCloud transcodings");
+
     var preferMp3 = mode === "audio";
     var picked = null;
     for (var j = 0; j < transcodings.length; j++) {
@@ -2788,52 +2948,94 @@ input[type="range"]::-moz-range-thumb{
       }
     }
     if (!picked) throw new Error("no usable SoundCloud stream");
+
     var fileUrl = picked.url + "?client_id=" + clientId + "&track_authorization=" + encodeURIComponent(json.track_authorization || "");
     var fileJson = await fetchJSON(fileUrl, 15000);
     if (!fileJson || !fileJson.url) throw new Error("SoundCloud stream URL missing");
+
     var title = json.title || "soundcloud_" + Date.now();
-    return { url: fileJson.url, audioUrl: null, needsMerge: false, isAudio: true, needsAudioExtract: false, filename: sanitizeFilename(title) + ".mp3", title: title };
+    return {
+      url: fileJson.url, audioUrl: null, needsMerge: false,
+      isAudio: true, needsAudioExtract: false,
+      filename: sanitizeFilename(title) + ".mp3", title: title
+    };
   }
 
   /* ============================== TWITCH ============================== */
   async function tryTwitch(rawUrl, mode) {
     var clipId = extractTwitchClip(rawUrl);
     if (!clipId) throw new Error("invalid Twitch clip URL");
+
     setStatus("Fetching Twitch clip metadata…", "info");
     var gqlUrl = "https://gql.twitch.tv/gql";
     var headers = { "Client-Id": "kimne78kx3ncx6brgo4mv6wki5h1ko", "Content-Type": "application/json" };
+
     var metadataQuery = {
       query: 'query { clip(slug: "' + clipId + '") { broadcaster { login } createdAt durationSeconds id title videoQualities { quality sourceURL } } }'
     };
-    var metadata = await fetchJSON(gqlUrl, 12000, headers).catch(function () { return null; });
+
+    var metadata = null;
+    try { metadata = await fetchJSON(gqlUrl, 12000, headers); }
+    catch (e) {}
     if (!metadata) {
       try {
-        var res = await fetch(gqlUrl, { method: "POST", headers: headers, body: JSON.stringify(metadataQuery) });
+        var res = await fetch(gqlUrl, {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify(metadataQuery)
+        });
         metadata = await res.json();
       } catch (e) {}
     }
     if (!metadata || !metadata.data || !metadata.data.clip) throw new Error("Twitch metadata failed");
+
     var clip = metadata.data.clip;
     if (!clip.videoQualities || !clip.videoQualities.length) throw new Error("no Twitch video qualities");
-    var tokenQuery = [{
-      operationName: "VideoAccessToken_Clip",
-      variables: { slug: clipId },
-      extensions: { persistedQuery: { version: 1, sha256Hash: "36b89d2507fce29e5ca551df756d27c1cfe079e2609642b4390aa4c35796eb11" } }
-    }];
-    var res2 = await fetch(gqlUrl, { method: "POST", headers: headers, body: JSON.stringify(tokenQuery) });
+
+    var tokenQuery = [
+      {
+        operationName: "VideoAccessToken_Clip",
+        variables: { slug: clipId },
+        extensions: {
+          persistedQuery: {
+            version: 1,
+            sha256Hash: "36b89d2507fce29e5ca551df756d27c1cfe079e2609642b4390aa4c35796eb11"
+          }
+        }
+      }
+    ];
+
+    var res2 = await fetch(gqlUrl, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(tokenQuery)
+    });
     var tokenData = await res2.json();
     if (!tokenData || !tokenData[0] || !tokenData[0].data || !tokenData[0].data.clip) throw new Error("Twitch token failed");
+
     var accessToken = tokenData[0].data.clip.playbackAccessToken;
     var best = clip.videoQualities.slice().sort(function (a, b) { return parseInt(b.quality, 10) - parseInt(a.quality, 10); })[0];
-    var source = best.sourceURL + "?" + new URLSearchParams({ sig: accessToken.signature, token: accessToken.value }).toString();
+
+    var source = best.sourceURL + "?" + new URLSearchParams({
+      sig: accessToken.signature,
+      token: accessToken.value
+    }).toString();
+
     var title = clip.title || "twitchclip_" + clipId;
-    return { url: source, audioUrl: null, needsMerge: false, isAudio: mode === "audio", needsAudioExtract: mode === "audio", filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"), title: title };
+
+    return {
+      url: source, audioUrl: null, needsMerge: false,
+      isAudio: mode === "audio", needsAudioExtract: mode === "audio",
+      filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"),
+      title: title
+    };
   }
 
   /* ============================== VIMEO ============================== */
   async function tryVimeo(rawUrl, mode) {
     var id = extractVimeoId(rawUrl);
     if (!id) throw new Error("invalid Vimeo URL");
+
     setStatus("Fetching Vimeo info…", "info");
     var apiUrl = "https://player.vimeo.com/video/" + id + "/config";
     var config = null;
@@ -2848,35 +3050,56 @@ input[type="range"]::-moz-range-thumb{
       }
     }
     if (!config || !config.request) throw new Error("Vimeo config missing");
+
     var title = (config.video && config.video.title) || "vimeo_" + id;
     var files = (config.request.files && config.request.files.progressive) || [];
+
     if (mode === "audio") {
-      var hlsCdn = config.request.files && config.request.files.hls && config.request.files.hls.cdns && config.request.files.hls.cdns.akfire_interconnect_quic && config.request.files.hls.cdns.akfire_interconnect_quic.url;
-      if (hlsCdn) return { url: hlsCdn, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: true, filename: sanitizeFilename(title) + ".mp3", title: title };
+      var hlsUrl = config.request.files && config.request.files.hls && config.request.files.hls.cdns;
+      var hlsCdn = hlsUrl && hlsUrl.akfire_interconnect_quic && hlsUrl.akfire_interconnect_quic.url;
+      if (hlsCdn) {
+        return {
+          url: hlsCdn, audioUrl: null, needsMerge: false,
+          isAudio: false, needsAudioExtract: true,
+          filename: sanitizeFilename(title) + ".mp3", title: title
+        };
+      }
       if (files.length) {
         var bestAudioSrc = files.slice().sort(function (a, b) { return parseInt(b.height, 10) - parseInt(a.height, 10); })[0];
-        return { url: bestAudioSrc.url, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: true, filename: sanitizeFilename(title) + ".mp3", title: title };
+        return {
+          url: bestAudioSrc.url, audioUrl: null, needsMerge: false,
+          isAudio: false, needsAudioExtract: true,
+          filename: sanitizeFilename(title) + ".mp3", title: title
+        };
       }
       throw new Error("no Vimeo files");
     }
+
     if (!files.length) throw new Error("no progressive Vimeo files");
     var targetQuality = el.quality.value === "max" ? 9000 : parseInt(el.quality.value, 10) || 1080;
     files.sort(function (a, b) {
       return Math.abs((parseInt(a.height, 10) || 0) - targetQuality) - Math.abs((parseInt(b.height, 10) || 0) - targetQuality);
     });
     var best = files[0];
-    return { url: best.url, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: sanitizeFilename(title) + ".mp4", title: title };
+
+    return {
+      url: best.url, audioUrl: null, needsMerge: false,
+      isAudio: false, needsAudioExtract: false,
+      filename: sanitizeFilename(title) + ".mp4", title: title
+    };
   }
 
   /* ============================== STREAMABLE ============================== */
   async function tryStreamable(rawUrl, mode) {
     var id = extractStreamableId(rawUrl);
     if (!id) throw new Error("invalid Streamable URL");
+
     setStatus("Fetching Streamable info…", "info");
     var apiUrl = "https://api.streamable.com/videos/" + id;
     var json = null;
-    try { json = await fetchJSON(apiUrl, 12000); }
-    catch (e) {
+    try {
+      json = await fetchJSON(apiUrl, 12000);
+    } catch (e) {
       for (var i = 0; i < CORS_PROXIES.length && !json; i++) {
         try {
           var res = await fetch(CORS_PROXIES[i](apiUrl), { credentials: "omit" });
@@ -2885,11 +3108,24 @@ input[type="range"]::-moz-range-thumb{
       }
     }
     if (!json || !json.files) throw new Error("Streamable fetch failed");
+
     var title = json.title || "streamable_" + id;
     var best = json.files.mp4 || json.files["mp4-mobile"];
     if (!best || !best.url) throw new Error("no Streamable mp4");
-    if (mode === "audio") return { url: best.url, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: true, filename: sanitizeFilename(title) + ".mp3", title: title };
-    return { url: best.url, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: sanitizeFilename(title) + ".mp4", title: title };
+
+    if (mode === "audio") {
+      return {
+        url: best.url, audioUrl: null, needsMerge: false,
+        isAudio: false, needsAudioExtract: true,
+        filename: sanitizeFilename(title) + ".mp3", title: title
+      };
+    }
+
+    return {
+      url: best.url, audioUrl: null, needsMerge: false,
+      isAudio: false, needsAudioExtract: false,
+      filename: sanitizeFilename(title) + ".mp4", title: title
+    };
   }
 
   /* ============================== DAILYMOTION ============================== */
@@ -2918,12 +3154,17 @@ input[type="range"]::-moz-range-thumb{
   async function tryDailymotion(rawUrl, mode) {
     var id = extractDailymotionId(rawUrl);
     if (!id) throw new Error("invalid Dailymotion URL");
+
     var token = await getDailymotionToken();
     if (!token) throw new Error("Dailymotion auth failed");
+
     setStatus("Fetching Dailymotion metadata…", "info");
     var res = await fetch("https://graphql.api.dailymotion.com/", {
       method: "POST",
-      headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+      headers: {
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
         operationName: "Media",
         query: "query Media($xid: String!) { media(xid: $xid) { __typename ... on Video { xid hlsURL duration title channel { displayName } } } }",
@@ -2933,25 +3174,40 @@ input[type="range"]::-moz-range-thumb{
     if (!res.ok) throw new Error("Dailymotion fetch failed");
     var json = await res.json();
     if (!json.data || !json.data.media || !json.data.media.hlsURL) throw new Error("no Dailymotion HLS");
+
     var media = json.data.media;
     var title = media.title || "dailymotion_" + id;
     var hlsUrl = media.hlsURL;
-    if (mode === "audio") return { url: hlsUrl, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: true, filename: sanitizeFilename(title) + ".mp3", title: title };
-    return { url: hlsUrl, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: sanitizeFilename(title) + ".mp4", title: title };
+
+    if (mode === "audio") {
+      return {
+        url: hlsUrl, audioUrl: null, needsMerge: false,
+        isAudio: false, needsAudioExtract: true,
+        filename: sanitizeFilename(title) + ".mp3", title: title
+      };
+    }
+    return {
+      url: hlsUrl, audioUrl: null, needsMerge: false,
+      isAudio: false, needsAudioExtract: false,
+      filename: sanitizeFilename(title) + ".mp4", title: title
+    };
   }
 
   /* ============================== SNAPCHAT ============================== */
   async function trySnapchat(rawUrl, mode) {
     var parts = extractSnapchatPart(rawUrl);
     if (!parts) throw new Error("invalid Snapchat URL");
+
     var targetUrl;
     if (parts.spotlightId) targetUrl = "https://www.snapchat.com/spotlight/" + parts.spotlightId;
     else if (parts.username) targetUrl = "https://www.snapchat.com/add/" + parts.username + (parts.storyId ? "/" + parts.storyId : "");
     else throw new Error("unsupported Snapchat URL");
+
     setStatus("Fetching Snapchat page…", "info");
     var html = null;
-    try { html = await fetchText(targetUrl, 12000); }
-    catch (e) {
+    try {
+      html = await fetchText(targetUrl, 12000);
+    } catch (e) {
       for (var i = 0; i < CORS_PROXIES.length && !html; i++) {
         try {
           var res = await fetch(CORS_PROXIES[i](targetUrl), { credentials: "omit" });
@@ -2960,12 +3216,19 @@ input[type="range"]::-moz-range-thumb{
       }
     }
     if (!html) throw new Error("Snapchat fetch failed");
+
     var videoMatch = html.match(/<link data-react-helmet="true" rel="preload" href="([^"]+)" as="video"\/>/);
     if (videoMatch && videoMatch[1]) {
       var videoUrl = videoMatch[1];
       var title = "snapchat_" + (parts.spotlightId || parts.username || Date.now());
-      return { url: videoUrl, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: mode === "audio", filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"), title: title };
+      return {
+        url: videoUrl, audioUrl: null, needsMerge: false,
+        isAudio: false, needsAudioExtract: mode === "audio",
+        filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"),
+        title: title
+      };
     }
+
     var nextMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">({.+})<\/script>/);
     if (nextMatch) {
       try {
@@ -2985,11 +3248,17 @@ input[type="range"]::-moz-range-thumb{
           var mediaUrl = first.snapUrls && first.snapUrls.mediaUrl;
           if (mediaUrl) {
             var title2 = "snapchat_" + (parts.username || Date.now());
-            return { url: mediaUrl, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: mode === "audio", filename: sanitizeFilename(title2) + (mode === "audio" ? ".mp3" : (first.snapMediaType === 0 ? ".jpg" : ".mp4")), title: title2 };
+            return {
+              url: mediaUrl, audioUrl: null, needsMerge: false,
+              isAudio: false, needsAudioExtract: mode === "audio",
+              filename: sanitizeFilename(title2) + (mode === "audio" ? ".mp3" : (first.snapMediaType === 0 ? ".jpg" : ".mp4")),
+              title: title2
+            };
           }
         }
       } catch (e) {}
     }
+
     throw new Error("could not parse Snapchat page");
   }
 
@@ -2997,33 +3266,53 @@ input[type="range"]::-moz-range-thumb{
   async function tryLoom(rawUrl, mode) {
     var id = extractLoomId(rawUrl);
     if (!id) throw new Error("invalid Loom URL");
+
     setStatus("Fetching Loom video…", "info");
     var endpoint = "https://www.loom.com/api/campaigns/sessions/" + id + "/transcoded-url";
-    var headers = { "Content-Type": "application/json", "Origin": "https://www.loom.com", "Referer": "https://www.loom.com/share/" + id };
+    var headers = {
+      "Content-Type": "application/json",
+      "Origin": "https://www.loom.com",
+      "Referer": "https://www.loom.com/share/" + id
+    };
     var res;
     try {
-      res = await fetch(endpoint, { method: "POST", headers: headers, body: JSON.stringify({ force_original: false, password: null, anonID: null, deviceID: null }) });
-    } catch (e) { throw new Error("Loom fetch failed (CORS)"); }
+      res = await fetch(endpoint, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({ force_original: false, password: null, anonID: null, deviceID: null })
+      });
+    } catch (e) {
+      throw new Error("Loom fetch failed (CORS)");
+    }
     if (!res.ok) throw new Error("Loom returned " + res.status);
     var json = await res.json();
     if (!json.url) throw new Error("Loom URL missing");
+
     var title = "loom_" + id;
-    return { url: json.url, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: mode === "audio", filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"), title: title };
+    return {
+      url: json.url, audioUrl: null, needsMerge: false,
+      isAudio: false, needsAudioExtract: mode === "audio",
+      filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"),
+      title: title
+    };
   }
 
   /* ============================== TUMBLR ============================== */
   async function tryTumblr(rawUrl, mode) {
     var parts = extractTumblr(rawUrl);
     if (!parts || !parts.user) throw new Error("invalid Tumblr URL");
+
     setStatus("Fetching Tumblr post…", "info");
     var apiKey = "jrsCWX1XDuVxAFO4GkK147syAoN8BJZ5voz8tS80bPcj26Vc5Z";
     var domain = parts.user + ".tumblr.com";
     var apiUrl = "https://api.tumblr.com/v2/blog/" + domain + "/posts";
     if (parts.id) apiUrl += "/" + parts.id;
     apiUrl += "/permalink?api_key=" + apiKey;
+
     var json = null;
-    try { json = await fetchJSON(apiUrl, 12000); }
-    catch (e) {
+    try {
+      json = await fetchJSON(apiUrl, 12000);
+    } catch (e) {
       for (var i = 0; i < CORS_PROXIES.length && !json; i++) {
         try {
           var res = await fetch(CORS_PROXIES[i](apiUrl), { credentials: "omit" });
@@ -3032,8 +3321,10 @@ input[type="range"]::-moz-range-thumb{
       }
     }
     if (!json || !json.response || !json.response.timeline) throw new Error("Tumblr fetch failed");
+
     var elements = json.response.timeline.elements || [];
     if (!elements.length) throw new Error("no Tumblr post content");
+
     var contents = [];
     for (var j = 0; j < elements.length; j++) {
       var elm = elements[j];
@@ -3042,18 +3333,36 @@ input[type="range"]::-moz-range-thumb{
         elm.trail.forEach(function (t) { if (t.content) contents = contents.concat(t.content); });
       }
     }
+
     var audio = contents.find(function (c) { return c.type === "audio" && c.provider === "tumblr"; });
     var video = contents.find(function (c) { return c.type === "video" && c.provider === "tumblr"; });
     var photo = contents.find(function (c) { return c.type === "image" && c.media; });
+
     var title = "tumblr_" + (parts.id || parts.user);
+
     if (audio && audio.media) {
-      return { url: audio.media.url, audioUrl: null, needsMerge: false, isAudio: true, needsAudioExtract: false, filename: sanitizeFilename(audio.title || title) + ".mp3", title: audio.title || title };
+      return {
+        url: audio.media.url, audioUrl: null, needsMerge: false,
+        isAudio: true, needsAudioExtract: false,
+        filename: sanitizeFilename(audio.title || title) + ".mp3",
+        title: audio.title || title
+      };
     }
     if (video && video.media) {
-      return { url: video.media.url, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: mode === "audio", filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"), title: title };
+      return {
+        url: video.media.url, audioUrl: null, needsMerge: false,
+        isAudio: false, needsAudioExtract: mode === "audio",
+        filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"),
+        title: title
+      };
     }
     if (photo && photo.media) {
-      return { url: photo.media.url, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: false, filename: sanitizeFilename(title) + ".jpg", title: title };
+      return {
+        url: photo.media.url, audioUrl: null, needsMerge: false,
+        isAudio: false, needsAudioExtract: false,
+        filename: sanitizeFilename(title) + ".jpg",
+        title: title
+      };
     }
     throw new Error("unsupported Tumblr post");
   }
@@ -3062,8 +3371,10 @@ input[type="range"]::-moz-range-thumb{
   async function tryBilibili(rawUrl, mode) {
     var parts = extractBilibili(rawUrl);
     if (!parts) throw new Error("invalid Bilibili URL");
+
     var comId = parts.comId;
     var partId = parts.partId;
+
     if (parts.comShortLink) {
       try {
         var res = await fetch("https://b23.tv/" + parts.comShortLink, { credentials: "omit", redirect: "manual" });
@@ -3075,11 +3386,13 @@ input[type="range"]::-moz-range-thumb{
       } catch (e) {}
       if (!comId) throw new Error("could not resolve Bilibili short link");
     }
+
     setStatus("Fetching Bilibili page…", "info");
     var pageUrl = "https://www.bilibili.com/video/" + comId + "/" + (partId ? "?p=" + partId : "");
     var html = null;
-    try { html = await fetchText(pageUrl, 12000); }
-    catch (e) {
+    try {
+      html = await fetchText(pageUrl, 12000);
+    } catch (e) {
       for (var i = 0; i < CORS_PROXIES.length && !html; i++) {
         try {
           var r = await fetch(CORS_PROXIES[i](pageUrl), { credentials: "omit" });
@@ -3088,20 +3401,32 @@ input[type="range"]::-moz-range-thumb{
       }
     }
     if (!html) throw new Error("Bilibili fetch failed");
+
     var match = html.match(/<script>window\.__playinfo__=({.+?})<\/script>/);
     if (!match) throw new Error("no Bilibili play info");
     var playInfo = JSON.parse(match[1]);
     var dash = playInfo.data && playInfo.data.dash;
     if (!dash) throw new Error("no Bilibili dash streams");
+
     var videos = dash.video || [];
     var audios = dash.audio || [];
     if (!videos.length) throw new Error("no Bilibili video streams");
+
     var bestVideo = videos.slice().sort(function (a, b) { return (b.bandwidth || 0) - (a.bandwidth || 0); })[0];
     var bestAudio = audios.slice().sort(function (a, b) { return (b.bandwidth || 0) - (a.bandwidth || 0); })[0];
+
     var title = "bilibili_" + comId + (partId ? "_" + partId : "");
+
     if (mode === "audio" && bestAudio) {
-      return { url: bestAudio.baseUrl || bestAudio.base_url, audioUrl: null, needsMerge: false, isAudio: true, needsAudioExtract: false, filename: sanitizeFilename(title) + ".mp3", title: title };
+      return {
+        url: bestAudio.baseUrl || bestAudio.base_url,
+        audioUrl: null, needsMerge: false,
+        isAudio: true, needsAudioExtract: false,
+        filename: sanitizeFilename(title) + ".mp3",
+        title: title
+      };
     }
+
     return {
       url: bestVideo.baseUrl || bestVideo.base_url,
       audioUrl: bestAudio ? (bestAudio.baseUrl || bestAudio.base_url) : null,
@@ -3116,6 +3441,7 @@ input[type="range"]::-moz-range-thumb{
   async function tryVk(rawUrl, mode) {
     var parts = extractVk(rawUrl);
     if (!parts) throw new Error("invalid VK URL");
+
     setStatus("Fetching VK video info…", "info");
     var authUrl = "https://api.vk.ru/method/auth.getAnonymToken?client_id=51552953&client_secret=qgr0yWwXCrsxA1jnRtRX&device_id=" +
       encodeURIComponent(crypto.randomUUID().toUpperCase()) + "&v=5.274";
@@ -3128,6 +3454,7 @@ input[type="range"]::-moz-range-thumb{
       }
     } catch (e) {}
     if (!token) throw new Error("VK auth failed (CORS)");
+
     var videoUrl = "https://api.vkvideo.ru/method/video.get";
     var body = new URLSearchParams({
       anonymous_token: token,
@@ -3136,27 +3463,42 @@ input[type="range"]::-moz-range-thumb{
       v: "5.274",
       videos: parts.ownerId + "_" + parts.videoId
     });
-    var videoRes = await fetch(videoUrl, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded; charset=utf-8" }, body: body.toString() });
+    var videoRes = await fetch(videoUrl, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded; charset=utf-8" },
+      body: body.toString()
+    });
     if (!videoRes.ok) throw new Error("VK video fetch failed");
     var videoJson = await videoRes.json();
-    if (!videoJson.response || !videoJson.response.items || !videoJson.response.items.length) throw new Error("VK video info missing");
+    if (!videoJson.response || !videoJson.response.items || !videoJson.response.items.length) {
+      throw new Error("VK video info missing");
+    }
+
     var video = videoJson.response.items[0];
     var files = video.files || {};
     var best = files["mp4_1080"] || files["mp4_720"] || files["mp4_480"] || files["mp4_360"] || files["mp4_240"];
     if (!best) throw new Error("no VK mp4");
+
     var title = video.title || "vk_" + parts.ownerId + "_" + parts.videoId;
-    return { url: best, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: mode === "audio", filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"), title: title };
+    return {
+      url: best, audioUrl: null, needsMerge: false,
+      isAudio: false, needsAudioExtract: mode === "audio",
+      filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"),
+      title: title
+    };
   }
 
   /* ============================== OK.RU ============================== */
   async function tryOk(rawUrl, mode) {
     var parts = extractOk(rawUrl);
     if (!parts) throw new Error("invalid OK.ru URL");
+
     setStatus("Fetching OK.ru page…", "info");
     var pageUrl = "https://ok.ru/video/" + parts.id;
     var html = null;
-    try { html = await fetchText(pageUrl, 12000); }
-    catch (e) {
+    try {
+      html = await fetchText(pageUrl, 12000);
+    } catch (e) {
       for (var i = 0; i < CORS_PROXIES.length && !html; i++) {
         try {
           var res = await fetch(CORS_PROXIES[i](pageUrl), { credentials: "omit" });
@@ -3165,22 +3507,32 @@ input[type="range"]::-moz-range-thumb{
       }
     }
     if (!html) throw new Error("OK.ru fetch failed");
+
     var m = html.match(/<div data-module="OKVideo" .*? data-options="({.*?})"/);
     if (!m) throw new Error("no OK.ru video data");
     var opts = JSON.parse(m[1].replace(/&quot;/g, '"'));
     var metadata = JSON.parse(JSON.parse(opts.flashvars.metadata));
     var videos = (metadata.videos || []).filter(function (v) { return !v.disallowed; });
     if (!videos.length) throw new Error("no OK.ru videos");
+
     var best = videos[videos.length - 1];
     var title = (metadata.movie && metadata.movie.title) || "ok_" + parts.id;
-    return { url: best.url, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: mode === "audio", filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"), title: title };
+
+    return {
+      url: best.url, audioUrl: null, needsMerge: false,
+      isAudio: false, needsAudioExtract: mode === "audio",
+      filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"),
+      title: title
+    };
   }
 
   /* ============================== NEWGROUNDS ============================== */
   async function tryNewgrounds(rawUrl, mode) {
     var parts = extractNewgrounds(rawUrl);
     if (!parts) throw new Error("invalid Newgrounds URL");
+
     setStatus("Fetching Newgrounds info…", "info");
+
     if (parts.type === "audio") {
       var audioUrl = "https://www.newgrounds.com/audio/listen/" + parts.id;
       var audioHtml = null;
@@ -3198,8 +3550,14 @@ input[type="range"]::-moz-range-thumb{
       if (!paramsMatch) throw new Error("no Newgrounds audio params");
       var params = JSON.parse(paramsMatch[1]);
       var title = params.name || "newgrounds_" + parts.id;
-      return { url: params.filename, audioUrl: null, needsMerge: false, isAudio: true, needsAudioExtract: false, filename: sanitizeFilename(title) + ".mp3", title: title };
+      return {
+        url: params.filename, audioUrl: null, needsMerge: false,
+        isAudio: true, needsAudioExtract: false,
+        filename: sanitizeFilename(title) + ".mp3",
+        title: title
+      };
     }
+
     var videoUrl = "https://www.newgrounds.com/portal/video/" + parts.id;
     var videoJson = null;
     try {
@@ -3215,17 +3573,25 @@ input[type="range"]::-moz-range-thumb{
       }
     }
     if (!videoJson || !videoJson.sources) throw new Error("Newgrounds video fetch failed");
+
     var bestQuality = Object.keys(videoJson.sources)[0];
     var bestSrc = videoJson.sources[bestQuality] && videoJson.sources[bestQuality][0];
     if (!bestSrc) throw new Error("no Newgrounds video source");
+
     var title2 = videoJson.title || "newgrounds_" + parts.id;
-    return { url: bestSrc.src, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: mode === "audio", filename: sanitizeFilename(title2) + (mode === "audio" ? ".mp3" : ".mp4"), title: title2 };
+    return {
+      url: bestSrc.src, audioUrl: null, needsMerge: false,
+      isAudio: false, needsAudioExtract: mode === "audio",
+      filename: sanitizeFilename(title2) + (mode === "audio" ? ".mp3" : ".mp4"),
+      title: title2
+    };
   }
 
   /* ============================== RUTUBE ============================== */
   async function tryRutube(rawUrl, mode) {
     var parts = extractRutube(rawUrl);
     if (!parts) throw new Error("invalid Rutube URL");
+
     setStatus("Fetching Rutube page…", "info");
     var pageUrl = "https://rutube.ru/video/" + parts.id + "/";
     var html = null;
@@ -3239,15 +3605,23 @@ input[type="range"]::-moz-range-thumb{
       }
     }
     if (!html) throw new Error("Rutube fetch failed");
+
     var m = html.match(/"video_balancer":\s*({[^}]+})/);
     if (!m) throw new Error("no Rutube balancer");
     var balancer;
     try { balancer = JSON.parse(m[1]); } catch (e) { throw new Error("Rutube balancer parse failed"); }
     var videoUrl = balancer.m3u8 || balancer.default;
     if (!videoUrl) throw new Error("no Rutube video URL");
+
     var titleMatch = html.match(/<title>([^<]+)<\/title>/);
     var title = (titleMatch && titleMatch[1]) ? titleMatch[1].trim().replace(/ - Rutube$/, "") : ("rutube_" + parts.id);
-    return { url: videoUrl, audioUrl: null, needsMerge: false, isAudio: false, needsAudioExtract: mode === "audio", filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"), title: title };
+
+    return {
+      url: videoUrl, audioUrl: null, needsMerge: false,
+      isAudio: false, needsAudioExtract: mode === "audio",
+      filename: sanitizeFilename(title) + (mode === "audio" ? ".mp3" : ".mp4"),
+      title: title
+    };
   }
 
   /* ============================== ORCHESTRATOR ============================== */
@@ -3258,6 +3632,7 @@ input[type="range"]::-moz-range-thumb{
     if (platform === "youtube") {
       var id = extractVideoId(rawUrl);
       if (!id) return Promise.reject(new Error("Invalid YouTube link"));
+
       return tryPiped(id, mode, el.quality.value)
         .then(function (r) { console.log("[HexTube] ✓ piped"); return r; })
         .catch(function (pipedErr) {
@@ -3294,11 +3669,16 @@ input[type="range"]::-moz-range-thumb{
         .catch(function (tikwmErr) {
           console.warn("[HexTube] ✗ tikwm:", tikwmErr.message);
           setStatus("tikwm failed — trying Cobalt…", "info");
-          var next = getCobaltEndpoint() ? tryCobalt(rawUrl, mode) : tryPublicCobalt(rawUrl, mode);
+          var next = getCobaltEndpoint()
+            ? tryCobalt(rawUrl, mode)
+            : tryPublicCobalt(rawUrl, mode);
           return next
             .then(function (r) { console.log("[HexTube] ✓ cobalt"); return r; })
             .catch(function (cobaltErr) {
-              throw new Error("TikTok download failed. tikwm: " + tikwmErr.message.slice(0, 60) + " · Cobalt: " + cobaltErr.message.slice(0, 100));
+              throw new Error(
+                "TikTok download failed. tikwm: " + tikwmErr.message.slice(0, 60) +
+                " · Cobalt: " + cobaltErr.message.slice(0, 100)
+              );
             });
         });
     }
@@ -3309,60 +3689,107 @@ input[type="range"]::-moz-range-thumb{
         .catch(function (fxErr) {
           console.warn("[HexTube] ✗ fxtwitter:", fxErr.message);
           setStatus("fxtwitter failed — trying Cobalt…", "info");
-          var next = getCobaltEndpoint() ? tryCobalt(rawUrl, mode) : tryPublicCobalt(rawUrl, mode);
+          var next = getCobaltEndpoint()
+            ? tryCobalt(rawUrl, mode)
+            : tryPublicCobalt(rawUrl, mode);
           return next
             .then(function (r) { console.log("[HexTube] ✓ cobalt"); return r; })
             .catch(function (cobaltErr) {
-              throw new Error("Twitter / X download failed. fxtwitter: " + fxErr.message.slice(0, 60) + " · Cobalt: " + cobaltErr.message.slice(0, 100));
+              throw new Error(
+                "Twitter / X download failed. fxtwitter: " + fxErr.message.slice(0, 60) +
+                " · Cobalt: " + cobaltErr.message.slice(0, 100)
+              );
             });
         });
     }
 
     if (platform === "instagram") {
+      // The base shortcode URL is what Cobalt's Instagram extractor needs.
+      // Stripping the encoded tracking params (?exln=MXZ2YWcxanlleHo5dQ==, ?igsh=...)
+      // before forwarding avoids "unsupported link" errors and lets Cobalt
+      // return the direct CDN URL (scontent-*.cdninstagram.com/...mp4).
+      var igUrl = normalizeInstagramUrl(rawUrl);
+      console.log("[IG] normalized URL:", igUrl);
+
       return (async function () {
-        var steps = [
-          {
-            name: "native multi-method extraction",
-            run: function () {
-              setStatus("Instagram: native extraction…", "info");
-              return scrapeInstagramEmbed(rawUrl, mode);
-            }
-          }
-        ];
-        if (getCobaltEndpoint()) {
-          steps.push({
-            name: "your Cobalt",
-            run: function () {
-              setStatus("Instagram: trying your Cobalt…", "info");
-              return tryCobalt(rawUrl, mode);
-            }
-          });
-        }
-        steps.push({
-          name: "public Cobalt pool",
-          run: function () {
-            setStatus("Instagram: trying public Cobalt pool…", "info");
-            return tryPublicCobalt(rawUrl, mode);
-          }
-        });
         var lastErr = null;
-        for (var i = 0; i < steps.length; i++) {
+
+        // 1) User's Cobalt endpoint (most reliable)
+        if (getCobaltEndpoint()) {
           try {
-            console.log("[HexTube] IG: trying step " + (i + 1) + " (" + steps[i].name + ")");
-            return await steps[i].run();
+            setStatus("Instagram: your Cobalt…", "info");
+            var r = await tryCobalt(igUrl, mode);
+            console.log("[IG] ✓ via user Cobalt →", r.url ? hostOf(r.url) : "");
+            return r;
           } catch (e) {
             lastErr = e;
-            console.warn("[HexTube] IG: step " + (i + 1) + " (" + steps[i].name + ") failed:", e.message);
+            console.warn("[IG] user Cobalt failed:", e.message);
           }
         }
-        throw new Error("Instagram download failed. " + (lastErr ? lastErr.message.slice(0, 160) : "Try adding a Cobalt endpoint in Settings."));
+
+        // 2) cobalt.canine.tools first via public pool (explicitly prioritised inside PUBLIC_COBALT_INSTANCES)
+        try {
+          setStatus("Instagram: cobalt.canine.tools…", "info");
+          var rC = await callCobaltEndpoint("https://cobalt.canine.tools", igUrl, mode, "");
+          console.log("[IG] ✓ via cobalt.canine.tools →", rC.url ? hostOf(rC.url) : "");
+          return rC;
+        } catch (e) {
+          lastErr = e;
+          console.warn("[IG] cobalt.canine.tools failed:", e.message);
+        }
+
+        // 3) Rest of the public Cobalt pool
+        try {
+          setStatus("Instagram: public Cobalt pool…", "info");
+          var instances = PUBLIC_COBALT_INSTANCES.filter(function (x) { return x !== "https://cobalt.canine.tools"; });
+          for (var ci = 0; ci < instances.length; ci++) {
+            try {
+              setStatus("Instagram: Cobalt " + (ci + 2) + "/" + (instances.length + 1) + " (" + hostOf(instances[ci]) + ")…", "info");
+              var rP = await callCobaltEndpoint(instances[ci], igUrl, mode, "");
+              console.log("[IG] ✓ via " + hostOf(instances[ci]) + " →", rP.url ? hostOf(rP.url) : "");
+              return rP;
+            } catch (eInner) {
+              lastErr = eInner;
+              console.warn("[IG] ✗ " + hostOf(instances[ci]) + ":", eInner.message);
+            }
+          }
+        } catch (e) {
+          lastErr = e;
+          console.warn("[IG] public Cobalt pool failed:", e.message);
+        }
+
+        // 4) Cobalt-style native extraction (mobile API + embed captioned)
+        try {
+          var r2 = await tryInstagramCobaltStyle(igUrl, mode);
+          console.log("[IG] ✓ via cobalt-style native");
+          return r2;
+        } catch (e) {
+          lastErr = e;
+          console.warn("[IG] cobalt-style native failed:", e.message);
+        }
+
+        // 5) Last-resort multi-proxy scrape
+        try {
+          setStatus("Instagram: scrape fallback…", "info");
+          var r4 = await scrapeInstagramEmbed(igUrl, mode);
+          console.log("[IG] ✓ via scrape fallback");
+          return r4;
+        } catch (e) {
+          lastErr = e;
+          console.warn("[IG] scrape fallback failed:", e.message);
+        }
+
+        throw new Error("Instagram download failed. " + (lastErr ? lastErr.message.slice(0, 200) : "All methods exhausted. Try adding your own Cobalt endpoint in Settings."));
       })();
     }
 
     if (platform === "pinterest") {
       var pinChain;
-      if (getCobaltEndpoint()) pinChain = tryCobalt(rawUrl, mode).catch(function () { return tryPublicCobalt(rawUrl, mode); });
-      else pinChain = tryPublicCobalt(rawUrl, mode);
+      if (getCobaltEndpoint()) {
+        pinChain = tryCobalt(rawUrl, mode).catch(function () { return tryPublicCobalt(rawUrl, mode); });
+      } else {
+        pinChain = tryPublicCobalt(rawUrl, mode);
+      }
       return pinChain
         .catch(function (e) {
           console.warn("[Pinterest] cobalt failed:", e.message);
@@ -3376,8 +3803,11 @@ input[type="range"]::-moz-range-thumb{
 
     if (platform === "facebook") {
       var fbChain;
-      if (getCobaltEndpoint()) fbChain = tryCobalt(rawUrl, mode).catch(function () { return tryPublicCobalt(rawUrl, mode); });
-      else fbChain = tryPublicCobalt(rawUrl, mode);
+      if (getCobaltEndpoint()) {
+        fbChain = tryCobalt(rawUrl, mode).catch(function () { return tryPublicCobalt(rawUrl, mode); });
+      } else {
+        fbChain = tryPublicCobalt(rawUrl, mode);
+      }
       return fbChain
         .catch(function (e) {
           console.warn("[Facebook] cobalt failed:", e.message);
@@ -3582,17 +4012,21 @@ input[type="range"]::-moz-range-thumb{
       var result = await fetchWithFallback(url);
       var res = result.res;
       var viaProxy = result.viaProxy;
+
       var contentType = res.headers.get("content-type") || "application/octet-stream";
       var total = Number(res.headers.get("content-length")) || 0;
+
       if (!res.body || typeof res.body.getReader !== "function") {
         var blob = await res.blob();
         onProgress(100, formatBytes(blob.size));
         saveBlob(blob, filename);
         return { saved: true, size: blob.size, filename: filename };
       }
+
       var reader = res.body.getReader();
       var chunks = [];
       var received = 0;
+
       while (true) {
         var chunk = await reader.read();
         if (chunk.done) break;
@@ -3601,6 +4035,7 @@ input[type="range"]::-moz-range-thumb{
         var pct = total ? (received / total) * 100 : Math.min(90, received / 100000);
         onProgress(Math.min(99, pct), formatBytes(received) + (total ? " / " + formatBytes(total) : ""));
       }
+
       var outBlob = new Blob(chunks, { type: contentType });
       onProgress(100, formatBytes(outBlob.size) + (viaProxy ? " (via proxy)" : ""));
       saveBlob(outBlob, filename);
@@ -3653,14 +4088,17 @@ input[type="range"]::-moz-range-thumb{
       var FFmpeg = ffmpegMod.FFmpeg;
       var toBlobURL = utilMod.toBlobURL;
       if (!FFmpeg || !toBlobURL) throw new Error("ffmpeg.wasm module failed to load");
+
       var ffmpeg = new FFmpeg();
       ffmpeg.on("log", function (evt) { if (evt && evt.message) console.log("[ffmpeg]", evt.message); });
+
       var workerBlobURL = await buildFFmpegWorkerBlobURL();
       await ffmpeg.load({
         coreURL: await toBlobURL(FFMPEG_CDN.coreBase + "/ffmpeg-core.js", "text/javascript"),
         wasmURL: await toBlobURL(FFMPEG_CDN.coreBase + "/ffmpeg-core.wasm", "application/wasm"),
         classWorkerURL: workerBlobURL
       });
+
       ffmpegInstance = ffmpeg;
       return ffmpeg;
     })();
@@ -3717,6 +4155,7 @@ input[type="range"]::-moz-range-thumb{
   async function downloadExtractAudio(videoUrl, baseFilename) {
     var audioFormat = el.audioFormat.value;
     var audioBitrate = el.audioBitrate.value;
+
     var formatMap = {
       mp3:  { codec: "libmp3lame", mime: "audio/mpeg", ext: "mp3" },
       aac:  { codec: "aac", mime: "audio/mp4", ext: "m4a" },
@@ -3731,33 +4170,42 @@ input[type="range"]::-moz-range-thumb{
 
     try {
       var ffmpeg = await loadFFmpeg(function (msg) { setStatus(msg, "info"); });
+
       setStatus("Downloading source video for audio extraction…", "info");
       setProgress(5, "downloading source…");
       var video = await fetchBytesWithFallback(videoUrl, function (p, detail) {
         setProgress(5 + p * 0.6, detail || ("video " + Math.round(p) + "%"));
       }, "source");
+
       var vExt = extFromMime(video.contentType, "mp4");
       if (["mp4","webm","mkv","mov","avi","m4v","3gp","flv"].indexOf(vExt) === -1) vExt = "mp4";
       var vName = "aud_src_" + Date.now() + "." + vExt;
       var outName = "aud_out_" + Date.now() + "." + fmt.ext;
+
       setStatus("Writing source to ffmpeg…", "info");
       setProgress(66, "writing…");
       await ffmpeg.writeFile(vName, video.data);
+
       setStatus("Extracting " + fmt.ext.toUpperCase() + " (" + audioBitrate + " kbps)…", "info");
       setProgress(72, "extracting…");
+
       var args;
       if (fmt.ext === "wav" || fmt.ext === "flac") {
         args = ["-i", vName, "-vn", "-c:a", fmt.codec, outName];
       } else {
         args = ["-i", vName, "-vn", "-c:a", fmt.codec, "-b:a", audioBitrate + "k", outName];
       }
+
       await ffmpeg.exec(args);
+
       setProgress(95, "finalizing…");
       var outData = await ffmpeg.readFile(outName);
       try { await ffmpeg.deleteFile(vName); } catch (e) {}
       try { await ffmpeg.deleteFile(outName); } catch (e) {}
+
       var bytes = (outData instanceof Uint8Array) ? outData : new Uint8Array(outData);
       var blob = new Blob([bytes], { type: fmt.mime });
+
       var finalFilename = replaceExt(baseFilename, fmt.ext);
       saveBlob(blob, finalFilename);
       setProgress(100, formatBytes(blob.size));
@@ -3773,16 +4221,19 @@ input[type="range"]::-moz-range-thumb{
   async function downloadMerged(result, baseFilename) {
     try {
       var ffmpeg = await loadFFmpeg(function (msg) { setStatus(msg, "info"); });
+
       setStatus("Downloading video stream…", "info");
       setProgress(5, "downloading video…");
       var video = await fetchBytesWithFallback(result.url, function (p, detail) {
         setProgress(5 + p * 0.35, detail || ("video " + Math.round(p) + "%"));
       }, "video");
+
       setStatus("Downloading audio stream…", "info");
       setProgress(42, "downloading audio…");
       var audio = await fetchBytesWithFallback(result.audioUrl, function (p, detail) {
         setProgress(42 + p * 0.13, detail || ("audio " + Math.round(p) + "%"));
       }, "audio");
+
       var videoFamily = /webm/i.test(video.contentType) ? "webm" : "mp4";
       var audioFamily = /webm|opus/i.test(audio.contentType) ? "webm" : "mp4";
       var outputExt, outputMime;
@@ -3798,22 +4249,27 @@ input[type="range"]::-moz-range-thumb{
       var vName = "v_input." + vExt;
       var aName = "a_input." + aExt;
       var outName = "merged_output." + outputExt;
+
       setStatus("Merging with ffmpeg…", "info");
       setProgress(58, "writing files…");
       await ffmpeg.writeFile(vName, video.data);
       await ffmpeg.writeFile(aName, audio.data);
       setProgress(62, "merging streams…");
+
       var argsPrimary = ["-i", vName, "-i", aName, "-map", "0:v:0", "-map", "1:a:0", "-c", "copy", "-shortest", outName];
       var argsFallback = ["-i", vName, "-i", aName, "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", outName];
+
       var merged = false;
       try { await ffmpeg.exec(argsPrimary); merged = true; }
       catch (e1) { console.warn("[HexTube] stream-copy merge failed, re-encoding audio:", e1 && e1.message); }
       if (!merged) { setProgress(66, "re-encoding audio…"); await ffmpeg.exec(argsFallback); }
+
       setProgress(92, "finalizing…");
       var outData = await ffmpeg.readFile(outName);
       try { await ffmpeg.deleteFile(vName); } catch (e) {}
       try { await ffmpeg.deleteFile(aName); } catch (e) {}
       try { await ffmpeg.deleteFile(outName); } catch (e) {}
+
       var outBytes = (outData instanceof Uint8Array) ? outData : new Uint8Array(outData);
       var blob = new Blob([outBytes], { type: outputMime });
       var finalFilename = replaceExt(baseFilename, outputExt);
@@ -3845,7 +4301,11 @@ input[type="range"]::-moz-range-thumb{
       return cleaned + "." + guessExtension();
     }
     var base = sanitizeFilename(state.title || ("hextube_" + (id || "media")));
-    var suffix = state.mode === "audio" ? "_audio" : state.mode === "post" ? "_post" : "_" + (el.quality.value === "max" ? "best" : el.quality.value + "p");
+    var suffix = state.mode === "audio"
+      ? "_audio"
+      : state.mode === "post"
+        ? "_post"
+        : "_" + (el.quality.value === "max" ? "best" : el.quality.value + "p");
     return base + suffix + "." + guessExtension();
   }
 
@@ -3871,17 +4331,22 @@ input[type="range"]::-moz-range-thumb{
     var list = el.downloadResultsList;
     list.innerHTML = "";
     el.downloadResults.classList.remove("hidden");
+
     state.postResults = result.multi || [];
     state.postTitle = result.title || "post";
+
     var hasMulti = state.postResults.length > 1;
     el.downloadZipAll.style.display = hasMulti ? "" : "none";
+
     state.postResults.forEach(function (item, idx) {
       var li = document.createElement("li");
       li.className = "result-item";
+
       var name = document.createElement("span");
       name.className = "r-name";
       var label = (item.type === "image" ? "Image " : "Video ") + (idx + 1);
       name.textContent = label + " · " + (item.ext || "").toUpperCase();
+
       var dl = document.createElement("button");
       dl.type = "button";
       dl.innerHTML = '<i class="fa-solid fa-download" aria-hidden="true"></i> Save';
@@ -3896,15 +4361,17 @@ input[type="range"]::-moz-range-thumb{
           } else {
             setStatus("Downloading " + label + "… " + Math.round(p) + "%", "info");
           }
-        }).catch(function (err) {
+        }).catch(function (err) { 
           toast("Failed: " + err.message, "error", 5000);
           setStatus("Download failed: " + err.message, "error");
         });
       });
+
       li.appendChild(name);
       li.appendChild(dl);
       list.appendChild(li);
     });
+
     setStatus("Found " + state.postResults.length + " item(s) — ready to save", "ok");
     setProgress(100, "done");
     toast("Found " + state.postResults.length + " item(s)", "ok", 2600);
@@ -3929,6 +4396,7 @@ input[type="range"]::-moz-range-thumb{
       await loadJSZip();
       var zip = new JSZip();
       var total = state.postResults.length;
+
       for (var i = 0; i < total; i++) {
         var item = state.postResults[i];
         setProgress(10 + (i / total) * 80, "fetching " + (i + 1) + "/" + total);
@@ -3940,6 +4408,7 @@ input[type="range"]::-moz-range-thumb{
           console.warn("[ZIP] failed item " + i + ":", e.message);
         }
       }
+
       setProgress(92, "packing…");
       var out = await zip.generateAsync({ type: "blob" });
       saveBlob(out, sanitizeFilename(state.postTitle) + ".zip");
@@ -3961,6 +4430,7 @@ input[type="range"]::-moz-range-thumb{
       el.urlInput.focus();
       return;
     }
+
     var platform = detectPlatform(raw);
     if (!platform) {
       setStatus("Unsupported URL — try YouTube, TikTok, Twitter, Instagram, Facebook, Pinterest, Reddit, Vimeo, SoundCloud, Twitch, Bluesky, Dailymotion, Streamable, Snapchat, Loom, Tumblr, Bilibili, VK, OK.ru, Newgrounds or Rutube.", "error");
@@ -3972,34 +4442,43 @@ input[type="range"]::-moz-range-thumb{
       toast("Invalid YouTube link", "error");
       return;
     }
+
     state.lastId = extractVideoId(raw);
     if (platform === "youtube" && state.lastId && el.preview.classList.contains("hidden")) showPreview(state.lastId);
+
     el.downloadResults.classList.add("hidden");
     el.downloadResultsList.innerHTML = "";
     state.postResults = [];
+
     setBusy(true);
     setProgress(0, "resolving…");
     setStatus("Resolving download link…", "info");
+
     requestDownload(raw)
       .then(function (result) {
         if (!result) throw new Error("no result from resolver");
+
         if (result.multi) { showPostResults(result); return; }
         if (!result.url) throw new Error("no download URL returned");
+
         var filename = buildFilename(result.filename, state.lastId || platform);
         setStatus("Download starting…", "info");
         setProgress(2, "starting…");
+
         if (result.needsAudioExtract || (state.mode === "audio" && result.isAudio === false)) {
           toast("Converting to " + (el.audioFormat.value === "best" ? "MP3" : el.audioFormat.value.toUpperCase()) + " via ffmpeg.wasm…", "info", 3400);
           return downloadExtractAudio(result.url, filename).then(function (outcome) {
             finalizeDownload(outcome, filename, state.lastId, result);
           });
         }
+
         if (result.needsMerge && result.audioUrl) {
           toast("Merging video + audio with ffmpeg.wasm…", "info", 3200);
           return downloadMerged(result, filename).then(function (outcome) {
             finalizeDownload(outcome, filename, state.lastId, result);
           });
         }
+
         return fetchAndSave(result.url, filename, setProgress).then(function (outcome) {
           finalizeDownload(outcome, filename, state.lastId, result);
         });
@@ -4043,13 +4522,16 @@ input[type="range"]::-moz-range-thumb{
     var isVideo = mode === "video";
     var isAudio = mode === "audio";
     var isPost = mode === "post";
+
     el.modeVideo.setAttribute("aria-pressed", isVideo ? "true" : "false");
     el.modeAudio.setAttribute("aria-pressed", isAudio ? "true" : "false");
     el.modePost.setAttribute("aria-pressed", isPost ? "true" : "false");
+
     el.videoOpts.classList.toggle("hidden", !isVideo);
     el.audioOpts.classList.toggle("hidden", !isAudio);
     el.postHint.classList.toggle("hidden", !isPost);
     if (isPost) { el.videoOpts.classList.add("hidden"); el.audioOpts.classList.add("hidden"); }
+
     updateDownloadLabel();
     setStatus("");
   }
@@ -4195,6 +4677,7 @@ input[type="range"]::-moz-range-thumb{
       card.classList.toggle('active', card.dataset.theme === theme);
     });
     try { localStorage.setItem('neon-theme', theme); } catch (_) {}
+
     const c = THEME_SWATCHES[theme] || ['#4b6bfb', '#7b92b2', '#67cba0', '#181a2a'];
     el.customPrimary.value = c[0] || '#4b6bfb';
     el.customSecondary.value = c[1] || '#7b92b2';
@@ -4205,6 +4688,7 @@ input[type="range"]::-moz-range-thumb{
     el.customBase300.value = '#e6e6e6';
     el.customBaseContent.value = '#181a2a';
     customColors = {};
+
     const root = document.documentElement;
     ['primary', 'secondary', 'accent', 'neutral', 'base-100', 'base-200', 'base-300', 'base-content']
       .forEach(p => root.style.removeProperty(`--${p}`));
@@ -4252,6 +4736,7 @@ input[type="range"]::-moz-range-thumb{
       card.setAttribute('tabindex', '0');
       card.setAttribute('aria-label', 'Theme ' + theme);
       card.title = theme;
+
       const strip = document.createElement('div');
       strip.className = 'swatch-strip';
       colors.forEach(c => {
@@ -4260,6 +4745,7 @@ input[type="range"]::-moz-range-thumb{
         strip.appendChild(span);
       });
       card.appendChild(strip);
+
       const label = document.createElement('span');
       label.className = 'theme-label';
       label.textContent = theme;
@@ -4268,6 +4754,7 @@ input[type="range"]::-moz-range-thumb{
       check.textContent = ' ✓';
       label.appendChild(check);
       card.appendChild(label);
+
       card.addEventListener('click', () => {
         applySystemTheme(theme);
         applyThemeColors(themeToColors(theme));
@@ -4281,6 +4768,7 @@ input[type="range"]::-moz-range-thumb{
           updateCurrentThemeLabel();
         }
       });
+
       container.appendChild(card);
     });
   }
@@ -4331,6 +4819,7 @@ input[type="range"]::-moz-range-thumb{
       var raw = localStorage.getItem('neon-custom-colors');
       if (raw) savedCustom = JSON.parse(raw);
     } catch (e) { savedCustom = null; }
+
     applySystemTheme(savedTheme);
     if (savedCustom && savedCustom.primary) {
       setCustomInputs(savedCustom);
@@ -4892,6 +5381,7 @@ input[type="range"]::-moz-range-thumb{
       try {
         var opts = this.readOptions();
         var ffmpeg = await loadFFmpeg(function (msg) { self.setStatus(msg, "info"); });
+
         var multiFileOps = ["concatenate","side-by-side","picture-in-picture","logo-overlay","mix-audio","embed-subtitles"];
         var isMulti = multiFileOps.indexOf(this.op) !== -1;
         var batchMode = !isMulti && this.batch.checked && this.files.length > 1;
@@ -4939,6 +5429,7 @@ input[type="range"]::-moz-range-thumb{
 
     async runOne(ffmpeg, file, opts) {
       var isMulti = ["concatenate","side-by-side","picture-in-picture","logo-overlay","mix-audio","embed-subtitles"].indexOf(this.op) !== -1;
+
       var inputName = isMulti && file ? file.name : (file ? file.name : this.files[0].name);
       var baseName = inputName.replace(/\.[^./\\]+$/, "");
       var outputBase = "out_" + Date.now() + "_" + sanitizeFilename(baseName).replace(/\s+/g, "_");
@@ -5114,6 +5605,7 @@ input[type="range"]::-moz-range-thumb{
     el.modePost.addEventListener("click", function () { setMode("post"); });
     el.downloadBtn.addEventListener("click", handleDownload);
     el.downloadZipAll.addEventListener("click", downloadPostZip);
+
     el.settingsToggle.addEventListener("click", function () {
       var isHidden = el.settingsCard.classList.contains("hidden");
       el.settingsCard.classList.toggle("hidden", !isHidden);
@@ -5133,11 +5625,13 @@ input[type="range"]::-moz-range-thumb{
     bindEvents();
     bindThemeEvents();
     Editor.init();
+
     try {
       var params = new URLSearchParams(window.location.search);
       var preset = params.get("url") || params.get("v");
       if (preset) { el.urlInput.value = preset; handleUrlChange(); }
     } catch (e) {}
+
     setStatus("Ready.", "info");
     setTimeout(function () { setStatus(""); }, 2000);
   }
@@ -5151,6 +5645,7 @@ input[type="range"]::-moz-range-thumb{
 </script>
 
 <script>
+// Disable right-click
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 
 function ctrlShiftKey(e, keyCode) {
