@@ -4126,6 +4126,679 @@ input[type="range"]::-moz-range-thumb{
 
 })();
 </script>
+<script>
+    const CONFIG = {
+        instances: [
+            'https://api.cobalt.tools',
+            'https://cobalt-api.kwiatekmiki.com',
+            'https://cobalt-api.ayo.tf'
+        ],
+        apiKey: '',              // optional: only for instances that require it
+        timeout: 25000,          // ms before a single instance request is aborted
+        defaultQuality: '1080',
+        defaultMode: 'auto',
+        mount: '#hextube-downloader',
+        autoStartFromQuery: true // ?url=https://youtu.be/... fills + starts
+    };
 
+    const STORAGE_KEYS = {
+        quality: 'hextube.quality',
+        mode: 'hextube.mode',
+        instance: 'hextube.instance'
+    };
+
+    const QUALITIES = [
+        ['max', 'Maximum available'],
+        ['2160', '2160p (4K)'],
+        ['1440', '1440p (2K)'],
+        ['1080', '1080p (Full HD)'],
+        ['720', '720p (HD)'],
+        ['480', '480p'],
+        ['360', '360p'],
+        ['240', '240p'],
+        ['144', '144p']
+    ];
+
+    const MODES = [
+        ['auto', 'Video + audio'],
+        ['audio', 'Audio only'],
+        ['mute', 'Video only (no sound)']
+    ];
+
+    const ERROR_TEXT = {
+        'error.api.link.invalid': 'That link is not supported or is invalid.',
+        'error.api.link.unsupported': 'This service is not supported.',
+        'error.api.content.too_long': 'The video is too long to download.',
+        'error.api.content.video.unavailable': 'The video is unavailable (private, removed or region-locked).',
+        'error.api.content.video.live': 'Live streams cannot be downloaded.',
+        'error.api.content.video.age': 'This video is age-restricted and cannot be downloaded.',
+        'error.api.content.video.region': 'This video is region-locked.',
+        'error.api.content.video.private': 'This video is private.',
+        'error.api.rate_exceeded': 'Rate limit reached. Wait a moment and try again.',
+        'error.api.auth.key.missing': 'This API instance requires an API key.',
+        'error.api.auth.key.invalid': 'The configured API key is invalid.',
+        'error.api.auth.jwt.missing': 'This instance requires a signed session (captcha).',
+        'error.api.turnstile.missing': 'This instance requires a captcha token.',
+        'error.api.fetch.fail': 'The instance could not reach the source service.',
+        'error.api.fetch.empty': 'The source returned an empty response.',
+        'error.api.fetch.rate': 'The source is rate limiting the instance.',
+        'error.api.youtube.login': 'YouTube requires a login for this request.',
+        'error.api.youtube.decipher': 'Could not decipher the YouTube stream.',
+        'error.api.unknown': 'The API returned an unknown error.'
+    };
+
+    // Errors that mean "this link will never work" — stop trying other instances.
+    const FATAL_CODES = /^error\.api\.(link|content|youtube)/;
+
+    /* =============================== HELPERS ============================== */
+    const hostOf = (u) => {
+        try { return new URL(u).hostname; } catch (_) { return String(u); }
+    };
+
+    function h(tag, props) {
+        const node = document.createElement(tag);
+        if (props) {
+            for (const key of Object.keys(props)) {
+                const value = props[key];
+                if (value === null || value === undefined || value === false) continue;
+                if (key === 'class') node.className = value;
+                else if (key === 'dataset') Object.assign(node.dataset, value);
+                else if (key.slice(0, 2) === 'on' && typeof value === 'function') {
+                    node.addEventListener(key.slice(2).toLowerCase(), value);
+                } else if (key === 'text') node.textContent = value;
+                else node.setAttribute(key, value === true ? '' : String(value));
+            }
+        }
+        for (let i = 2; i < arguments.length; i++) {
+            const children = [].concat(arguments[i]);
+            for (const child of children) {
+                if (child === null || child === undefined || child === false) continue;
+                node.append(child.nodeType ? child : document.createTextNode(String(child)));
+            }
+        }
+        return node;
+    }
+
+    const store = {
+        get(key, fallback) {
+            try {
+                const value = localStorage.getItem(key);
+                return value === null ? fallback : value;
+            } catch (_) { return fallback; }
+        },
+        set(key, value) {
+            try {
+                if (value === null || value === undefined || value === '') localStorage.removeItem(key);
+                else localStorage.setItem(key, value);
+            } catch (_) { /* private mode */ }
+        }
+    };
+
+    function filenameFromUrl(url) {
+        try {
+            const parts = new URL(url).pathname.split('/').filter(Boolean);
+            return parts.length ? decodeURIComponent(parts[parts.length - 1]) : '';
+        } catch (_) { return ''; }
+    }
+
+    const YOUTUBE_HOSTS = /^(?:www\.|m\.|music\.)?(?:youtube\.com|youtu\.be|youtube-nocookie\.com)$/i;
+
+    function isSupportedUrl(input) {
+        try {
+            const url = new URL(String(input).trim());
+            if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+            return YOUTUBE_HOSTS.test(url.hostname);
+        } catch (_) { return false; }
+    }
+
+    /* ================================ API ================================= */
+    class ApiError extends Error {
+        constructor(code) {
+            super(ERROR_TEXT[code] || ('API error: ' + code));
+            this.name = 'ApiError';
+            this.code = code;
+        }
+    }
+
+    function friendlyError(err) {
+        if (!err) return 'Unknown error.';
+        if (err instanceof ApiError) return ERROR_TEXT[err.code] || ('API error (' + err.code + ').');
+        if (err && err.name === 'AbortError') return 'The request timed out. Try again or use another instance.';
+        return err.message || String(err);
+    }
+
+    function networkMessage(err) {
+        if (err && err.name === 'AbortError') {
+            return 'Request timed out after ' + Math.round(CONFIG.timeout / 1000) + ' seconds.';
+        }
+        return 'Network error — the instance may be offline or blocking browser requests.';
+    }
+
+    async function fetchJSON(url, options) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), CONFIG.timeout);
+        try {
+            const response = await fetch(url, Object.assign({}, options, {
+                signal: controller.signal,
+                mode: 'cors',
+                credentials: 'omit',
+                cache: 'no-store'
+            }));
+            let text = '';
+            try { text = await response.text(); } catch (_) { text = ''; }
+            let data = null;
+            try { data = text ? JSON.parse(text) : null; } catch (_) { data = null; }
+            return { ok: response.ok, status: response.status, data: data };
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    function buildBody(url, mode, quality) {
+        // Keys for both the current API (v10) and the legacy one are sent;
+        // unknown keys are simply ignored by whichever instance answers.
+        return {
+            url: url,
+            videoQuality: quality,
+            vQuality: quality,
+            downloadMode: mode,
+            isAudioOnly: mode === 'audio',
+            isAudioMute: mode === 'mute',
+            filenameStyle: 'basic',
+            filenamePattern: 'basic',
+            disableMetadata: true,
+            youtubeVideoCodec: 'h264'
+        };
+    }
+
+    function parseResponse(base, data) {
+        if (!data || typeof data !== 'object') throw new ApiError('error.api.fetch.empty');
+
+        if (data.status === 'error' || data.error) {
+            const code = (data.error && data.error.code) || 'error.api.unknown';
+            throw new ApiError(code);
+        }
+
+        const absolute = (path) => {
+            if (!path) return null;
+            if (/^https?:\/\//i.test(path)) return path;
+            return new URL(path, base + '/').href;
+        };
+
+        switch (data.status) {
+            case 'tunnel':
+            case 'redirect':
+            case 'stream':
+                if (!data.url) throw new ApiError('error.api.fetch.empty');
+                return { url: absolute(data.url), filename: data.filename || '' };
+
+            case 'picker': {
+                const items = (data.picker || [])
+                    .filter((item) => item && item.url)
+                    .map((item) => ({
+                        url: absolute(item.url),
+                        type: item.type || 'video',
+                        thumb: item.thumb || null
+                    }));
+                if (!items.length) throw new ApiError('error.api.fetch.empty');
+                return { url: items[0].url, filename: data.filename || '', picker: items };
+            }
+
+            case 'local-processing': {
+                const tunnels = [].concat(data.tunnel || []);
+                const file = tunnels.filter((t) => typeof t === 'string')[0];
+                if (!file) throw new ApiError('error.api.fetch.empty');
+                return {
+                    url: absolute(file),
+                    filename: (data.output && data.output.filename) || ''
+                };
+            }
+
+            default:
+                if (data.url) return { url: absolute(data.url), filename: data.filename || '' };
+                throw new ApiError('error.api.unknown');
+        }
+    }
+
+    async function requestInstance(instance, url, mode, quality) {
+        const base = String(instance).replace(/\/+$/, '');
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        };
+        if (CONFIG.apiKey) headers['Authorization'] = 'Api-Key ' + CONFIG.apiKey;
+
+        const payload = JSON.stringify(buildBody(url, mode, quality));
+        let result;
+
+        try {
+            result = await fetchJSON(base + '/', { method: 'POST', headers: headers, body: payload });
+        } catch (err) {
+            throw new Error(networkMessage(err));
+        }
+
+        // Very old cobalt instances only expose the legacy endpoint.
+        if (!result.ok && (result.status === 404 || result.status === 405)) {
+            try {
+                result = await fetchJSON(base + '/api/json', {
+                    method: 'POST', headers: headers, body: payload
+                });
+            } catch (err) {
+                throw new Error(networkMessage(err));
+            }
+        }
+
+        if (!result.data) {
+            throw new Error('Empty or non-JSON response from ' + hostOf(base) + ' (HTTP ' + result.status + ').');
+        }
+
+        return parseResponse(base, result.data);
+    }
+
+    function getInstances() {
+        const custom = (store.get(STORAGE_KEYS.instance, '') || '').trim();
+        const list = CONFIG.instances.slice();
+        if (custom && list.indexOf(custom) === -1) list.unshift(custom);
+        return list;
+    }
+
+    async function requestDownload(url, mode, quality, onAttempt) {
+        const instances = getInstances();
+        const failures = [];
+
+        for (let i = 0; i < instances.length; i++) {
+            const instance = instances[i];
+            try {
+                if (typeof onAttempt === 'function') onAttempt(instance, i, instances.length);
+                const result = await requestInstance(instance, url, mode, quality);
+                result.instance = instance;
+                return result;
+            } catch (err) {
+                if (err instanceof ApiError && FATAL_CODES.test(err.code)) throw err;
+                failures.push({ instance: instance, error: err });
+            }
+        }
+
+        const first = failures[0];
+        if (first) throw first.error;
+        throw new Error('No API instance is configured.');
+    }
+
+    /* ================================ STYLES ============================== */
+    const CSS = [
+        '.ht-app{',
+        '--ht-bg:#0f1115;--ht-surface:#171a21;--ht-surface-2:#1e222b;--ht-border:#2a2f3a;',
+        '--ht-text:#e8eaee;--ht-muted:#98a2b3;--ht-accent:#ff2d55;--ht-accent-2:#ff6b8a;',
+        '--ht-ok:#34d399;--ht-warn:#fbbf24;--ht-error:#f87171;',
+        'color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;',
+        'font-size:15px;line-height:1.45;color:var(--ht-text);background:var(--ht-surface);',
+        'border:1px solid var(--ht-border);border-radius:16px;padding:22px;max-width:720px;',
+        'margin:24px auto;box-shadow:0 18px 48px rgba(0,0,0,.38);}',
+        '.ht-app *,.ht-app *::before,.ht-app *::after{box-sizing:border-box;}',
+        '.ht-header{display:flex;align-items:center;gap:10px;margin-bottom:4px;}',
+        '.ht-logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--ht-accent),var(--ht-accent-2));',
+        'display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;flex:none;}',
+        '.ht-title{margin:0;font-size:19px;font-weight:700;letter-spacing:.2px;}',
+        '.ht-sub{margin:0 0 18px;color:var(--ht-muted);font-size:13px;}',
+        '.ht-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}',
+        '.ht-field{display:flex;flex-direction:column;gap:6px;flex:1 1 180px;min-width:0;}',
+        '.ht-label{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--ht-muted);}',
+        '.ht-input,.ht-select{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--ht-border);',
+        'background:var(--ht-surface-2);color:var(--ht-text);font:inherit;outline:none;transition:border-color .15s,box-shadow .15s;}',
+        '.ht-input::placeholder{color:#6b7280;}',
+        '.ht-input:focus,.ht-select:focus{border-color:var(--ht-accent);box-shadow:0 0 0 3px rgba(255,45,85,.18);}',
+        '.ht-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;',
+        'border-radius:10px;border:1px solid transparent;font:inherit;font-weight:600;cursor:pointer;',
+        'text-decoration:none;white-space:nowrap;transition:background .15s,border-color .15s,color .15s,transform .05s;}',
+        '.ht-btn:active{transform:translateY(1px);}',
+        '.ht-btn:disabled{opacity:.55;cursor:not-allowed;}',
+        '.ht-btn-primary{background:linear-gradient(135deg,var(--ht-accent),var(--ht-accent-2));color:#fff;}',
+        '.ht-btn-primary:hover:not(:disabled){filter:brightness(1.08);}',
+        '.ht-btn-ghost{background:transparent;border-color:var(--ht-border);color:var(--ht-text);}',
+        '.ht-btn-ghost:hover:not(:disabled){border-color:var(--ht-accent);color:var(--ht-accent-2);}',
+        '.ht-btn.ht-loading{position:relative;color:transparent;}',
+        '.ht-btn.ht-loading::after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;',
+        'border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:ht-spin .7s linear infinite;}',
+        '@keyframes ht-spin{to{transform:rotate(360deg);}}',
+        '.ht-url-row{display:flex;gap:10px;margin-bottom:14px;}',
+        '.ht-url-row .ht-input{flex:1 1 auto;}',
+        '.ht-options{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}',
+        '.ht-options .ht-field{flex:1 1 160px;}',
+        '.ht-actions{display:flex;gap:10px;align-items:center;margin-bottom:14px;}',
+        '.ht-actions .ht-btn-primary{flex:0 0 auto;min-width:150px;}',
+        '.ht-status{display:none;padding:11px 13px;border-radius:10px;font-size:14px;margin-bottom:14px;',
+        'border:1px solid var(--ht-border);background:var(--ht-surface-2);word-break:break-word;}',
+        '.ht-status.ht-info{border-color:#3b82f6;color:#bfdbfe;}',
+        '.ht-status.ht-ok{border-color:var(--ht-ok);color:#a7f3d0;}',
+        '.ht-status.ht-warn{border-color:var(--ht-warn);color:#fde68a;}',
+        '.ht-status.ht-error{border-color:var(--ht-error);color:#fecaca;}',
+        '.ht-results:empty{display:none;}',
+        '.ht-result{border:1px solid var(--ht-border);background:var(--ht-surface-2);border-radius:12px;',
+        'padding:14px;display:flex;flex-direction:column;gap:12px;}',
+        '.ht-result-name{font-size:14px;font-weight:600;word-break:break-word;}',
+        '.ht-result-actions{display:flex;gap:10px;flex-wrap:wrap;}',
+        '.ht-note{font-size:12px;color:var(--ht-muted);}',
+        '.ht-advanced{margin-top:16px;border-top:1px solid var(--ht-border);padding-top:12px;}',
+        '.ht-advanced summary{cursor:pointer;font-size:13px;color:var(--ht-muted);user-select:none;}',
+        '.ht-advanced summary:hover{color:var(--ht-text);}',
+        '.ht-advanced[open] summary{margin-bottom:12px;}',
+        '.ht-footer{margin-top:16px;font-size:12px;color:var(--ht-muted);text-align:center;}',
+        '.ht-footer a{color:var(--ht-accent-2);text-decoration:none;}',
+        '.ht-footer a:hover{text-decoration:underline;}',
+        '@media (max-width:520px){.ht-app{margin:12px;padding:16px;border-radius:14px;}',
+        '.ht-actions .ht-btn-primary{flex:1 1 100%;}}'
+    ].join('');
+
+    function injectStyles() {
+        if (document.getElementById('hextube-downloader-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'hextube-downloader-styles';
+        style.textContent = CSS;
+        (document.head || document.documentElement).appendChild(style);
+    }
+
+    /* ================================== UI ================================ */
+    function mountUI() {
+        let root = typeof CONFIG.mount === 'string'
+            ? document.querySelector(CONFIG.mount)
+            : CONFIG.mount;
+
+        if (!root) {
+            root = h('div', { id: 'hextube-downloader' });
+            (document.body || document.documentElement).appendChild(root);
+        }
+        root.textContent = '';
+
+        const app = h('div', { class: 'ht-app' });
+        root.appendChild(app);
+
+        /* ---------- header ---------- */
+        app.appendChild(h('div', { class: 'ht-header' },
+            h('div', { class: 'ht-logo', 'aria-hidden': 'true' }, 'HT'),
+            h('h1', { class: 'ht-title' }, 'HEXTube Downloader')
+        ));
+        app.appendChild(h('p', { class: 'ht-sub' },
+            'Paste a YouTube link and grab the video or the audio track. Powered by the cobalt API.'
+        ));
+
+        /* ---------- form ---------- */
+        const form = h('form', { class: 'ht-form', novalidate: true });
+
+        const urlInput = h('input', {
+            class: 'ht-input',
+            id: 'ht-url',
+            type: 'url',
+            inputmode: 'url',
+            placeholder: 'https://www.youtube.com/watch?v=…',
+            autocomplete: 'off',
+            spellcheck: 'false',
+            'aria-label': 'YouTube video link'
+        });
+
+        const pasteBtn = h('button', {
+            type: 'button',
+            class: 'ht-btn ht-btn-ghost',
+            title: 'Paste from clipboard'
+        }, 'Paste');
+
+        form.appendChild(h('div', { class: 'ht-url-row' }, urlInput, pasteBtn));
+
+        const qualitySelect = h('select', { class: 'ht-select', id: 'ht-quality', 'aria-label': 'Download quality' },
+            QUALITIES.map((pair) => h('option', { value: pair[0] }, pair[1])));
+
+        const modeSelect = h('select', { class: 'ht-select', id: 'ht-mode', 'aria-label': 'Download format' },
+            MODES.map((pair) => h('option', { value: pair[0] }, pair[1])));
+
+        qualitySelect.value = store.get(STORAGE_KEYS.quality, CONFIG.defaultQuality);
+        if (!qualitySelect.value) qualitySelect.value = CONFIG.defaultQuality;
+        modeSelect.value = store.get(STORAGE_KEYS.mode, CONFIG.defaultMode);
+        if (!modeSelect.value) modeSelect.value = CONFIG.defaultMode;
+
+        form.appendChild(h('div', { class: 'ht-options' },
+            h('div', { class: 'ht-field' }, h('span', { class: 'ht-label' }, 'Quality'), qualitySelect),
+            h('div', { class: 'ht-field' }, h('span', { class: 'ht-label' }, 'Format'), modeSelect)
+        ));
+
+        const submitBtn = h('button', { type: 'submit', class: 'ht-btn ht-btn-primary' }, 'Download');
+
+        form.appendChild(h('div', { class: 'ht-actions' },
+            submitBtn,
+            h('span', { class: 'ht-note' }, 'Tip: press Enter in the link field.')
+        ));
+
+        const statusBox = h('div', {
+            class: 'ht-status',
+            role: 'status',
+            'aria-live': 'polite'
+        });
+
+        const resultsBox = h('div', { class: 'ht-results' });
+
+        app.appendChild(form);
+        app.appendChild(statusBox);
+        app.appendChild(resultsBox);
+
+        /* ---------- advanced settings ---------- */
+        const instanceInput = h('input', {
+            class: 'ht-input',
+            id: 'ht-instance',
+            type: 'url',
+            placeholder: 'https://your-cobalt-instance.example',
+            value: store.get(STORAGE_KEYS.instance, ''),
+            'aria-label': 'Custom cobalt API instance'
+        });
+
+        const advanced = h('details', { class: 'ht-advanced' },
+            h('summary', {}, 'Advanced settings'),
+            h('div', { class: 'ht-field' },
+                h('span', { class: 'ht-label' }, 'Custom API instance (tried first)'),
+                instanceInput
+            ),
+            h('p', { class: 'ht-note' },
+                'Leave empty to use the built-in list. Self-hosted cobalt instances work best.')
+        );
+        app.appendChild(advanced);
+
+        app.appendChild(h('div', { class: 'ht-footer' },
+            'Backend by ',
+            h('a', { href: 'https://github.com/imputnet/cobalt', target: '_blank', rel: 'noopener noreferrer' }, 'cobalt'),
+            ' · HEXTube Downloader'
+        ));
+
+        /* ---------- behaviour ---------- */
+        function setStatus(message, type) {
+            if (!message) {
+                statusBox.textContent = '';
+                statusBox.className = 'ht-status';
+                statusBox.style.display = 'none';
+                return;
+            }
+            statusBox.textContent = message;
+            statusBox.className = 'ht-status' + (type ? ' ht-' + type : '');
+            statusBox.style.display = 'block';
+        }
+
+        function setBusy(busy) {
+            submitBtn.disabled = busy;
+            pasteBtn.disabled = busy;
+            qualitySelect.disabled = busy;
+            modeSelect.disabled = busy;
+            submitBtn.classList.toggle('ht-loading', busy);
+            submitBtn.textContent = busy ? 'Working…' : 'Download';
+        }
+
+        function renderResult(result) {
+            resultsBox.textContent = '';
+
+            const options = [];
+            if (Array.isArray(result.picker) && result.picker.length) {
+                result.picker.forEach((item, index) => {
+                    options.push({
+                        url: item.url,
+                        label: item.type === 'photo' ? 'Image' : 'Video ' + (index + 1)
+                    });
+                });
+            } else if (result.url) {
+                options.push({ url: result.url, label: 'Download file' });
+            }
+
+            if (!options.length) {
+                setStatus('The API returned no downloadable file.', 'error');
+                return;
+            }
+
+            const name = result.filename || filenameFromUrl(options[0].url) || 'download';
+
+            const actions = h('div', { class: 'ht-result-actions' });
+
+            options.forEach((option) => {
+                actions.appendChild(h('a', {
+                    class: 'ht-btn ht-btn-primary',
+                    href: option.url,
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
+                    download: ''
+                }, option.label));
+            });
+
+            const copyBtn = h('button', { type: 'button', class: 'ht-btn ht-btn-ghost' }, 'Copy link');
+            copyBtn.addEventListener('click', function () {
+                const clipboard = navigator.clipboard;
+                if (!clipboard || !clipboard.writeText) {
+                    setStatus('Clipboard is not available in this browser.', 'warn');
+                    return;
+                }
+                clipboard.writeText(options[0].url).then(function () {
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(function () { copyBtn.textContent = 'Copy link'; }, 1500);
+                }).catch(function () {
+                    setStatus('Could not copy — clipboard access was blocked.', 'warn');
+                });
+            });
+            actions.appendChild(copyBtn);
+
+            resultsBox.appendChild(h('div', { class: 'ht-result' },
+                h('div', { class: 'ht-result-name', title: name }, name),
+                actions,
+                h('div', { class: 'ht-note' },
+                    'The link is temporary and served by ' + hostOf(result.instance || '') + '.')
+            ));
+        }
+
+        async function handleSubmit() {
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                setStatus('Paste a YouTube link first.', 'warn');
+                urlInput.focus();
+                return;
+            }
+            if (!isSupportedUrl(url)) {
+                setStatus('Only YouTube links are supported (youtube.com, youtu.be, music.youtube.com).', 'error');
+                return;
+            }
+
+            const mode = modeSelect.value;
+            const quality = qualitySelect.value;
+
+            store.set(STORAGE_KEYS.mode, mode);
+            store.set(STORAGE_KEYS.quality, quality);
+
+            resultsBox.textContent = '';
+            setBusy(true);
+            setStatus('Contacting the download API…', 'info');
+
+            try {
+                const result = await requestDownload(url, mode, quality, function (instance, index, total) {
+                    setStatus('Requesting from ' + hostOf(instance) +
+                        (total > 1 ? ' (' + (index + 1) + '/' + total + ')' : '') + '…', 'info');
+                });
+
+                setStatus('Ready — your file is prepared.', 'ok');
+                renderResult(result);
+            } catch (err) {
+                setStatus(friendlyError(err), 'error');
+            } finally {
+                setBusy(false);
+            }
+        }
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            handleSubmit();
+        });
+
+        pasteBtn.addEventListener('click', function () {
+            const clipboard = navigator.clipboard;
+            if (!clipboard || !clipboard.readText) {
+                setStatus('Clipboard is not available — paste manually with Ctrl+V.', 'warn');
+                urlInput.focus();
+                return;
+            }
+            clipboard.readText().then(function (text) {
+                if (text) {
+                    urlInput.value = text.trim();
+                    setStatus('', null);
+                }
+            }).catch(function () {
+                setStatus('Clipboard access was blocked — paste manually with Ctrl+V.', 'warn');
+                urlInput.focus();
+            });
+        });
+
+        qualitySelect.addEventListener('change', function () {
+            store.set(STORAGE_KEYS.quality, qualitySelect.value);
+        });
+
+        modeSelect.addEventListener('change', function () {
+            store.set(STORAGE_KEYS.mode, modeSelect.value);
+        });
+
+        instanceInput.addEventListener('change', function () {
+            store.set(STORAGE_KEYS.instance, instanceInput.value.trim());
+            setStatus('Custom API instance saved.', 'ok');
+        });
+
+        /* ---------- deep link: ?url=... ---------- */
+        if (CONFIG.autoStartFromQuery) {
+            let queryUrl = '';
+            try {
+                const params = new URLSearchParams(window.location.search);
+                queryUrl = params.get('url') || params.get('u') || '';
+            } catch (_) { queryUrl = ''; }
+
+            if (queryUrl) {
+                urlInput.value = queryUrl;
+                handleSubmit();
+            }
+        }
+
+        urlInput.focus();
+    }
+
+    /* ================================= BOOT =============================== */
+    function boot() {
+        injectStyles();
+        try {
+            mountUI();
+        } catch (err) {
+            // Last-resort fallback so the page never breaks silently.
+            const fallback = h('div', { class: 'ht-app' },
+                h('div', { class: 'ht-header' }, h('h1', { class: 'ht-title' }, 'HEXTube Downloader')),
+                h('p', { class: 'ht-status ht-error', style: 'display:block' },
+                    'Could not start the downloader: ' + (err && err.message ? err.message : String(err)))
+            );
+            (document.body || document.documentElement).appendChild(fallback);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
+    }
+})();
+
+</script>
 </body>
 </html>
